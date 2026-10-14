@@ -1,0 +1,26 @@
+<UserControl x:Class="ShablonRabot.App.Controls.InfoBar"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Name="Root" Focusable="False" IsTabStop="False">
+    <!-- Инфобар (DESIGN.md 12.15) -->
+    <Border x:Name="Bd" MinHeight="48" CornerRadius="4" BorderThickness="1" BorderBrush="{DynamicResource Brush.Stroke.Infobar}"
+            Padding="16,8,8,8">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock x:Name="Glyph" Style="{StaticResource Icon}" VerticalAlignment="Top" Margin="0,4,12,0" />
+            <TextBlock Grid.Column="1" VerticalAlignment="Center" Style="{StaticResource Text.Body}" Margin="0,2">
+                <Run x:Name="TitleRun" FontWeight="SemiBold" /><Run x:Name="Gap" Text="  " /><Run x:Name="MessageRun" />
+            </TextBlock>
+            <Button x:Name="ActionButton" Grid.Column="2" Margin="12,0,0,0" VerticalAlignment="Center" Click="OnAction" />
+            <Button x:Name="CloseButton" Grid.Column="3" Style="{StaticResource Button.Icon}" Margin="4,0,0,0" VerticalAlignment="Center"
+                    AutomationProperties.Name="Закрыть уведомление" ToolTip="Закрыть уведомление" Click="OnClose">
+                <TextBlock Text="&#xE711;" Style="{StaticResource Icon}" />
+            </Button>
+        </Grid>
+    </Border>
+</UserControl>

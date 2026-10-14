@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Свои тексты мастера установки поверх стандартных строк WixUI (ru-RU). Шрифты {\WixUI_Font_*} — из WixUI. -->
+<WixLocalization Culture="ru-RU" Codepage="1251" xmlns="http://wixtoolset.org/schemas/v4/wxl">
+  <!-- Приветствие и лицензия -->
+  <String Id="WelcomeEulaDlgTitle" Value="{\WixUI_Font_Title}Добро пожаловать! Прочитайте условия использования программы" />
+  <String Id="WelcomeEulaDlgLicenseAcceptedCheckBox" Value="&amp;Я принимаю условия использования" />
+
+  <!-- Подготовка и ход установки -->
+  <String Id="PrepareDlgTitle" Value="{\WixUI_Font_Bigger}Готовим установку" />
+  <String Id="PrepareDlgDescription" Value="Это займёт пару секунд." />
+  <String Id="ProgressDlgTitleInstalling" Value="{\WixUI_Font_Title}Устанавливаем «[ProductName]»" />
+  <String Id="ProgressDlgTextInstalling" Value="Права администратора не нужны: программа ставится только для вашей учётной записи." />
+  <String Id="ProgressDlgTitleUpdating" Value="{\WixUI_Font_Title}Обновляем «[ProductName]»" />
+  <String Id="ProgressDlgTextUpdating" Value="Ваши профили и настройки сохранятся." />
+  <String Id="ProgressDlgTitleRepairing" Value="{\WixUI_Font_Title}Восстанавливаем «[ProductName]»" />
+  <String Id="ProgressDlgTextRepairing" Value="Возвращаем на место файлы и ярлыки программы." />
+  <String Id="ProgressDlgTitleRemoving" Value="{\WixUI_Font_Title}Удаляем «[ProductName]»" />
+  <String Id="ProgressDlgTextRemoving" Value="Созданные вами документы и шаблоны останутся на месте." />
+
+  <!-- Завершение -->
+  <String Id="ExitDialogTitle" Value="{\WixUI_Font_Bigger}Всё готово!" />
+  <String Id="ExitDialogDescription" Value="«[ProductName]» установлен, ярлыки — в меню «Пуск» и на рабочем столе. Выберите вид работы, заполните титульный лист — и получите документ Word, оформленный по ГОСТ." />
+
+  <!-- Отмена и ошибки -->
+  <String Id="UserExitTitle" Value="{\WixUI_Font_Bigger}Установка отменена" />
+  <String Id="UserExitDescription1" Value="На компьютере ничего не изменилось. Чтобы установить программу, запустите установщик ещё раз." />
+  <String Id="UserExitDescription2" Value="Нажмите «Готово», чтобы закрыть мастер." />
+  <String Id="FatalErrorTitle" Value="{\WixUI_Font_Bigger}Не получилось установить программу" />
+  <String Id="FatalErrorDescription1" Value="Установка остановлена из-за ошибки, компьютер не изменён. Закройте «[ProductName]», если он запущен, и попробуйте ещё раз." />
+  <String Id="FatalErrorDescription2" Value="Нажмите «Готово», чтобы закрыть мастер." />
+
+  <!-- Повторный запуск установщика -->
+  <String Id="MaintenanceWelcomeDlgTitle" Value="{\WixUI_Font_Bigger}«[ProductName]» уже установлен" />
+  <String Id="MaintenanceWelcomeDlgDescription" Value="Программу можно восстановить, если она перестала запускаться, или удалить. Нажмите «Далее»." />
+  <String Id="MaintenanceTypeDlgTitle" Value="{\WixUI_Font_Title}Восстановить или удалить" />
+  <String Id="MaintenanceTypeDlgDescription" Value="Выберите, что сделать с программой." />
+  <String Id="MaintenanceTypeDlgRepairText" Value="Вернуть на место файлы и ярлыки программы. Ваши профили и настройки не изменятся." />
+  <String Id="MaintenanceTypeDlgRemoveText" Value="Удалить программу. Созданные документы и шаблоны останутся." />
+</WixLocalization>

@@ -1,0 +1,26 @@
+# Сборка .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.vscode/
+
+# Результаты build.ps1: exe и MSI выкладываются в релизы, не в репозиторий
+artifacts/
+dist/
+*.wixpdb
+*.msi
+
+# Python-прототип
+__pycache__/
+*.pyc
+prototype/out/
+prototype/build/
+prototype/dist/
+
+# Временные файлы Word и системы
+~$*
+*.tmp
+Thumbs.db
+desktop.ini

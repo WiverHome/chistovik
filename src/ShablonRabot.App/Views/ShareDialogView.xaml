@@ -1,0 +1,59 @@
+<UserControl x:Class="ShablonRabot.App.Views.ShareDialogView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:ShablonRabot.App.Controls">
+    <!-- Диалог 7.2 «Поделиться профилем» -->
+    <Border Style="{StaticResource DialogCard}" AutomationProperties.Name="{Binding Title}">
+        <StackPanel>
+            <StackPanel Margin="24">
+                <TextBlock Text="{Binding Title}" Style="{StaticResource DialogTitle}" />
+                <TextBlock Style="{StaticResource Text.Body}" Margin="0,12,0,0"
+                           Text="Отправьте файл профиля студентам или коллегам. Они откроют его в Конструкторе: «Вид работы» → «Импортировать профиль»." />
+                <Border Background="{DynamicResource Brush.Bg.CardSecondary}" CornerRadius="4" Padding="12" Margin="0,16,0,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="&#xE8A5;" Style="{StaticResource Icon}" FontSize="20" Margin="0,0,12,0" Foreground="{DynamicResource Brush.Text.Primary}" />
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="{Binding FileName}" Style="{StaticResource Text.BodyStrong}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                            <TextBlock Text="{Binding SizeText}" Style="{StaticResource Text.Caption}" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+                <StackPanel Orientation="Horizontal" Margin="0,8,0,0" Visibility="{Binding Copied, Converter={StaticResource BoolToVisibility}}"
+                            AutomationProperties.LiveSetting="Polite">
+                    <TextBlock Text="&#xE73E;" Style="{StaticResource Icon}" FontSize="12" Foreground="{DynamicResource Brush.Text.Success}" Margin="0,0,6,0" />
+                    <TextBlock Text="Файл скопирован — вставьте его в письмо или мессенджер (Ctrl+V)." Style="{StaticResource Text.Caption}" />
+                </StackPanel>
+                <CheckBox IsChecked="{Binding IncludeOrg}" Margin="0,12,0,0" Content="Включить данные учебного заведения" />
+                <TextBlock Text="Вуз, институт, кафедра и город. ФИО, группа и тема в профиль не попадают." Style="{StaticResource Text.Caption}" Margin="28,0,0,0" />
+            </StackPanel>
+            <Border Style="{StaticResource DialogFooter}">
+                <UniformGrid Rows="1" HorizontalAlignment="Right">
+                    <Button Style="{StaticResource DialogPrimary}" Command="{Binding CopyCommand}" c:Input.DefaultFocus="True" AutomationProperties.Name="Копировать файл">
+                        <StackPanel Orientation="Horizontal">
+                            <AccessText>
+                                <AccessText.Style>
+                                    <Style TargetType="AccessText">
+                                        <Setter Property="Text" Value="_Копировать файл" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Copied}" Value="True">
+                                                <Setter Property="Text" Value="Скопировано" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </AccessText.Style>
+                            </AccessText>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource DialogButton}" Command="{Binding SaveAsCommand}" AutomationProperties.Name="Сохранить как">
+                        <AccessText Text="Сохранить _как…" />
+                    </Button>
+                    <Button Style="{StaticResource DialogButton}" Content="Закрыть" Command="{Binding CloseCommand}" />
+                </UniformGrid>
+            </Border>
+        </StackPanel>
+    </Border>
+</UserControl>

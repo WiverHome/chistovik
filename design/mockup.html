@@ -1,0 +1,1161 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Конструктор шаблонов — макет</title>
+<meta name="viewport" content="width=1340">
+<style>
+/* ============================================================
+   ТОКЕНЫ (совпадают с DESIGN.md, раздел 11)
+   ============================================================ */
+.theme-light{
+  --bg-window:#F3F3F3; --bg-layer:#F9F9F9; --bg-card:#FFFFFF; --bg-card2:#F6F6F6; --bg-footer:#F3F3F3;
+  --smoke:rgba(0,0,0,.30); --bg-flyout:#FCFCFC;
+  --fill-control:#FFFFFF; --fill-control-hover:#F9F9F9; --fill-control-pressed:#F5F5F5; --fill-control-dis:#F9F9F9; --fill-input-focus:#FFFFFF;
+  --fill-subtle-hover:rgba(0,0,0,.039); --fill-subtle-pressed:rgba(0,0,0,.024); --fill-subtle-sel:rgba(0,0,0,.039);
+  --fill-segmented:#F0F0F0; --fill-accent-subtle:#E6F0FA;
+  --stroke-card:#E5E5E5; --stroke-control:#E5E5E5; --stroke-control-bottom:#CCCCCC; --stroke-strong:#868686; --stroke-divider:#EBEBEB; --stroke-flyout:#E0E0E0;
+  --text:#1B1B1B; --text2:#5C5C5C; --text-ph:#6B6B6B; --text-dis:#A0A0A0; --on-accent:#FFFFFF; --on-accent-dis:#FFFFFF;
+  --accent:#005FB8; --accent-hover:#1A6FC0; --accent-pressed:#004C93; --accent-dis:#C5C5C5; --accent-text:#005FB8;
+  --success:#0F7B0F; --bg-success:#DFF6DD; --warning:#9D5D00; --bg-warning:#FFF4CE; --error:#C42B1C; --bg-error:#FDE7E9;
+  --fill-error:#C42B1C; --on-error:#FFFFFF; --bg-info:#F6F6F6; --stroke-infobar:rgba(0,0,0,.059);
+  --focus-outer:#1B1B1B; --focus-inner:#FFFFFF;
+  --sh-flyout:0 8px 16px rgba(0,0,0,.14); --sh-dialog:0 32px 64px rgba(0,0,0,.19),0 2px 21px rgba(0,0,0,.15);
+  --sh-paper:0 2px 8px rgba(0,0,0,.14); --sh-drag:0 4px 16px rgba(0,0,0,.18);
+  --close-hover:#C42B1C;
+}
+.theme-dark{
+  --bg-window:#202020; --bg-layer:#272727; --bg-card:#2B2B2B; --bg-card2:#323232; --bg-footer:#202020;
+  --smoke:rgba(0,0,0,.60); --bg-flyout:#2C2C2C;
+  --fill-control:#2D2D2D; --fill-control-hover:#323232; --fill-control-pressed:#272727; --fill-control-dis:#2A2A2A; --fill-input-focus:#1F1F1F;
+  --fill-subtle-hover:rgba(255,255,255,.059); --fill-subtle-pressed:rgba(255,255,255,.039); --fill-subtle-sel:rgba(255,255,255,.059);
+  --fill-segmented:#1C1C1C; --fill-accent-subtle:#1E3A52;
+  --stroke-card:#1D1D1D; --stroke-control:#303030; --stroke-control-bottom:#3A3A3A; --stroke-strong:#9A9A9A; --stroke-divider:#3A3A3A; --stroke-flyout:#3A3A3A;
+  --text:#FFFFFF; --text2:#C5C5C5; --text-ph:#A3A3A3; --text-dis:#6E6E6E; --on-accent:#000000; --on-accent-dis:#A7A7A7;
+  --accent:#60CDFF; --accent-hover:#5AB8E6; --accent-pressed:#3AA0D6; --accent-dis:#434343; --accent-text:#60CDFF;
+  --success:#6CCB5F; --bg-success:#393D1B; --warning:#FCE100; --bg-warning:#433519; --error:#FF99A4; --bg-error:#442726;
+  --fill-error:#FF99A4; --on-error:#000000; --bg-info:#2B2B2B; --stroke-infobar:rgba(0,0,0,.10);
+  --focus-outer:#FFFFFF; --focus-inner:#000000;
+  --sh-flyout:0 8px 16px rgba(0,0,0,.28); --sh-dialog:0 32px 64px rgba(0,0,0,.38),0 2px 21px rgba(0,0,0,.30);
+  --sh-paper:0 2px 8px rgba(0,0,0,.28); --sh-drag:0 4px 16px rgba(0,0,0,.36);
+  --close-hover:#C42B1C;
+}
+
+/* ============================================================ база */
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:"Segoe UI",system-ui,sans-serif;font-size:14px;line-height:20px;background:#D6D6D6;color:#1B1B1B;-webkit-font-smoothing:antialiased}
+body.dark-stage{background:#0F0F0F}
+.ic{font-family:"Segoe Fluent Icons","Segoe MDL2 Assets";font-style:normal;font-weight:normal;font-size:16px;line-height:1;display:inline-block;speak:never}
+button{font:inherit;color:inherit}
+.t-caption{font-size:12px;line-height:16px}
+.t-body-strong{font-weight:600}
+
+/* ============================================================ демо-панель (не часть интерфейса) */
+.demo{position:sticky;top:0;z-index:50;background:#2B2B2B;color:#fff;padding:8px 16px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px}
+.demo b{font-weight:600;margin-right:6px;color:#ddd}
+.demo button{background:#3B3B3B;color:#fff;border:1px solid #555;border-radius:4px;padding:3px 10px;cursor:pointer;font-size:12px}
+.demo button.on{background:#60CDFF;color:#000;border-color:#60CDFF}
+.demo .sep{width:1px;height:20px;background:#555;margin:0 6px}
+.stage{padding:24px 30px 60px;display:flex;justify-content:center;min-width:1340px}
+.note{max-width:1280px;margin:0 auto 10px;font-size:12px;color:#444}
+body.dark-stage .note{color:#aaa}
+
+/* ============================================================ окно */
+.window{flex:none;width:1280px;height:800px;display:flex;flex-direction:column;background:var(--bg-window);color:var(--text);border-radius:8px;overflow:hidden;position:relative;
+  box-shadow:0 0 0 1px rgba(0,0,0,.28),0 32px 64px rgba(0,0,0,.28)}
+.window.min{width:1024px;height:680px}
+.titlebar{height:32px;flex:none;display:flex;align-items:center;font-size:12px;line-height:16px;user-select:none}
+.titlebar .appico{width:16px;height:16px;margin:0 8px 0 12px;border-radius:3px;background:linear-gradient(135deg,#2B88D8,#005FB8);display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px}
+.titlebar .title{flex:1}
+.cap{width:46px;height:32px;display:flex;align-items:center;justify-content:center;font-size:10px}
+.cap:hover{background:var(--fill-subtle-hover)}
+.cap.close:hover{background:var(--close-hover);color:#fff}
+.client{flex:1;min-height:0;display:flex;position:relative}
+
+/* ------------------------------------------------------------ навигация */
+.nav{width:240px;flex:none;display:flex;flex-direction:column;padding:8px 0;position:relative;z-index:5;background:var(--bg-window)}
+.nav-items{flex:1}
+.nav-item{position:relative;margin:0 4px 4px;height:56px;border-radius:4px;display:flex;align-items:center;cursor:default;outline:none}
+.nav-item.single{height:36px}
+.nav-item:hover{background:var(--fill-subtle-hover)}
+.nav-item:active{background:var(--fill-subtle-pressed)}
+.nav-item.sel{background:var(--fill-subtle-sel)}
+.nav-item.sel::before{content:"";position:absolute;left:0;top:50%;margin-top:-8px;width:3px;height:16px;border-radius:1.5px;background:var(--accent)}
+.nav-item>.ic{position:absolute;left:12px;top:50%;margin-top:-8px}
+.nav-item .tx{margin-left:44px;min-width:0;flex:1;padding-right:8px}
+.nav-item .l1{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav-item .l2{display:block;font-size:12px;line-height:16px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav-item .l2.err{color:var(--error)}
+.nav-badge{margin-right:12px;min-width:16px;height:16px;border-radius:8px;background:var(--fill-error);color:var(--on-error);font-size:11px;line-height:16px;text-align:center;font-weight:600;padding:0 4px}
+.nav-dot{margin-right:14px;width:6px;height:6px;border-radius:3px;background:var(--accent)}
+.nav-sep{height:1px;background:var(--stroke-divider);margin:4px 12px 8px}
+.nav-burger{display:none}
+.min .nav{width:48px}
+.min .nav-item{width:40px;height:40px;margin:0 4px 4px}
+.min .nav-item .tx,.min .nav-item .nav-dot{display:none}
+.min .nav-item .nav-badge{position:absolute;right:6px;top:6px;min-width:8px;width:8px;height:8px;padding:0;font-size:0;margin:0}
+.min .nav-burger{display:flex}
+.min .nav-sep{margin:4px 8px 8px}
+
+/* ------------------------------------------------------------ редактор */
+.editor{flex:1;min-width:0;background:var(--bg-layer);border:1px solid var(--stroke-card);border-bottom:none;border-radius:8px 8px 0 0;overflow-y:auto;overflow-x:hidden;position:relative}
+.page{padding:24px 32px 32px;max-width:760px;animation:pageIn .25s cubic-bezier(.1,.9,.2,1)}
+@keyframes pageIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.ph-row{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:36px}
+.ph-title{font-size:28px;line-height:36px;font-weight:600;margin:0}
+.ph-sub{color:var(--text2);margin-top:4px;max-width:640px}
+.ph-cmds{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:6px;height:24px;font-size:12px;line-height:16px;color:var(--text2);white-space:nowrap}
+.chip .ic{font-size:12px}
+.chip.ok .ic{color:var(--success)}
+.chip .dot{width:6px;height:6px;border-radius:3px;background:var(--accent)}
+.content{margin-top:24px}
+.bars:empty{display:none}
+.bars{margin-top:16px;display:flex;flex-direction:column;gap:8px}
+.grp{margin-bottom:24px}
+.grp-h{display:flex;align-items:baseline;justify-content:space-between;font-weight:600;margin-bottom:8px}
+.grp-h .cnt{font-weight:400;font-size:12px;line-height:16px;color:var(--text2)}
+.grp-desc{font-size:12px;line-height:16px;color:var(--text2);margin:-4px 0 8px}
+.card{background:var(--bg-card);border:1px solid var(--stroke-card);border-radius:8px}
+.next-row{display:flex;justify-content:flex-end;margin-top:24px}
+
+/* ------------------------------------------------------------ кнопки */
+.btn{height:32px;min-width:96px;padding:0 12px;border-radius:4px;display:inline-block;vertical-align:middle;line-height:30px;text-align:center;cursor:default;white-space:nowrap;outline:none;
+  transition:background .083s linear}
+.btn .ic{font-size:16px;vertical-align:-3px}
+.btn>.ic:first-child{margin-right:8px}
+.btn>.ic:last-child:not(:first-child){margin-left:8px}
+.btn-icon>.ic:first-child{margin:0}
+.btn-primary{background:var(--accent);color:var(--on-accent);border:1px solid var(--accent);border-bottom-color:rgba(0,0,0,.4)}
+.btn-primary:hover,.btn-primary.is-hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+.btn-primary:active,.btn-primary.is-pressed{background:var(--accent-pressed);border-color:var(--accent-pressed)}
+.btn-primary:disabled,.btn-primary.is-disabled{background:var(--accent-dis);border-color:var(--accent-dis);color:var(--on-accent-dis)}
+.btn-secondary{background:var(--fill-control);border:1px solid var(--stroke-control);border-bottom-color:var(--stroke-control-bottom);color:var(--text)}
+.btn-secondary:hover,.btn-secondary.is-hover{background:var(--fill-control-hover)}
+.btn-secondary:active,.btn-secondary.is-pressed{background:var(--fill-control-pressed);border-bottom-color:var(--stroke-control);color:var(--text2)}
+.btn-secondary:disabled,.btn-secondary.is-disabled{background:var(--fill-control-dis);border-color:var(--stroke-control);color:var(--text-dis)}
+.btn-subtle{background:transparent;border:1px solid transparent;color:var(--text)}
+.btn-subtle:hover,.btn-subtle.is-hover{background:var(--fill-subtle-hover)}
+.btn-subtle:active,.btn-subtle.is-pressed{background:var(--fill-subtle-pressed);color:var(--text2)}
+.btn-subtle:disabled,.btn-subtle.is-disabled{background:transparent;color:var(--text-dis)}
+.btn-large{height:40px;line-height:38px;padding:0 16px;font-weight:600}
+.btn-icon{min-width:32px;width:32px;padding:0}
+.btn-icon.sm{height:32px}
+.btn:focus-visible,.is-focus,.focusable:focus-visible{box-shadow:0 0 0 1px var(--focus-inner),0 0 0 3px var(--focus-outer)!important;outline:none}
+.link{color:var(--accent-text);cursor:pointer;text-decoration:none;border-radius:2px}
+.link:hover{text-decoration:underline}
+.link:active{color:var(--accent-pressed)}
+
+/* ------------------------------------------------------------ поля ввода */
+.form{display:grid;grid-template-columns:1fr 1fr;column-gap:16px;row-gap:12px;padding:16px 20px}
+.f-full{grid-column:1 / -1}
+.lbl{display:block;margin-bottom:4px}
+.tb{display:block;width:100%;height:32px;border:1px solid var(--stroke-control);border-bottom-color:var(--stroke-strong);border-radius:4px;background:var(--fill-control);color:var(--text);
+  padding:5px 11px 6px;font:inherit;outline:none;transition:background .083s}
+textarea.tb{height:56px;resize:none;line-height:20px;padding-top:5px}
+.tb::placeholder{color:var(--text-ph);opacity:1}
+.tb:hover,.tb.is-hover{background:var(--fill-control-hover)}
+.tb:focus,.tb.is-focusin{background:var(--fill-input-focus);border-bottom-color:var(--accent);box-shadow:inset 0 -1px 0 var(--accent)}
+.tb:disabled,.tb.is-disabled{background:var(--fill-control-dis);color:var(--text-dis);border-bottom-color:var(--stroke-control)}
+.tb.err,.nb.err{border-color:var(--error)!important;box-shadow:inset 0 -1px 0 var(--error)!important}
+.help{font-size:12px;line-height:16px;color:var(--text2);margin-top:4px}
+.help.err{color:var(--error);display:flex;gap:6px;align-items:flex-start}
+.help.warn{color:var(--warning);display:flex;gap:6px;align-items:flex-start}
+.help .ic{font-size:12px;margin-top:2px}
+.help.tip{display:flex;gap:6px;align-items:flex-start}
+.help.tip .ic{color:var(--accent-text)}
+
+/* числовое поле */
+.nb{display:flex;align-items:center;height:32px;width:128px;border:1px solid var(--stroke-control);border-bottom-color:var(--stroke-strong);border-radius:4px;background:var(--fill-control);padding-right:4px}
+.nb:hover,.nb.is-hover{background:var(--fill-control-hover)}
+.nb:focus-within,.nb.is-focusin{background:var(--fill-input-focus);border-bottom-color:var(--accent);box-shadow:inset 0 -1px 0 var(--accent)}
+.nb.is-disabled{background:var(--fill-control-dis);border-bottom-color:var(--stroke-control);color:var(--text-dis)}
+.nb.is-disabled .sp{visibility:hidden}
+.nb input{flex:1;min-width:0;width:0;border:0;background:transparent;font:inherit;color:inherit;padding:0 0 0 11px;outline:none;height:30px}
+.nb .suf{color:var(--text2);margin:0 4px 0 2px}
+.nb.is-disabled .suf{color:var(--text-dis)}
+.nb .sp{width:24px;height:24px;border:0;border-radius:4px;background:transparent;color:var(--text2);font-size:12px;display:flex;align-items:center;justify-content:center;padding:0}
+.nb .sp+.sp{margin-left:2px}
+.nb .sp:hover,.nb .sp.is-hover{background:var(--fill-subtle-hover);color:var(--text)}
+.nb .sp:active{background:var(--fill-subtle-pressed)}
+.nb .sp:disabled{color:var(--text-dis);background:transparent}
+.nb.wide{width:100%}
+
+/* выпадающий список */
+.cb{position:relative;width:220px;height:32px}
+.cb select,.cb .cbv{appearance:none;-webkit-appearance:none;width:100%;height:32px;border:1px solid var(--stroke-control);border-bottom-color:var(--stroke-control-bottom);border-radius:4px;background:var(--fill-control);color:var(--text);
+  font:inherit;padding:5px 32px 6px 11px;outline:none;display:flex;align-items:center}
+.cb select:hover,.cb .cbv.is-hover{background:var(--fill-control-hover)}
+.cb select:focus-visible{box-shadow:0 0 0 1px var(--focus-inner),0 0 0 3px var(--focus-outer)}
+.cb .chev{position:absolute;right:12px;top:10px;font-size:12px;color:var(--text2);pointer-events:none}
+.cb .cbv.is-disabled{background:var(--fill-control-dis);color:var(--text-dis)}
+.cb .cbv.is-open{background:var(--fill-control-pressed)}
+.cb.err select,.cb.err .cbv{border-color:var(--error);box-shadow:inset 0 -1px 0 var(--error)}
+.flyout{background:var(--bg-flyout);border:1px solid var(--stroke-flyout);border-radius:8px;box-shadow:var(--sh-flyout);padding:4px;width:220px}
+.flyout .it{height:32px;border-radius:4px;display:flex;align-items:center;padding-left:12px;position:relative;margin-bottom:2px}
+.flyout .it.h{background:var(--fill-subtle-hover)}
+.flyout .it.s{background:var(--fill-subtle-sel)}
+.flyout .it.s::before{content:"";position:absolute;left:0;top:8px;width:3px;height:16px;border-radius:1.5px;background:var(--accent)}
+
+/* переключатель */
+.tg{display:inline-flex;align-items:center;gap:12px;cursor:default;user-select:none}
+.tg input{position:absolute;opacity:0;width:0;height:0}
+.tg .track{width:40px;height:20px;border-radius:10px;border:1px solid var(--stroke-strong);background:var(--fill-control);position:relative;transition:background .167s}
+.tg .knob{position:absolute;top:50%;left:3px;width:12px;height:12px;margin-top:-6px;border-radius:6px;background:var(--text2);transition:all .167s cubic-bezier(.1,.9,.2,1)}
+.tg:hover .track,.tg.is-hover .track{background:var(--fill-subtle-hover)}
+.tg:hover .knob,.tg.is-hover .knob{width:14px;height:14px;margin-top:-7px;left:2px}
+.tg.is-pressed .knob{width:17px;height:14px;margin-top:-7px}
+.tg input:checked+.track{background:var(--accent);border-color:var(--accent)}
+.tg input:checked+.track .knob{left:23px;background:var(--on-accent)}
+.tg:hover input:checked+.track,.tg.is-hover input:checked+.track{background:var(--accent-hover);border-color:var(--accent-hover)}
+.tg:hover input:checked+.track .knob,.tg.is-hover input:checked+.track .knob{left:22px}
+.tg.is-pressed input:checked+.track{background:var(--accent-pressed)}
+.tg.is-pressed input:checked+.track .knob{left:19px}
+.tg input:focus-visible+.track,.tg.is-focus .track{box-shadow:0 0 0 1px var(--focus-inner),0 0 0 3px var(--focus-outer)}
+.tg.is-focus{box-shadow:none!important}
+.tg.is-disabled{color:var(--text-dis)}
+.tg.is-disabled .track{border-color:var(--text-dis);background:transparent}
+.tg.is-disabled .knob{background:var(--text-dis)}
+.tg.is-disabled input:checked+.track{background:var(--accent-dis);border-color:var(--accent-dis)}
+.tg.is-disabled input:checked+.track .knob{background:#fff}
+.tg .st{min-width:40px;text-align:right}
+
+/* чекбокс */
+.chk{display:flex;align-items:center;gap:8px;min-height:32px;cursor:default;user-select:none}
+.chk input{position:absolute;opacity:0;width:0;height:0}
+.chk .box{width:20px;height:20px;flex:none;border-radius:4px;border:1px solid var(--stroke-strong);background:var(--fill-control);display:flex;align-items:center;justify-content:center;color:transparent;font-size:12px}
+.chk:hover .box,.chk.is-hover .box{background:var(--fill-control-hover)}
+.chk.is-pressed .box{background:var(--fill-control-pressed)}
+.chk input:checked+.box{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.chk:hover input:checked+.box,.chk.is-hover input:checked+.box{background:var(--accent-hover);border-color:var(--accent-hover)}
+.chk.is-pressed input:checked+.box{background:var(--accent-pressed)}
+.chk input:focus-visible+.box,.chk.is-focus .box{box-shadow:0 0 0 1px var(--focus-inner),0 0 0 3px var(--focus-outer)}
+.chk.is-focus{box-shadow:none!important}
+.chk.is-disabled,.chk input:disabled~span{color:var(--text-dis)}
+.chk.is-disabled .box,.chk input:disabled+.box{border-color:var(--text-dis);background:transparent}
+.chk.is-disabled input:checked+.box{background:var(--accent-dis);border-color:var(--accent-dis)}
+
+/* сегменты */
+.seg{display:inline-flex;height:32px;padding:2px;gap:2px;background:var(--fill-segmented);border:1px solid var(--stroke-control);border-radius:6px;white-space:nowrap}
+.seg button{height:26px;padding:0 12px;border-radius:4px;border:1px solid transparent;background:transparent;color:var(--text2);position:relative;outline:none;cursor:default}
+.seg button:hover,.seg button.is-hover{background:var(--fill-subtle-hover);color:var(--text)}
+.seg button:active,.seg button.is-pressed{background:var(--fill-subtle-pressed);color:var(--text2)}
+.seg button.sel{background:var(--bg-card);border-color:var(--stroke-control);color:var(--text)}
+.seg button.sel::after{content:"";position:absolute;left:50%;bottom:1px;width:16px;height:3px;margin-left:-8px;border-radius:1.5px;background:var(--accent)}
+.seg button:disabled,.seg.is-disabled button{color:var(--text-dis);background:transparent}
+.seg.is-disabled button.sel::after{display:none}
+.seg.eq{display:flex;width:100%}
+.seg.eq button{flex:1;padding:0 6px}
+
+/* инфобар */
+.ib{display:flex;align-items:flex-start;gap:12px;min-height:48px;border-radius:4px;border:1px solid var(--stroke-infobar);padding:13px 8px 13px 16px;background:var(--bg-info)}
+.ib>.ic{margin-top:2px;color:var(--accent)}
+.ib.success{background:var(--bg-success)} .ib.success>.ic{color:var(--success)}
+.ib.warning{background:var(--bg-warning)} .ib.warning>.ic{color:var(--warning)}
+.ib.error{background:var(--bg-error)} .ib.error>.ic{color:var(--error)}
+.ib .ib-tx{flex:1;min-width:0}
+.ib .ib-tx b{font-weight:600;margin-right:8px}
+.ib .ib-act{display:flex;gap:4px;align-items:center;margin:-7px 0}
+.ib .ib-act .btn-icon{color:var(--text)}
+
+/* строки правил */
+.srow{display:flex;align-items:center;gap:16px;padding:12px 16px;min-height:64px;position:relative}
+.srow+.srow::before,.srow+.srow-sub::before{content:"";position:absolute;left:16px;right:16px;top:0;height:1px;background:var(--stroke-divider)}
+.srow.stack{flex-direction:column;align-items:stretch}
+.srow .stx{flex:1;min-width:220px}
+.srow .stitle{display:block}
+.srow .sdesc{display:block;font-size:12px;line-height:16px;color:var(--text2)}
+.srow .schg{display:flex;gap:8px;font-size:12px;line-height:16px;color:var(--accent-text);margin-top:2px;align-items:center}
+.srow .schg .dot{width:6px;height:6px;border-radius:3px;background:var(--accent)}
+.srow .sctl{flex:none;display:flex;align-items:center;gap:8px}
+.mgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:4px}
+.mgrid .lbl{font-size:12px;line-height:16px;color:var(--text2)}
+.srow-sub{padding:0 16px 12px 32px;display:flex;align-items:center;gap:12px;position:relative}
+.locked{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--text2)}
+.locked .ic{font-size:12px}
+
+/* карточки профиля */
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.pcard{height:112px;padding:16px;border-radius:8px;background:var(--bg-card);border:1px solid var(--stroke-card);display:flex;gap:12px;position:relative;cursor:default;outline:none;text-align:left}
+.pcard:hover,.pcard.is-hover{background:var(--fill-control-hover);border-color:var(--stroke-control-bottom)}
+.pcard:active,.pcard.is-pressed{background:var(--fill-control-pressed);border-color:var(--stroke-card)}
+.pcard.sel{border:2px solid var(--accent);padding:15px}
+.pcard .tile{width:40px;height:40px;flex:none;border-radius:6px;background:var(--fill-accent-subtle);color:var(--accent-text);display:flex;align-items:center;justify-content:center}
+.pcard .tile .ic{font-size:20px}
+.pcard .pt{font-weight:600;display:block;padding-right:28px}
+.pcard .pd{font-size:12px;line-height:16px;color:var(--text2);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin-top:4px}
+.pcard .check{position:absolute;right:12px;top:12px;width:20px;height:20px;border-radius:10px;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center}
+.pcard .check .ic{font-size:12px}
+.pcard.dis{background:var(--bg-card2)}
+.pcard.dis .pt,.pcard.dis .pd{color:var(--text-dis)}
+.pcard.dis .tile{background:var(--fill-segmented);color:var(--text-dis)}
+.pcard.dis:hover{border-color:var(--stroke-card)}
+.soon{position:absolute;right:12px;top:12px;height:20px;padding:0 8px;border-radius:10px;background:var(--fill-segmented);color:var(--text2);font-size:12px;line-height:20px;font-weight:600}
+.pcard.imp{border:1px dashed var(--stroke-strong);background:transparent}
+.pcard.imp .tile{background:var(--fill-segmented);color:var(--text)}
+.pcard.broken{border-color:var(--error)}
+.pcard.broken .pd{color:var(--error)}
+.pcard .more{position:absolute;right:8px;top:8px}
+
+/* expander */
+.exp{border-top:1px solid var(--stroke-divider);margin:0 20px}
+.exp-h{height:40px;display:flex;align-items:center;gap:8px;margin:0 -8px;padding:0 8px;border-radius:4px;cursor:default}
+.exp-h:hover{background:var(--fill-subtle-hover)}
+.exp-h .ttl{flex:1}
+.exp-h .sum{font-size:12px;color:var(--text2)}
+.exp-h .ic{font-size:12px;color:var(--text2)}
+.exp-b{padding:4px 0 16px;display:grid;gap:12px}
+
+/* список структуры */
+.olist{padding:8px 0}
+.oitem{height:40px;margin:0 4px;border-radius:4px;display:flex;align-items:center;position:relative;outline:none}
+.oitem:hover,.oitem.is-hover{background:var(--fill-subtle-hover)}
+.oitem.sel{background:var(--fill-accent-subtle)}
+.oitem.sel::before{content:"";position:absolute;left:0;top:12px;width:3px;height:16px;border-radius:1.5px;background:var(--accent)}
+.oitem.sub{padding-left:28px}
+.oitem .grip{width:24px;text-align:center;color:var(--text2);opacity:.6;margin-left:4px}
+.oitem:hover .grip{opacity:1}
+.oitem .num{width:36px;color:var(--text2);font-variant-numeric:tabular-nums}
+.oitem .ot{flex:1;min-width:0;height:32px;border:1px solid transparent;border-radius:4px;background:transparent;font:inherit;color:var(--text);padding:5px 8px 6px;outline:none}
+.oitem:not(.sub) .ot{font-weight:600}
+.oitem .ot::placeholder{color:var(--text-ph);font-weight:400}
+.oitem .ot:hover{background:var(--fill-control-hover);border-color:var(--stroke-control);border-bottom-color:var(--stroke-strong)}
+.oitem .ot:focus{background:var(--fill-input-focus);border-color:var(--stroke-control);border-bottom-color:var(--accent);box-shadow:inset 0 -1px 0 var(--accent)}
+.oitem .acts{display:flex;visibility:hidden;margin:0 4px}
+.oitem:hover .acts,.oitem.sel .acts,.oitem.is-hover .acts,.oitem:focus-within .acts{visibility:visible}
+.oitem .acts .btn-icon{color:var(--text2)}
+.oitem .acts .btn-icon:hover{color:var(--text)}
+.oitem.drag{background:var(--bg-card);box-shadow:var(--sh-drag);opacity:.9}
+.oadd{height:32px;margin:0 4px 4px 96px}
+.ofoot{border-top:1px solid var(--stroke-divider);height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 16px}
+.ofoot .t-caption{color:var(--text2)}
+.dropline{height:2px;background:var(--accent);margin:0 8px 0 36px;position:relative}
+.dropline::before{content:"";position:absolute;left:-6px;top:-2px;width:6px;height:6px;border-radius:3px;border:0;background:var(--accent)}
+.empty{text-align:center;padding:32px 24px}
+.empty .ic{font-size:32px;color:var(--text2)}
+.empty .et{font-weight:600;margin-top:12px}
+.empty .ed{color:var(--text2);margin:4px auto 16px;max-width:380px}
+
+/* ------------------------------------------------------------ предпросмотр */
+.preview{width:400px;flex:none;display:flex;flex-direction:column;background:var(--bg-window)}
+.min .preview{width:360px}
+.pv-head{height:48px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 24px;gap:8px}
+.pv-canvas{flex:1;min-height:0;padding:8px 24px;display:flex;flex-direction:column}
+.paper-host{flex:1;min-height:0;display:flex;justify-content:center;align-items:flex-start}
+.paper-wrap{position:relative;flex:none}
+.paper{position:absolute;left:0;top:0;width:210mm;height:297mm;transform-origin:0 0;background:#fff;color:#000;box-shadow:0 0 0 1px #E0E0E0,var(--sh-paper);overflow:hidden;
+  font-family:"Times New Roman",serif;font-size:14pt;line-height:1.15}
+.theme-dark .paper{box-shadow:0 0 0 1px #000,var(--sh-paper)}
+.paper p{margin:0}
+.paper .ph{background:#FFF4CE;color:#7A5800;cursor:pointer}
+.paper .fv{cursor:pointer}
+.paper .ph:hover,.paper .fv:hover{outline:2px dashed #005FB8;outline-offset:1px}
+.paper .hl{outline:3px solid #005FB8;outline-offset:2px}
+.pv-area{position:absolute}
+.pv-margins{background:#EAF2FB}
+.pv-margins .txt{position:absolute;background:#fff;outline:2px dashed #5B9BD5}
+.mz{position:absolute;background:#CFE2F6}
+.dim{position:absolute;transform:translate(-50%,-50%);font-size:11px;line-height:14px;font-weight:600;color:#1F5E99;background:#EAF2FB;padding:0 3px;border-radius:2px;white-space:nowrap;pointer-events:none}
+.dim.act{background:#CFE2F6;outline:1px solid #1F5E99}
+.indent-mark{position:absolute;background:rgba(0,95,184,.3)}
+.legend{height:20px;margin-top:8px;flex:none;display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;line-height:16px;color:var(--text2);text-align:center}
+.legend .sw{width:12px;height:12px;background:#FFF4CE;border:1px solid #E8D48A;flex:none}
+.create{flex:none;height:172px;border-top:1px solid var(--stroke-divider);padding:16px 24px}
+.create .btn-large{width:100%;margin-top:12px}
+.create .last{margin-top:8px;font-size:12px;line-height:16px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;gap:4px;align-items:center}
+.create .last .ic{font-size:12px;color:var(--warning)}
+.toc-row{display:flex;align-items:baseline}
+.toc-row .tt{flex:none;max-width:85%}
+.toc-row .lead{flex:1;border-bottom:2px dotted #000;margin:0 4px;transform:translateY(-6px)}
+
+/* ------------------------------------------------------------ диалог */
+.smoke{position:absolute;inset:0;background:var(--smoke);display:flex;align-items:center;justify-content:center;z-index:30}
+.dlg{width:480px;background:var(--bg-card);border:1px solid var(--stroke-flyout);border-radius:8px;box-shadow:var(--sh-dialog);overflow:hidden;animation:dlgIn .167s cubic-bezier(.1,.9,.2,1)}
+@keyframes dlgIn{from{opacity:0;transform:scale(1.05)}to{opacity:1;transform:none}}
+.dlg-b{padding:24px}
+.dlg-t{font-size:20px;line-height:28px;font-weight:600;display:flex;align-items:center;gap:12px;margin:0 0 12px}
+.dlg-t .ic{font-size:24px}
+.dlg-f{background:var(--bg-footer);border-top:1px solid var(--stroke-card);padding:24px;display:flex;gap:8px;justify-content:flex-end}
+.dlg-f .btn{flex:1;max-width:200px}
+.steps{display:flex;flex-direction:column;gap:4px;margin:4px 0 16px}
+.step{display:flex;align-items:center;gap:12px;min-height:28px}
+.step .ic{width:16px;text-align:center}
+.step.done .ic{color:var(--success)}
+.step.wait{color:var(--text2)} .step.wait .ic{color:var(--text-dis)}
+.step.warn .ic{color:var(--warning)}
+.step.fail .ic{color:var(--error)}
+.spin{width:16px;height:16px;border-radius:50%;border:2px solid transparent;border-top-color:var(--accent);border-right-color:var(--accent);border-bottom-color:var(--accent);animation:spin 1s linear infinite;flex:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+.pbar{height:3px;position:relative;overflow:hidden;margin-top:4px}
+.pbar::before{content:"";position:absolute;left:0;right:0;top:1px;height:1px;background:var(--stroke-strong)}
+.pbar::after{content:"";position:absolute;top:0;height:3px;width:40%;border-radius:2px;background:var(--accent);animation:pb 2s cubic-bezier(.4,0,.6,1) infinite}
+@keyframes pb{from{left:-40%}to{left:100%}}
+.fcard{background:var(--bg-card2);border-radius:4px;padding:12px;display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
+.fcard .fr{display:flex;gap:12px;align-items:center}
+.fcard .fr>.ic{font-size:20px;color:var(--accent-text)}
+.fcard .fn{font-weight:600;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fcard .fp{font-size:12px;line-height:16px;color:var(--text2);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fcard .fr>div{min-width:0}
+.mono{font-family:"Cascadia Mono",Consolas,monospace;font-size:12px;line-height:16px}
+
+/* компактная навигация: подсказка */
+.tooltip{position:absolute;background:var(--bg-flyout);border:1px solid var(--stroke-flyout);border-radius:4px;padding:5px 8px;font-size:12px;line-height:16px;box-shadow:var(--sh-flyout);white-space:nowrap;z-index:40;color:var(--text)}
+
+/* ------------------------------------------------------------ лист компонентов */
+.sheet{flex:none;width:1280px;background:var(--bg-layer);color:var(--text);border-radius:8px;padding:32px;box-shadow:0 0 0 1px rgba(0,0,0,.2)}
+.sheet h2{font-size:20px;line-height:28px;font-weight:600;margin:28px 0 12px}
+.sheet h2:first-child{margin-top:0}
+.st-table{display:grid;grid-template-columns:150px repeat(6,minmax(0,1fr));gap:12px 16px;align-items:center}
+.st-table .cb{width:100%}
+.st-table .hd{font-size:12px;color:var(--text2);font-weight:600}
+.st-table .rl{font-size:12px;color:var(--text2)}
+.sheet .row{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+.sheet .cell{display:flex;flex-direction:column;gap:6px}
+.sheet .cap2{font-size:12px;color:var(--text2)}
+.swatches{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.swatch{border:1px solid var(--stroke-card);border-radius:6px;overflow:hidden;background:var(--bg-card);font-size:11px;line-height:14px}
+.swatch .c{height:36px}
+.swatch div:last-child{padding:6px}
+</style>
+</head>
+<body>
+
+<div class="demo" role="toolbar" aria-label="Экраны макета">
+  <b>Экраны:</b>
+  <button data-s="first">1 · Первый запуск</button>
+  <button data-s="title">2 · Титульный лист</button>
+  <button data-s="vkr">3 · Титул ВКР</button>
+  <button data-s="rules">4 · Правила (ошибка)</button>
+  <button data-s="structure">5 · Структура</button>
+  <button data-s="progress">6 · Создание…</button>
+  <button data-s="success">7 · Готово</button>
+  <button data-s="noword">8 · Нет Word</button>
+  <button data-s="locked">9 · Файл занят</button>
+  <button data-s="share">10 · Поделиться</button>
+  <button data-s="min">11 · 1024×680</button>
+  <button data-s="sheet">Компоненты и токены</button>
+  <span class="sep"></span>
+  <b>Тема:</b>
+  <button data-theme="light" class="on">Светлая</button>
+  <button data-theme="dark">Тёмная</button>
+</div>
+<p class="note" id="note"></p>
+<div class="stage" id="stage"></div>
+
+<script>
+/* ===================================================================
+   ДАННЫЕ ПРОФИЛЕЙ (из config/kursovaya.json и config/vkr.json)
+   =================================================================== */
+const YEAR = 2026;
+const META = {
+  university:{l:'Университет',ph:'Полное наименование университета',help:'Без кавычек — «ёлочки» добавятся сами.',g:'inst',w:2,doc:'[Полное наименование университета]'},
+  institute:{l:'Институт или факультет',ph:'Например: Институт информационных технологий',g:'inst',w:2,doc:'[Институт / факультет]'},
+  department:{l:'Кафедра',ph:'Например: информационных систем',help:'Слово «Кафедра» уже есть в шаблоне.',g:'inst',w:1,doc:'[наименование кафедры]'},
+  city:{l:'Город',ph:'Например: Казань',g:'inst',w:1,doc:'[Город]'},
+  ministry:{l:'Министерство',ph:'Министерство науки и высшего образования…',g:'head',w:2,def:'МИНИСТЕРСТВО НАУКИ И ВЫСШЕГО ОБРАЗОВАНИЯ РОССИЙСКОЙ ФЕДЕРАЦИИ'},
+  org_form:{l:'Тип учреждения',ph:'Например: Федеральное государственное бюджетное…',g:'head',w:2,def:'Федеральное государственное бюджетное образовательное учреждение высшего образования'},
+  work_type:{l:'Вид работы на титульном листе',ph:'Например: КУРСОВАЯ РАБОТА',help:'Так и будет написано на титульном листе.',g:'work',w:2},
+  work_kind:{l:'Уточнение вида работы',ph:'Например: (бакалаврская работа)',g:'work',w:2,combo:['(бакалаврская работа)','(магистерская диссертация)','(дипломная работа)','(дипломный проект)']},
+  discipline:{l:'Дисциплина',ph:'Название дисциплины',help:'Без кавычек.',g:'work',w:2,doc:'[Название дисциплины]'},
+  topic:{l:'Тема работы',ph:'Тема без кавычек — как в задании или приказе',help:'Кавычки «» добавятся сами.',g:'work',w:2,multi:true,doc:'[Тема работы]'},
+  specialty:{l:'Направление подготовки',ph:'Например: 09.03.02 Информационные системы и технологии',help:'Код и название.',g:'work',w:2,doc:'[код] [Наименование направления подготовки]'},
+  profile:{l:'Направленность (профиль)',ph:'Например: Разработка программного обеспечения',g:'work',w:2,doc:'[Направленность (профиль)]'},
+  year:{l:'Год',ph:String(YEAR),help:'Пусто — подставится текущий год.',g:'work',w:1,num:true},
+  student:{l:'ФИО студента',ph:'И. О. Фамилия',help:'Инициалы перед фамилией: И. И. Иванов.',g:'stud',w:2,doc:'И. О. Фамилия',fio:true},
+  course:{l:'Курс',ph:'Например: 3',g:'stud',w:1,doc:'[N]',num:true},
+  group:{l:'Группа',ph:'Например: ИС-31',g:'stud',w:1,doc:'[номер группы]'},
+  supervisor:{l:'Руководитель',ph:'И. О. Фамилия',g:'sup',w:1,doc:'И. О. Фамилия',fio:true},
+  supervisor_position:{l:'Должность и степень руководителя',ph:'Например: доцент, канд. техн. наук',g:'sup',w:1,doc:'[должность, учёная степень]'},
+  head:{l:'Заведующий кафедрой',ph:'И. О. Фамилия',g:'sup',w:1,doc:'И. О. Фамилия',fio:true},
+  head_position:{l:'Должность и степень заведующего',ph:'Например: профессор, д-р экон. наук',g:'sup',w:1,doc:'[должность, учёная степень]'},
+  normcontrol:{l:'Нормоконтролёр',ph:'И. О. Фамилия',g:'sup',w:1,doc:'И. О. Фамилия',fio:true},
+};
+const GROUPS = [['inst','Учебное заведение'],['work','Работа'],['stud','Студент'],['sup','Руководство']];
+const PROFILES = {
+  kurs:{name:'Курсовая работа',short:'Курсовая работа',
+    keys:['university','institute','department','city','ministry','org_form','work_type','discipline','topic','year','student','course','group','supervisor','supervisor_position'],
+    defs:{work_type:'КУРСОВАЯ РАБОТА'}, wide:{student:2},
+    blocks:[
+      {align:'center',lines:['{ministry}','{org_form}','«{university}»']},
+      {align:'center',sb:12,lines:['{institute}','Кафедра {department}']},
+      {align:'center',sb:110,bold:true,size:16,lines:['{work_type}']},
+      {align:'center',sb:6,lines:['по дисциплине «{discipline}»']},
+      {align:'center',sb:12,bold:true,lines:['на тему: «{topic}»']},
+      {align:'left',ind:8.5,sb:90,lines:['Выполнил(а):','студент(ка) {course} курса, группы {group}','________________ {student}','','Руководитель:','{supervisor_position}','________________ {supervisor}','','Оценка: _____________________','«___» _______________ {year} г.']}
+    ]},
+  vkr:{name:'Выпускная квалификационная работа',short:'ВКР',
+    keys:['university','institute','department','city','ministry','org_form','work_type','work_kind','topic','specialty','profile','year','student','group','supervisor','supervisor_position','head','head_position','normcontrol'],
+    defs:{work_type:'ВЫПУСКНАЯ КВАЛИФИКАЦИОННАЯ РАБОТА',work_kind:'(бакалаврская работа)'}, wide:{student:1},
+    blocks:[
+      {align:'center',lines:['{ministry}','{org_form}','«{university}»']},
+      {align:'center',sb:12,lines:['{institute}','Кафедра {department}']},
+      {align:'left',ind:9,sb:24,lines:['ДОПУСТИТЬ К ЗАЩИТЕ','Заведующий кафедрой','{head_position}','________________ {head}','«___» _______________ {year} г.']},
+      {align:'center',sb:48,bold:true,size:16,lines:['{work_type}']},
+      {align:'center',lines:['{work_kind}']},
+      {align:'center',sb:12,bold:true,lines:['на тему: «{topic}»']},
+      {align:'center',sb:12,lines:['по направлению подготовки {specialty}','направленность (профиль) «{profile}»']},
+      {sig:true,sb:60,cols:[6.5,9],rows:[['Обучающийся\nгруппы {group}','________________ {student}'],['Руководитель\n{supervisor_position}','________________ {supervisor}'],['Нормоконтролёр','________________ {normcontrol}']]}
+    ]}
+};
+const PROFILE_KEYS = ['work_type','work_kind','ministry','org_form'];
+const GOST = {mL:30,mR:15,mT:20,mB:20,num:'center',font:'Times New Roman',size:14,ls:1.5,indent:1.25,align:'justify',hyph:true,hAlign:'indent',newPage:true,upper:true,toc:3,fig:'Рисунок',sep:'dash',tAlign:'left',tSize:12};
+const LIMITS = {mL:[0,50,1,'мм','Введите число от 0 до 50'],mR:[0,50,1,'мм','Введите число от 0 до 50'],mT:[0,50,1,'мм','Введите число от 0 до 50'],mB:[0,50,1,'мм','Введите число от 0 до 50'],
+  size:[10,16,1,'пт','Введите целое число от 10 до 16',true],indent:[0,2.5,0.05,'см','Введите число от 0 до 2,5'],tSize:[10,14,1,'пт','Введите целое число от 10 до 14',true],appN:[1,10,1,'','Введите число от 1 до 10',true]};
+const LETTERS = ['А','Б','В','Г','Д','Е','Ж','И','К','Л'];
+
+/* ===================================================================
+   СОСТОЯНИЕ
+   =================================================================== */
+let S;
+function freshState(){
+  return {
+    theme:'light', screen:'first', profile:'kurs', page:'type', mode:'title', modeManual:false, min:false,
+    welcome:true, values:{}, pv:{kurs:{},vkr:{}}, headerOpen:false,
+    rules:{...GOST}, raw:{}, focusRule:null, focusField:null,
+    chapters:[
+      {t:'',ph:'Название первой главы (теоретической)',s:[{t:'',ph:'Название параграфа 1.1'},{t:'',ph:'Название параграфа 1.2'}]},
+      {t:'',ph:'Название второй главы (практической)',s:[{t:'',ph:'Название параграфа 2.1'},{t:'',ph:'Название параграфа 2.2'}]}],
+    secs:{intro:true,concl:true,refs:true,app:true,appN:1,examples:true},
+    selRow:null, bars:[], dialog:null, last:null, pdf:true, open:true, word:true
+  };
+}
+function val(k){ return PROFILE_KEYS.includes(k) ? (S.pv[S.profile][k] ?? PROFILES[S.profile].defs[k] ?? META[k].def ?? '') : (S.values[k] ?? ''); }
+function setVal(k,v){ if(PROFILE_KEYS.includes(k)) S.pv[S.profile][k]=v; else S.values[k]=v; }
+const P = () => PROFILES[S.profile];
+
+/* ===================================================================
+   ВСПОМОГАТЕЛЬНОЕ
+   =================================================================== */
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const fmtNum = n => String(n).replace('.',',');
+function plural(n,a,b,c){const m10=n%10,m100=n%100; if(m10===1&&m100!==11)return a; if(m10>=2&&m10<=4&&(m100<12||m100>14))return b; return c;}
+function countFill(){ const ks=P().keys.filter(k=>META[k].doc); return [ks.filter(k=>val(k).trim()).length, ks.length]; }
+function ruleErrors(){ let n=0; for(const k in S.raw){ if(validate(k,S.raw[k])) n++; } return n; }
+function validate(k,raw){
+  const L=LIMITS[k]; if(!L) return null;
+  const s=String(raw).trim().replace(',','.'); const n=Number(s);
+  if(s===''||isNaN(n)||n<L[0]||n>L[1]||(L[5]&&!Number.isInteger(n))) return L[4];
+  return null;
+}
+function changedRules(){
+  const r=S.rules; let n=0;
+  if(r.mL!==GOST.mL||r.mR!==GOST.mR||r.mT!==GOST.mT||r.mB!==GOST.mB) n++;
+  for(const k of ['num','font','size','ls','indent','align','hyph','hAlign','newPage','upper','toc','fig','sep','tAlign','tSize']) if(r[k]!==GOST[k]) n++;
+  return n;
+}
+function secCount(){ return S.chapters.reduce((a,c)=>a+c.s.length,0); }
+
+/* ===================================================================
+   КАРКАС ОКНА
+   =================================================================== */
+function renderStage(){
+  const stage=document.getElementById('stage');
+  document.body.classList.toggle('dark-stage',S.theme==='dark');
+  if(S.screen==='sheet'){ stage.innerHTML=`<div class="sheet theme-${S.theme}">${sheetHTML()}</div>`; return; }
+  stage.innerHTML=`
+  <div class="window theme-${S.theme} ${S.min?'min':''}" id="win">
+    <div class="titlebar"><span class="appico ic">&#xE8A5;</span><span class="title">Конструктор шаблонов работ</span>
+      <span class="cap ic">&#xE921;</span><span class="cap ic">&#xE922;</span><span class="cap close ic">&#xE8BB;</span></div>
+    <div class="client">
+      <nav class="nav" id="nav" aria-label="Разделы"></nav>
+      <main class="editor" id="editor"></main>
+      <aside class="preview" aria-label="Предпросмотр">
+        <div class="pv-head">
+          <div class="seg eq" role="radiogroup" aria-label="Режим предпросмотра" id="modes" style="width:auto;flex:1;max-width:280px"></div>
+          <button class="btn btn-subtle btn-icon" title="Увеличить предпросмотр" aria-label="Увеличить предпросмотр" onclick="openZoom()"><span class="ic">&#xE740;</span></button>
+        </div>
+        <div class="pv-canvas"><div class="paper-host" id="host"></div><div class="legend" id="legend"></div></div>
+        <div class="create" id="create"></div>
+      </aside>
+      <div id="dlgHost"></div>
+    </div>
+  </div>`;
+  renderNav(); renderPage(); renderModes(); renderPreview(); renderCreate(); renderDialog();
+}
+
+function renderNav(){
+  const [f,m]=countFill(); const errs=ruleErrors(); const chg=changedRules();
+  const items=[
+    ['type','&#xE8F1;','Вид работы',P().short,''],
+    ['title','&#xE779;','Титульный лист',f===m?'Всё заполнено':`Заполнено ${f} из ${m}`,''],
+    ['rules','&#xED5E;','Правила оформления',errs?`Ошибок: ${errs}`:(chg?`Изменено: ${chg}`:'ГОСТ 7.32-2017'),errs?'err':''],
+    ['structure','&#xE8FD;','Структура работы',S.chapters.length?`${S.chapters.length} ${plural(S.chapters.length,'глава','главы','глав')} · ${secCount()} ${plural(secCount(),'параграф','параграфа','параграфов')}`:'Без глав','']
+  ];
+  const html=`
+    <button class="nav-item single nav-burger btn-subtle" style="border:0;background:none" title="Развернуть навигацию" aria-label="Развернуть навигацию"><span class="ic" style="position:absolute;left:12px;top:12px">&#xE700;</span></button>
+    <div class="nav-items" role="listbox">${items.map(([id,ic,l1,l2,cls],i)=>`
+      <div class="nav-item ${S.page===id?'sel':''}" role="option" tabindex="${S.page===id?0:-1}" aria-selected="${S.page===id}" data-nav="${id}" title="${S.min?esc(l1+' — '+l2):''}">
+        <span class="ic">${ic}</span><span class="tx"><span class="l1">${l1}</span><span class="l2 ${cls}">${esc(l2)}</span></span>
+        ${id==='rules'&&errs?`<span class="nav-badge">${errs}</span>`:(id==='rules'&&chg?`<span class="nav-dot" title="Есть изменения"></span>`:'')}
+      </div>`).join('')}</div>
+    <div class="nav-sep"></div>
+    <div class="nav-item single ${S.page==='settings'?'sel':''}" data-nav="settings" tabindex="-1" title="${S.min?'Параметры':''}"><span class="ic">&#xE713;</span><span class="tx"><span class="l1">Параметры</span></span></div>`;
+  const nav=document.getElementById('nav'); nav.innerHTML=html;
+  nav.querySelectorAll('[data-nav]').forEach(el=>el.onclick=()=>go(el.dataset.nav));
+}
+
+function go(page){
+  S.page=page; S.bars=S.bars.filter(b=>b.sticky);
+  if(!S.modeManual||true){ S.mode = page==='rules'?'page':page==='structure'?'toc':'title'; }
+  renderNav(); renderPage(); renderModes(); renderPreview();
+  document.getElementById('editor').scrollTop=0;
+}
+
+function header(title,sub,chip,cmds){
+  return `<div class="ph-row"><h1 class="ph-title">${title}</h1>${chip||''}</div>
+    <div class="ph-sub">${sub}</div>${cmds?`<div class="ph-cmds">${cmds}</div>`:''}
+    <div class="bars" id="bars">${barsHTML()}</div>`;
+}
+function barsHTML(){
+  return S.bars.map((b,i)=>ib(b.kind,b.title,b.text,b.action,i)).join('');
+}
+function ib(kind,title,text,action,i,noClose){
+  const icon={info:'&#xE946;',success:'&#xEC61;',warning:'&#xE7BA;',error:'&#xEB90;'}[kind];
+  return `<div class="ib ${kind==='info'?'':kind}" role="status"><span class="ic">${icon}</span>
+    <div class="ib-tx">${title?`<b>${title}</b>`:''}${text}</div>
+    <div class="ib-act">${action?`<button class="btn btn-secondary" onclick="barAction(${i})">${action}</button>`:''}
+    ${noClose?'':`<button class="btn btn-subtle btn-icon" aria-label="Закрыть уведомление" title="Закрыть уведомление" onclick="closeBar(${i})"><span class="ic">&#xE711;</span></button>`}</div></div>`;
+}
+function closeBar(i){ const b=S.bars[i]; if(b&&b.welcome) S.welcome=false; S.bars.splice(i,1); document.getElementById('bars').innerHTML=barsHTML(); }
+function barAction(i){ const b=S.bars[i]; if(b&&b.undo){ b.undo(); } S.bars.splice(i,1); renderNav(); renderPage(); renderPreview(); }
+
+/* ===================================================================
+   РАЗДЕЛЫ
+   =================================================================== */
+function renderPage(){
+  const ed=document.getElementById('editor');
+  if(S.page==='type'&&S.welcome&&!S.bars.some(b=>b.welcome)) S.bars.unshift({kind:'info',welcome:true,title:'Добро пожаловать!',text:'Шаблон создаётся за три шага: выберите вид работы, заполните титульный лист и нажмите «Создать шаблон». Правила оформления уже настроены по ГОСТ 7.32-2017 — меняйте их, только если методичка требует иначе.'});
+  if(S.page!=='type') S.bars=S.bars.filter(b=>!b.welcome);
+  ed.innerHTML=`<div class="page">${({type:pageType,title:pageTitle,rules:pageRules,structure:pageStructure,settings:pageSettings})[S.page]()}</div>`;
+  bindPage();
+}
+
+function pageType(){
+  const card=(id,ic,t,d,dis)=>`<button class="pcard ${S.profile===id?'sel':''} ${dis?'dis':''}" role="radio" aria-checked="${S.profile===id}" ${dis?'aria-disabled="true"':''} data-prof="${dis?'':id}">
+      <span class="tile"><span class="ic">${ic}</span></span><span><span class="pt">${t}</span><span class="pd">${d}</span></span>
+      ${S.profile===id?'<span class="check"><span class="ic">&#xE73E;</span></span>':''}${dis?'<span class="soon">Скоро</span>':''}</button>`;
+  return header('Вид работы','Выберите, какую работу оформляете. От этого зависят поля титульного листа и состав разделов.','',
+      `<button class="btn btn-secondary" onclick="importDemo()"><span class="ic">&#xE8B5;</span><u>И</u>мпортировать профиль…</button>`)+`
+    <div class="content">
+      <div class="grp"><div class="grp-h">Встроенные профили</div>
+        <div class="pgrid" role="radiogroup" aria-label="Вид работы">
+          ${card('kurs','&#xE7BE;','Курсовая работа','По ГОСТ 7.32-2017. Титульный лист с дисциплиной, руководителем и оценкой.')}
+          ${card('vkr','&#xEB95;','Выпускная квалификационная работа','ВКР, диплом, магистерская. Титульный лист с допуском к защите и нормоконтролем.')}
+          ${card('ref','&#xE8A5;','Реферат','Появится в следующей версии.',true)}
+          ${card('prac','&#xE821;','Отчёт по практике','Появится в следующей версии.',true)}
+        </div></div>
+      <div class="grp"><div class="grp-h">Профили кафедр</div>
+        <div class="grp-desc">Профиль — файл .json с правилами методички. Его может выдать кафедра или руководитель.</div>
+        <div class="pgrid">
+          ${S.imported?`<button class="pcard ${S.profile==='imp'?'sel':''}" data-prof="kurs"><span class="tile"><span class="ic">&#xE7BE;</span></span><span><span class="pt">Курсовая — кафедра ИСиТ</span><span class="pd">Файл: kafedra_isit.json · импортирован 14.10.2026</span></span><span class="more btn btn-subtle btn-icon" aria-label="Действия с профилем «Курсовая — кафедра ИСиТ»"><span class="ic">&#xE712;</span></span></button>`:''}
+          <button class="pcard imp" onclick="importDemo()"><span class="tile"><span class="ic">&#xE710;</span></span><span><span class="pt">Импортировать профиль…</span><span class="pd">Выберите файл .json или перетащите его в окно.</span></span></button>
+        </div></div>
+      <div class="next-row"><button class="btn btn-secondary" onclick="go('title')"><u>Д</u>алее: титульный лист<span class="ic">&#xE72A;</span></button></div>
+    </div>`;
+}
+function importDemo(){ S.imported=true; S.bars=[{kind:'success',text:'Профиль «Курсовая — кафедра ИСиТ» импортирован и выбран.'}]; renderPage(); }
+
+function fieldHTML(k){
+  const m=META[k]; const w=(P().wide&&P().wide[k])||m.w; const v=val(k);
+  let ctrl;
+  if(m.multi) ctrl=`<textarea class="tb" id="f_${k}" data-f="${k}" placeholder="${esc(m.ph)}" rows="2">${esc(v)}</textarea>`;
+  else ctrl=`<input class="tb" id="f_${k}" data-f="${k}" value="${esc(v)}" placeholder="${esc(m.ph)}" ${m.combo?`list="dl_${k}"`:''} autocomplete="off">${m.combo?`<datalist id="dl_${k}">${m.combo.map(o=>`<option value="${o}">`).join('')}</datalist>`:''}`;
+  return `<div class="${w===2?'f-full':''}"><label class="lbl" for="f_${k}">${m.l}</label>${ctrl}<div id="h_${k}">${helpFor(k,v)}</div></div>`;
+}
+function helpFor(k,v){
+  const m=META[k]; v=(v||'').trim();
+  if(k==='year'&&v&&!/^\d{4}$/.test(v)) return `<div class="help err"><span class="ic">&#xE783;</span>Год — четыре цифры, например ${YEAR}</div>`;
+  if(k==='course'&&v&&!/^[1-6]$/.test(v)) return `<div class="help err"><span class="ic">&#xE783;</span>Курс — число от 1 до 6</div>`;
+  if(m.fio&&/^[А-ЯЁ][а-яё]+\s+[А-ЯЁ][а-яё]+\s+[А-ЯЁ][а-яё]+$/.test(v)){ const [f,i,o]=v.split(/\s+/); const short=`${i[0]}. ${o[0]}. ${f}`;
+    return `<div class="help tip"><span class="ic">&#xEA80;</span><span>На титульном листе обычно пишут «${short}». <a class="link" onclick="fixFio('${k}','${short}')">Исправить</a></span></div>`; }
+  if(['topic','university','discipline'].includes(k)&&/^[«"].*[»"]$/.test(v)) return `<div class="help tip"><span class="ic">&#xEA80;</span><span>Кавычки уже есть в шаблоне. <a class="link" onclick="unquote('${k}')">Убрать кавычки</a></span></div>`;
+  return m.help?`<div class="help">${m.help}</div>`:'';
+}
+function fixFio(k,s){ setVal(k,s); document.getElementById('f_'+k).value=s; document.getElementById('h_'+k).innerHTML=helpFor(k,s); renderPreview(); }
+function unquote(k){ const s=val(k).replace(/^[«"]|[»"]$/g,''); setVal(k,s); document.getElementById('f_'+k).value=s; document.getElementById('h_'+k).innerHTML=helpFor(k,s); renderPreview(); }
+
+function pageTitle(){
+  const keys=P().keys; let html='';
+  for(const [g,gt] of GROUPS){
+    const gk=keys.filter(k=>META[k].g===g); if(!gk.length) continue;
+    const cnt=gk.filter(k=>META[k].doc); const filled=cnt.filter(k=>val(k).trim()).length;
+    let exp='';
+    if(g==='inst'){ const hk=keys.filter(k=>META[k].g==='head'); const changed=hk.some(k=>val(k)!==META[k].def);
+      exp=`<div class="exp"><div class="exp-h focusable" tabindex="0" role="button" aria-expanded="${S.headerOpen}" onclick="S.headerOpen=!S.headerOpen;renderPage()"><span class="ttl">Шапка: министерство и тип учреждения</span><span class="sum">${changed?'Изменено':'По умолчанию'}</span><span class="ic">${S.headerOpen?'&#xE70E;':'&#xE70D;'}</span></div>
+        ${S.headerOpen?`<div class="exp-b">${hk.map(k=>fieldHTML(k)).join('')}${changed?`<a class="link t-caption">Вернуть по умолчанию</a>`:''}</div>`:''}</div>`; }
+    html+=`<div class="grp"><div class="grp-h">${gt}${cnt.length?`<span class="cnt" id="cnt_${g}">${filled} из ${cnt.length}</span>`:''}</div>
+      <div class="card"><div class="form">${gk.map(fieldHTML).join('')}</div>${exp}</div></div>`;
+  }
+  return header('Титульный лист','Пустые поля останутся в шаблоне подсказками в [скобках] — их можно заполнить позже прямо в Word.',
+    `<span class="chip ok"><span class="ic">&#xE73E;</span>Сохраняется автоматически</span>`,
+    `<button class="btn btn-subtle" style="min-width:0"><span class="ic">&#xE894;</span>Очистить <u>п</u>оля</button>`)+
+    `<div class="content">${html}<div class="next-row" style="margin-top:0"><button class="btn btn-secondary" onclick="go('rules')"><u>Д</u>алее: правила оформления<span class="ic">&#xE72A;</span></button></div></div>`;
+}
+
+/* ---------- правила */
+function nb(k,label){
+  const L=LIMITS[k]; const raw=S.raw[k]!==undefined?S.raw[k]:fmtNum(k==='appN'?S.secs.appN:S.rules[k]); const err=validate(k,raw);
+  const n=Number(String(raw).replace(',','.'));
+  return `<div class="nb ${err?'err':''} ${k.startsWith('m')&&k.length===2?'wide':''}" id="nb_${k}">
+     <input data-nb="${k}" value="${esc(raw)}" aria-label="${label}" inputmode="decimal">${L[3]?`<span class="suf">${L[3]}</span>`:''}
+     <button class="sp ic" tabindex="-1" aria-label="Уменьшить: ${label}" data-step="${k}" data-d="-1" ${!err&&n<=L[0]?'disabled':''}>&#xE70D;</button>
+     <button class="sp ic" tabindex="-1" aria-label="Увеличить: ${label}" data-step="${k}" data-d="1" ${!err&&n>=L[1]?'disabled':''}>&#xE70E;</button></div>`;
+}
+function errLine(k){ const raw=S.raw[k]; const e=raw!==undefined&&validate(k,raw); return e?`<div class="help err"><span class="ic">&#xE783;</span>${e}</div>`:''; }
+function seg(key,opts,eq){ return `<div class="seg ${eq?'eq':''}" role="radiogroup">${opts.map(([v,l])=>`<button role="radio" aria-checked="${S.rules[key]===v}" class="${S.rules[key]===v?'sel':''}" data-seg="${key}" data-v="${v}">${l}</button>`).join('')}</div>`; }
+function tog(key,on,ext){ return `<label class="tg"><span class="st">${on?'Вкл.':'Откл.'}</span><input type="checkbox" ${on?'checked':''} ${ext||`data-tog="${key}"`}><span class="track"><span class="knob"></span></span></label>`; }
+function chg(key,gostText){
+  let changed;
+  if(key==='margins') changed=['mL','mR','mT','mB'].some(k=>S.rules[k]!==GOST[k]); else changed=S.rules[key]!==GOST[key];
+  return changed?`<span class="schg"><span class="dot"></span>Изменено · по ГОСТ: ${gostText}<a class="link" data-revert="${key}" aria-label="Вернуть значение по ГОСТ">Вернуть</a></span>`:'';
+}
+function srow(key,title,desc,ctrl,gost,extra){
+  return `<div class="srow" data-rule="${key}"><div class="stx"><span class="stitle">${title}</span><span class="sdesc">${desc}</span>${chg(key,gost)}${extra||''}</div><div class="sctl">${ctrl}</div></div>`;
+}
+function pageRules(){
+  const r=S.rules; const chgN=changedRules();
+  const sepEx = `${r.fig} 1${r.sep==='dash'?' – ':'. '}Схема процесса`;
+  const mErr=['mL','mR','mT','mB'].map(errLine).find(x=>x)||'';
+  const wide=(r.mL+r.mR)>80?`<div class="help warn"><span class="ic">&#xE7BA;</span>Широкие поля: для текста остаётся ${210-r.mL-r.mR} мм</div>`:'';
+  return header('Правила оформления','По умолчанию — ГОСТ 7.32-2017. Меняйте правила, только если методичка вашего вуза требует иначе.',
+    chgN?`<span class="chip"><span class="dot"></span>Изменено: ${chgN} из 16</span>`:`<span class="chip ok"><span class="ic">&#xEC61;</span>Соответствует ГОСТ 7.32-2017</span>`,
+    `<button class="btn btn-secondary" ${chgN?'':'disabled'} onclick="resetGost()"><span class="ic">&#xE72C;</span>Сбросить к <u>Г</u>ОСТ</button>
+     <button class="btn btn-secondary"><span class="ic">&#xE74E;</span>Со<u>х</u>ранить профиль…</button>
+     <button class="btn btn-secondary" onclick="openDialog('share')"><span class="ic">&#xE72D;</span>П<u>о</u>делиться…</button>`)+`
+  <div class="content">
+   <div class="grp"><div class="grp-h">Страница</div><div class="card">
+     <div class="srow stack" data-rule="margins"><div class="stx"><span class="stitle">Поля страницы</span><span class="sdesc">Расстояние от края листа до текста. Левое поле шире — под переплёт.</span>${chg('margins','30 / 15 / 20 / 20 мм')}</div>
+       <div class="mgrid">${[['mL','Левое'],['mR','Правое'],['mT','Верхнее'],['mB','Нижнее']].map(([k,l])=>`<div><label class="lbl">${l}</label>${nb(k,l+' поле')}</div>`).join('')}</div>${mErr}${wide}</div>
+     ${srow('num','Номер страницы','Где стоит номер на каждой странице, кроме титульного листа.',seg('num',[['center','Внизу по центру'],['right','Внизу справа']]),'внизу по центру')}
+   </div></div>
+   <div class="grp"><div class="grp-h">Основной текст</div><div class="card">
+     ${srow('font','Шрифт','Шрифт всего документа. ГОСТ не называет конкретный шрифт, но обычно требуют Times New Roman.',
+       `<div class="cb"><select data-sel="font" aria-label="Шрифт">${['Times New Roman','Arial','Calibri','PT Serif','PT Astra Serif'].map(f=>`<option ${r.font===f?'selected':''}>${f}</option>`).join('')}</select><span class="ic chev">&#xE70D;</span></div>`,'Times New Roman',
+       r.font==='PT Astra Serif'?`<div class="help warn"><span class="ic">&#xE7BA;</span>Шрифт «PT Astra Serif» не установлен на этом компьютере — Word заменит его другим</div>`:'')}
+     ${srow('size','Размер шрифта','Кегль основного текста. По ГОСТ — не меньше 12 пт, чаще требуют 14. Заголовки и подписи того же размера изменятся вместе с ним.',nb('size','Размер шрифта'),'14 пт',errLine('size'))}
+     ${srow('ls','Межстрочный интервал','Расстояние между строками. 1,5 — полуторный, как требует ГОСТ.',seg('ls',[[1,'1,0'],[1.15,'1,15'],[1.5,'1,5'],[2,'2,0']]),'1,5')}
+     ${srow('indent','Абзацный отступ','Отступ первой строки абзаца («красная строка»). По ГОСТ — 1,25 см.',nb('indent','Абзацный отступ'),'1,25 см',errLine('indent'))}
+     ${srow('align','Выравнивание','Как текст прилегает к краям. «По ширине» — ровные края с обеих сторон.',seg('align',[['justify','По ширине'],['left','По левому краю']]),'по ширине')}
+     ${srow('hyph','Автоматические переносы','Word сам переносит длинные слова — в тексте по ширине становится меньше растянутых пробелов.',tog('hyph',r.hyph),'вкл.')}
+   </div></div>
+   <div class="grp"><div class="grp-h">Заголовки</div><div class="card">
+     ${srow('hAlign','Положение заголовков глав','Заголовки глав, параграфов и пунктов. По ГОСТ — с абзацного отступа, но многие методички требуют по центру.',seg('hAlign',[['indent','С абзацного отступа'],['center','По центру']]),'с абзацного отступа')}
+     ${srow('newPage','Каждая глава с новой страницы','Перед заголовком главы вставляется разрыв страницы.',tog('newPage',r.newPage),'вкл.')}
+     ${srow('upper','Структурные заголовки прописными','ВВЕДЕНИЕ, ЗАКЛЮЧЕНИЕ, СПИСОК ИСПОЛЬЗОВАННЫХ ИСТОЧНИКОВ, ПРИЛОЖЕНИЕ — заглавными буквами.',tog('upper',r.upper),'вкл.')}
+     ${srow('toc','Уровни в содержании','Какие заголовки попадут в содержание: 1 — только главы, 2 — главы и параграфы, 3 — ещё и пункты.',seg('toc',[[1,'1'],[2,'2'],[3,'3']]),'3')}
+   </div></div>
+   <div class="grp"><div class="grp-h">Рисунки и таблицы</div><div class="card">
+     ${srow('fig','Подпись рисунка','Слово перед номером рисунка.',seg('fig',[['Рисунок','Рисунок'],['Рис.','Рис.']]),'Рисунок')}
+     ${srow('sep','Знак в подписи',`Что стоит между номером и названием рисунка или таблицы. Пример: ${sepEx}`,seg('sep',[['dash','Тире'],['dot','Точка']]),'тире')}
+     ${srow('tAlign','Подпись таблицы','Где стоит надпись «Таблица 1 – …» над таблицей.',seg('tAlign',[['left','Слева'],['center','По центру']]),'слева')}
+     ${srow('tSize','Шрифт в таблицах','Размер текста внутри таблиц. Обычно на 1–2 пт меньше основного.',nb('tSize','Шрифт в таблицах'),'12 пт',errLine('tSize'))}
+   </div></div>
+   <div class="next-row" style="margin-top:0"><button class="btn btn-secondary" onclick="go('structure')"><u>Д</u>алее: структура работы<span class="ic">&#xE72A;</span></button></div>
+  </div>`;
+}
+function resetGost(){
+  const prev={rules:{...S.rules},raw:{...S.raw}};
+  S.rules={...GOST}; S.raw={};
+  S.bars=[{kind:'info',text:'Правила сброшены к ГОСТ 7.32-2017.',action:'<u>О</u>тменить',undo:()=>{S.rules=prev.rules;S.raw=prev.raw;}}];
+  renderNav(); renderPage(); renderPreview();
+}
+
+/* ---------- структура */
+function pageStructure(){
+  let rows='';
+  if(!S.chapters.length){
+    rows=`<div class="empty"><span class="ic">&#xE8FD;</span><div class="et">Глав пока нет</div><div class="ed">Добавьте хотя бы одну главу. В курсовой их обычно две: теоретическая и практическая.</div><button class="btn btn-primary" onclick="addChapter()"><span class="ic">&#xE710;</span>Добавить главу</button></div>`;
+  } else {
+    rows='<div class="olist" role="list">';
+    S.chapters.forEach((c,ci)=>{
+      const id=`${ci}`; const sel=S.selRow===id;
+      rows+=`<div class="oitem ${sel?'sel':''}" role="listitem" data-row="${id}"><span class="grip ic" title="Перетащить">&#xE76F;</span><span class="num">${ci+1}</span>
+        <input class="ot" data-ot="${id}" value="${esc(c.t)}" placeholder="${esc(c.ph||'Название главы')}" aria-label="Глава ${ci+1}: название">
+        <span class="acts"><button class="btn btn-subtle btn-icon" title="Добавить параграф" aria-label="Добавить параграф в главу ${ci+1}" data-act="addsec" data-i="${id}"><span class="ic">&#xE710;</span></button>
+        <button class="btn btn-subtle btn-icon" title="Выше" aria-label="Переместить выше" data-act="up" data-i="${id}" ${ci===0?'disabled':''}><span class="ic">&#xE74A;</span></button>
+        <button class="btn btn-subtle btn-icon" title="Ниже" aria-label="Переместить ниже" data-act="down" data-i="${id}" ${ci===S.chapters.length-1?'disabled':''}><span class="ic">&#xE74B;</span></button>
+        <button class="btn btn-subtle btn-icon" title="Удалить" aria-label="Удалить главу ${ci+1}" data-act="del" data-i="${id}"><span class="ic">&#xE74D;</span></button></span></div>`;
+      c.s.forEach((s,si)=>{
+        const id2=`${ci}.${si}`; const sel2=S.selRow===id2;
+        rows+=`<div class="oitem sub ${sel2?'sel':''}" role="listitem" data-row="${id2}"><span class="grip ic" title="Перетащить">&#xE76F;</span><span class="num">${ci+1}.${si+1}</span>
+        <input class="ot" data-ot="${id2}" value="${esc(s.t)}" placeholder="${esc(s.ph||'Название параграфа')}" aria-label="Параграф ${ci+1}.${si+1}: название">
+        <span class="acts"><span style="width:32px"></span>
+        <button class="btn btn-subtle btn-icon" title="Выше" aria-label="Переместить выше" data-act="up" data-i="${id2}" ${si===0?'disabled':''}><span class="ic">&#xE74A;</span></button>
+        <button class="btn btn-subtle btn-icon" title="Ниже" aria-label="Переместить ниже" data-act="down" data-i="${id2}" ${si===c.s.length-1?'disabled':''}><span class="ic">&#xE74B;</span></button>
+        <button class="btn btn-subtle btn-icon" title="Удалить" aria-label="Удалить параграф ${ci+1}.${si+1}" data-act="del" data-i="${id2}"><span class="ic">&#xE74D;</span></button></span></div>`;
+      });
+      rows+=`<button class="btn btn-subtle oadd" style="text-align:left;min-width:0" data-act="addsec" data-i="${ci}" ${c.s.length>=10?'disabled title="Не больше 10 параграфов в главе"':''}><span class="ic">&#xE710;</span>Добавить параграф</button>`;
+    });
+    rows+='</div>';
+  }
+  const n=S.chapters.length, m=secCount();
+  const sx=S.secs;
+  const letters=LETTERS.slice(0,sx.appN);
+  return header('Структура работы','Главы и параграфы попадут в шаблон с автоматической нумерацией и подсказками. Названия можно оставить пустыми и вписать позже в Word.','',
+    `<button class="btn btn-subtle" style="min-width:0"><span class="ic">&#xE7A7;</span>Вернуть структуру профиля</button>`)+`
+  <div class="content">
+    <div class="grp"><div class="grp-h">Главы и параграфы</div><div class="card">${rows}
+      ${n?`<div class="ofoot"><button class="btn btn-secondary" onclick="addChapter()" ${n>=10?'disabled':''}><span class="ic">&#xE710;</span>Добавить <u>г</u>лаву</button><span class="t-caption">${n} ${plural(n,'глава','главы','глав')} · ${m} ${plural(m,'параграф','параграфа','параграфов')}</span></div>`:''}
+    </div></div>
+    <div class="grp"><div class="grp-h">Разделы работы</div><div class="card">
+      <div class="srow"><div class="stx"><span class="stitle">Содержание</span><span class="sdesc">Собирается автоматически из заголовков.</span></div><div class="sctl"><span class="locked"><span class="ic">&#xE72E;</span>Всегда включено</span></div></div>
+      <div class="srow"><div class="stx"><span class="stitle">Введение</span><span class="sdesc">Актуальность, цель и задачи, объект и предмет. В шаблоне — готовый план с подсказками.</span></div><div class="sctl">${tog('',sx.intro,'data-sec="intro"')}</div></div>
+      <div class="srow"><div class="stx"><span class="stitle">Заключение</span><span class="sdesc">Выводы по каждой задаче из введения.</span></div><div class="sctl">${tog('',sx.concl,'data-sec="concl"')}</div></div>
+      <div class="srow"><div class="stx"><span class="stitle">Список использованных источников</span><span class="sdesc">С образцами оформления книги, статьи, закона и сайта по ГОСТ Р 7.0.100-2018.</span></div><div class="sctl">${tog('',sx.refs,'data-sec="refs"')}</div></div>
+      <div class="srow"><div class="stx"><span class="stitle">Приложения</span><span class="sdesc">Каждое приложение начинается с новой страницы и обозначается буквой.</span></div><div class="sctl">${tog('',sx.app,'data-sec="app"')}</div></div>
+      ${sx.app?`<div class="srow-sub"><span>Количество приложений</span>${nb('appN','Количество приложений')}<span class="t-caption" style="color:var(--text2)">${letters.length>1?'Приложения '+letters.join(', '):'Приложение А'}</span></div>${errLine('appN')?`<div style="padding:0 16px 12px 32px">${errLine('appN')}</div>`:''}`:''}
+      <div class="srow"><div class="stx"><span class="stitle">Примеры оформления</span><span class="sdesc">Образцы рисунка, таблицы, формулы и списков внутри глав — их удобно скопировать и заменить своими.</span></div><div class="sctl">${tog('',sx.examples,'data-sec="examples"')}</div></div>
+    </div></div>
+  </div>`;
+}
+function addChapter(){ S.chapters.push({t:'',s:[{t:''}]}); S.selRow=String(S.chapters.length-1); renderNav(); renderPage(); renderPreview();
+  const el=document.querySelector(`[data-ot="${S.selRow}"]`); if(el) el.focus(); }
+function rowAct(act,id){
+  const [ci,si]=id.split('.').map(Number); const prev=JSON.parse(JSON.stringify(S.chapters));
+  if(act==='addsec'){ S.chapters[ci].s.push({t:''}); S.selRow=`${ci}.${S.chapters[ci].s.length-1}`; }
+  if(act==='del'){
+    if(si===undefined){ const c=S.chapters[ci]; S.chapters.splice(ci,1); S.selRow=null;
+      S.bars=[{kind:'info',text:c.t?`Глава «${esc(c.t)}» удалена вместе с параграфами (${c.s.length}).`:`Глава ${ci+1} удалена.`,action:'<u>О</u>тменить',undo:()=>{S.chapters=prev;}}]; }
+    else { S.chapters[ci].s.splice(si,1); S.selRow=null; S.bars=[{kind:'info',text:`Параграф ${ci+1}.${si+1} удалён.`,action:'<u>О</u>тменить',undo:()=>{S.chapters=prev;}}]; }
+  }
+  if(act==='up'||act==='down'){ const d=act==='up'?-1:1;
+    if(si===undefined){ const a=S.chapters; [a[ci],a[ci+d]]=[a[ci+d],a[ci]]; S.selRow=String(ci+d); }
+    else { const a=S.chapters[ci].s; [a[si],a[si+d]]=[a[si+d],a[si]]; S.selRow=`${ci}.${si+d}`; } }
+  renderNav(); renderPage(); renderPreview();
+}
+
+function pageSettings(){
+  return header('Параметры','','')+`<div class="content"><div class="card">
+    <div class="srow"><div class="stx"><span class="stitle">Тема</span><span class="sdesc">Оформление окна приложения. Лист в предпросмотре всегда белый.</span></div><div class="sctl"><div class="seg"><button>Как в Windows</button><button class="${S.theme==='light'?'sel':''}" onclick="setTheme('light')">Светлая</button><button class="${S.theme==='dark'?'sel':''}" onclick="setTheme('dark')">Тёмная</button></div></div></div>
+    <div class="srow"><div class="stx"><span class="stitle">Папка для шаблонов</span><span class="sdesc">C:\\Users\\Student\\Documents</span></div><div class="sctl"><button class="btn btn-secondary">Изменить…</button></div></div>
+    <div class="srow"><div class="stx"><span class="stitle">Сохранённые данные</span><span class="sdesc">Поля титульного листа, изменённые правила и структура, импортированные профили.</span></div><div class="sctl"><button class="btn btn-secondary">Очистить…</button></div></div>
+    <div class="srow"><div class="stx"><span class="stitle">Папка профилей</span><span class="sdesc">%APPDATA%\\KonstruktorShablonov\\profiles</span></div><div class="sctl"><a class="link">Открыть папку</a></div></div>
+    <div class="srow"><div class="stx"><span class="stitle">О программе</span><span class="sdesc">Версия 1.0.0 · Правила по умолчанию: ГОСТ 7.32-2017</span></div></div>
+  </div></div>`;
+}
+
+/* ---------- привязка событий раздела */
+function bindPage(){
+  const ed=document.getElementById('editor');
+  ed.querySelectorAll('[data-prof]').forEach(el=>{ if(el.dataset.prof) el.onclick=()=>{ S.profile=el.dataset.prof; renderNav(); renderPage(); renderPreview(); }; });
+  ed.querySelectorAll('[data-f]').forEach(el=>{
+    const k=el.dataset.f;
+    el.oninput=()=>{ setVal(k,el.value); document.getElementById('h_'+k).innerHTML=helpFor(k,el.value); renderPreview(); renderNav(); updateGroupCounts(); };
+    el.onfocus=()=>{ S.focusField=k; renderPreview(); };
+    el.onblur=()=>{ if(S.focusField===k){ S.focusField=null; renderPreview(); } };
+    if(/err/.test(helpFor(k,el.value))) el.classList.add('err');
+    el.addEventListener('input',()=>el.classList.toggle('err',/help err/.test(helpFor(k,el.value))));
+  });
+  ed.querySelectorAll('[data-nb]').forEach(el=>{
+    const k=el.dataset.nb;
+    el.oninput=()=>{ S.raw[k]=el.value; const e=validate(k,el.value);
+      if(!e){ const n=Number(el.value.replace(',','.')); if(k==='appN') S.secs.appN=n; else { if(k==='size') cascadeSize(n); S.rules[k]=n; } }
+      el.closest('.nb').classList.toggle('err',!!e); refreshErrors(k); renderNav(); renderPreview(); };
+    el.onfocus=()=>{ S.focusRule=k; renderPreview(); };
+    el.onblur=()=>{ S.focusRule=null; if(!validate(k,el.value)){ delete S.raw[k]; } renderPage(); renderPreview(); };
+    el.onkeydown=e=>{ if(e.key==='ArrowUp'||e.key==='ArrowDown'){ e.preventDefault(); stepNb(k,e.key==='ArrowUp'?1:-1); } };
+  });
+  ed.querySelectorAll('[data-step]').forEach(b=>b.onmousedown=e=>{ e.preventDefault(); stepNb(b.dataset.step,Number(b.dataset.d)); });
+  ed.querySelectorAll('[data-seg]').forEach(b=>b.onclick=()=>{ const k=b.dataset.seg; let v=b.dataset.v; if(['ls','toc'].includes(k)) v=Number(v); S.rules[k]=v; renderNav(); renderPage(); renderPreview(); });
+  ed.querySelectorAll('[data-tog]').forEach(c=>c.onchange=()=>{ S.rules[c.dataset.tog]=c.checked; renderNav(); renderPage(); renderPreview(); });
+  ed.querySelectorAll('[data-sec]').forEach(c=>c.onchange=()=>{ S.secs[c.dataset.sec]=c.checked; renderPage(); renderPreview(); });
+  ed.querySelectorAll('[data-sel]').forEach(c=>c.onchange=()=>{ S.rules[c.dataset.sel]=c.value; renderNav(); renderPage(); renderPreview(); });
+  ed.querySelectorAll('[data-revert]').forEach(a=>a.onclick=()=>{ const k=a.dataset.revert; if(k==='margins'){ ['mL','mR','mT','mB'].forEach(m=>{S.rules[m]=GOST[m]; delete S.raw[m];}); } else { S.rules[k]=GOST[k]; delete S.raw[k]; } renderNav(); renderPage(); renderPreview(); });
+  ed.querySelectorAll('[data-rule]').forEach(r=>{ r.onmouseenter=()=>{ if(!S.focusRule){ S.hoverRule=r.dataset.rule; renderPreview(); } }; r.onmouseleave=()=>{ S.hoverRule=null; renderPreview(); }; });
+  ed.querySelectorAll('[data-ot]').forEach(el=>{
+    el.oninput=()=>{ const [ci,si]=el.dataset.ot.split('.').map(Number); if(si===undefined) S.chapters[ci].t=el.value; else S.chapters[ci].s[si].t=el.value; renderPreview(); };
+    el.onfocus=()=>{ S.selRow=el.dataset.ot; ed.querySelectorAll('.oitem').forEach(r=>r.classList.toggle('sel',r.dataset.row===S.selRow)); renderPreview(); };
+  });
+  ed.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>rowAct(b.dataset.act,b.dataset.i));
+}
+function updateGroupCounts(){ for(const [g] of GROUPS){ const el=document.getElementById('cnt_'+g); if(!el) continue; const ks=P().keys.filter(k=>META[k].g===g&&META[k].doc); el.textContent=`${ks.filter(k=>val(k).trim()).length} из ${ks.length}`; } }
+function refreshErrors(k){ /* полная перерисовка при blur; на вводе только рамка */ }
+function cascadeSize(n){ /* в приложении меняет и размеры заголовков/подписей — здесь не требуется */ }
+function stepNb(k,d){
+  const L=LIMITS[k]; let cur=k==='appN'?S.secs.appN:S.rules[k];
+  let n=Math.round((cur+d*L[2])*100)/100; n=Math.max(L[0],Math.min(L[1],n));
+  if(k==='appN') S.secs.appN=n; else S.rules[k]=n; delete S.raw[k];
+  renderNav(); renderPage(); renderPreview();
+  const el=document.querySelector(`[data-nb="${k}"]`); if(el){ el.focus(); }
+}
+
+/* ===================================================================
+   ПРЕДПРОСМОТР
+   =================================================================== */
+function renderModes(){
+  const m=document.getElementById('modes');
+  m.innerHTML=[['title','Титул','Титульный лист'],['page','Страница','Поля, отступы и образец текста'],['toc','Содержание','Содержание по структуре работы']]
+    .map(([id,l,t])=>`<button role="radio" aria-checked="${S.mode===id}" class="${S.mode===id?'sel':''}" title="${t}" data-mode="${id}">${l}</button>`).join('');
+  m.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{ S.mode=b.dataset.mode; renderModes(); renderPreview(); });
+}
+function fillLine(line){
+  return line.replace(/\{(\w+)\}/g,(_,k)=>{
+    if(k==='year'){ const v=val('year').trim(); return `<span class="fv ${S.focusField==='year'?'hl':''}" data-pk="year">${esc(v||YEAR)}</span>`; }
+    const v=val(k).trim(); const hl=S.focusField===k?'hl':'';
+    if(v) return `<span class="fv ${hl}" data-pk="${k}" title="${esc(META[k]?META[k].l:'')}">${esc(v)}</span>`;
+    return `<span class="ph ${hl}" data-pk="${k}" title="Нажмите, чтобы заполнить: ${esc(META[k]?META[k].l:k)}">${esc(META[k]&&META[k].doc||'['+k+']')}</span>`;
+  });
+}
+function paperFont(){ return `font-family:'${S.rules.font}','Times New Roman',serif;`; }
+function titlePaper(){
+  const r=S.rules; let h=`<div style="position:absolute;left:${r.mL}mm;right:${r.mR}mm;top:${r.mT}mm;${paperFont()}font-size:14pt;line-height:1.15">`;
+  for(const b of P().blocks){
+    if(b.sig){
+      h+=`<table style="margin-top:${b.sb}pt;border-collapse:collapse;font-size:14pt">${b.rows.map(row=>`<tr>${row.map((c,i)=>`<td style="width:${b.cols[i]}cm;vertical-align:${i?'bottom':'top'};padding:0 0 12pt">${c.split('\n').map(fillLine).join('<br>')}</td>`).join('')}</tr>`).join('')}</table>`;
+      continue;
+    }
+    b.lines.forEach((ln,i)=>{ h+=`<p style="text-align:${b.align};${b.ind?`margin-left:${b.ind}cm;`:''}${i===0&&b.sb?`margin-top:${b.sb}pt;`:''}${b.bold?'font-weight:bold;':''}${b.size?`font-size:${b.size}pt;`:''}">${ln?fillLine(ln):'&nbsp;'}</p>`; });
+  }
+  h+=`</div><p style="position:absolute;left:${r.mL}mm;right:${r.mR}mm;bottom:10mm;text-align:center;${paperFont()}font-size:14pt">${fillLine('{city} {year}')}</p>`;
+  return h;
+}
+function pagePaper(){
+  const r=S.rules; const lh=(r.ls*1.15).toFixed(3);
+  const ch=S.chapters[0]; const h1=(ch&&ch.t)||'Название главы';
+  const sepTxt=r.sep==='dash'?' – ':'. ';
+  const para=`text-indent:${r.indent}cm;text-align:${r.align};`;
+  const active=S.focusRule||S.hoverRule; const zone=k=>active===k||(active==='margins');
+  return `<div class="pv-margins" style="position:absolute;inset:0"></div>
+   ${['mL','mR','mT','mB'].filter(zone).map(k=>{ const st={mL:`left:0;top:0;bottom:0;width:${r.mL}mm`,mR:`right:0;top:0;bottom:0;width:${r.mR}mm`,mT:`left:0;right:0;top:0;height:${r.mT}mm`,mB:`left:0;right:0;bottom:0;height:${r.mB}mm`}[k]; return `<div class="mz" style="${st}"></div>`;}).join('')}
+   <div class="txt pv-margins" style="position:absolute;left:${r.mL}mm;right:${r.mR}mm;top:${r.mT}mm;bottom:${r.mB}mm;background:#fff;outline:2px dashed #5B9BD5;overflow:hidden;${paperFont()}font-size:${r.size}pt;line-height:${lh}">
+     <p style="font-weight:bold;${r.hAlign==='center'?'text-align:center;':`text-indent:${r.indent}cm;`}margin-bottom:12pt;${active==='hAlign'?'outline:3px solid #005FB8;':''}">1 ${esc(h1)}</p>
+     <p style="${para}">${active==='indent'?`<span class="indent-mark" style="display:inline-block;position:relative;width:${r.indent}cm;height:1em;margin-left:-${r.indent}cm;vertical-align:middle"></span>`:''}Актуальность темы обусловлена тем, что грамотное управление запасами позволяет предприятию сократить издержки и повысить устойчивость. Текст работы набирается выбранным шрифтом, а каждый абзац начинается с отступа первой строки.</p>
+     <p style="${para}">Ниже приведены образцы рисунка и таблицы с подписями, оформленными по выбранным правилам.</p>
+     <div style="margin:12pt 4cm 6pt;height:2.4cm;border:1.5px dashed #808080;display:flex;align-items:center;justify-content:center;font-size:11pt;color:#555;text-indent:0">[Место для рисунка]</div>
+     <p style="text-align:center;margin-bottom:12pt;${active==='fig'||active==='sep'?'outline:3px solid #005FB8;':''}">${esc(r.fig)} 1${sepTxt}Схема процесса</p>
+     <p style="text-align:${r.tAlign};${active==='tAlign'?'outline:3px solid #005FB8;':''}">Таблица 1${sepTxt}Исходные данные</p>
+     <table style="width:100%;border-collapse:collapse;font-size:${r.tSize}pt;line-height:1.15;${active==='tSize'?'outline:3px solid #005FB8;':''}"><tr>${['Показатель','Значение','Примечание'].map(x=>`<th style="border:1px solid #000;padding:2pt 4pt">${x}</th>`).join('')}</tr><tr>${['Запасы, т','1 250','—'].map(x=>`<td style="border:1px solid #000;padding:2pt 4pt">${x}</td>`).join('')}</tr></table>
+   </div>
+   <p style="position:absolute;left:${r.mL}mm;right:${r.mR}mm;bottom:10mm;text-align:${r.num};font-size:12pt;${paperFont()}"><span style="${active==='num'?'outline:3px solid #005FB8;outline-offset:3px;border-radius:50%;':''}">&nbsp;2&nbsp;</span></p>`;
+}
+function tocPaper(){
+  const r=S.rules; const up=t=>r.upper?t.toUpperCase():t; const lh=(r.ls*1.15).toFixed(3);
+  let pg=3; const rows=[]; const row=(t,lvl,ph,sel)=>{ rows.push(`<div class="toc-row" style="margin-left:${(lvl)*0.5}cm;${sel?'outline:3px solid #005FB8;':''}"><span class="tt">${ph?`<span class="ph">${t}</span>`:t}</span><span class="lead"></span><span>${pg}</span></div>`); pg+=lvl?2:1; };
+  if(S.secs.intro) row(up('Введение'),0);
+  S.chapters.forEach((c,ci)=>{ row(`${ci+1} ${c.t?esc(c.t):`<span class="ph">[${esc(c.ph||'Название главы '+(ci+1))}]</span>`}`,0,false,S.selRow===String(ci)); pg++;
+    if(r.toc>=2) c.s.forEach((s,si)=>row(`${ci+1}.${si+1} ${s.t?esc(s.t):`<span class="ph">[${esc(s.ph||`Название параграфа ${ci+1}.${si+1}`)}]</span>`}`,1,false,S.selRow===`${ci}.${si}`)); });
+  if(S.secs.concl) row(up('Заключение'),0);
+  if(S.secs.refs) row(up('Список использованных источников'),0);
+  if(S.secs.app) LETTERS.slice(0,S.secs.appN).forEach(l=>row(up('Приложение '+l),0));
+  return `<div style="position:absolute;left:${r.mL}mm;right:${r.mR}mm;top:${r.mT}mm;${paperFont()}font-size:${r.size}pt;line-height:${lh}">
+    <p style="text-align:center;font-weight:bold;margin-bottom:12pt">${up('Содержание')}</p>${rows.join('')}</div>
+    <p style="position:absolute;left:${r.mL}mm;right:${r.mR}mm;bottom:10mm;text-align:${r.num};font-size:12pt;${paperFont()}">2</p>`;
+}
+function renderPreview(target,maxW,maxH){
+  const host=target||document.getElementById('host'); if(!host) return;
+  const W=maxW||host.clientWidth, H=maxH||host.clientHeight;
+  const k=Math.min(W/793.7,H/1122.5); const pw=793.7*k, phh=1122.5*k;
+  const inner=S.mode==='title'?titlePaper():S.mode==='page'?pagePaper():tocPaper();
+  let dims='';
+  if(S.mode==='page'){ const r=S.rules,mm=3.7795*k; const act=S.focusRule||S.hoverRule;
+    const d=(key,x,y,t)=>`<span class="dim ${act===key||act==='margins'?'act':''}" style="left:${x}px;top:${y}px">${t}</span>`;
+    dims=d('mL',r.mL/2*mm,phh/2,`${r.mL} мм`)+d('mR',pw-r.mR/2*mm,phh/2,`${r.mR} мм`)+d('mT',pw/2,r.mT/2*mm,`${r.mT} мм`)+d('mB',pw/2,phh-r.mB/2*mm-12*k*3.7795*0+0,`${r.mB} мм`); }
+  host.innerHTML=`<div class="paper-wrap" style="width:${pw}px;height:${phh}px"><div class="paper" role="img" aria-label="Предпросмотр: ${S.mode==='title'?'титульный лист':S.mode==='page'?'схема страницы':'содержание'}" style="transform:scale(${k})">${inner}</div>${dims}</div>`;
+  if(!target){
+    host.querySelectorAll('[data-pk]').forEach(s=>s.onclick=()=>{ const kk=s.dataset.pk; if(!META[kk]) return; if(['ministry','org_form'].includes(kk)) S.headerOpen=true; if(S.page!=='title') go('title'); else renderPage(); const el=document.getElementById('f_'+kk); if(el){ el.focus(); el.scrollIntoView({block:'center'}); } });
+    const lg=document.getElementById('legend');
+    if(S.mode==='title'){ const [f,m]=countFill(); lg.innerHTML=f===m?'Все поля заполнены':'<span class="sw"></span>Подсвечено — не заполнено, останется подсказкой'; }
+    else lg.textContent=S.mode==='page'?'Схема в масштабе. Переносы слов здесь не показаны':'Номера страниц условные';
+  }
+}
+
+/* ---------- панель создания */
+function renderCreate(){
+  const c=document.getElementById('create');
+  c.innerHTML=`
+    <label class="chk" title="${S.word?'':'Для PDF нужен Microsoft Word'}"><input type="checkbox" ${S.pdf&&S.word?'checked':''} ${S.word?'':'disabled'} onchange="S.pdf=this.checked"><span class="box ic">&#xE73E;</span><span>Сохранить также <u>P</u>DF</span></label>
+    <label class="chk"><input type="checkbox" ${S.open?'checked':''} onchange="S.open=this.checked"><span class="box ic">&#xE73E;</span><span><u>О</u>ткрыть после создания</span></label>
+    <button class="btn btn-primary btn-large" title="Создать шаблон (Ctrl+Enter)" onclick="startCreate()"><span class="ic">&#xE8A5;</span><u>С</u>оздать шаблон…</button>
+    <div class="last">${!S.word?'<span class="ic">&#xE7BA;</span>Word не найден — содержание обновится при открытии':S.last?`Последний: ${esc(S.last)} · <a class="link">Открыть</a> · <a class="link">Показать</a>`:'Ctrl+Enter — создать из любого раздела'}</div>`;
+}
+function fileName(){ const st=val('student').trim(); return `${P().name}${st?' – '+st:''}.docx`.replace(/[\\/:*?"<>|]/g,'_'); }
+function startCreate(){
+  const errs=ruleErrors();
+  if(errs){ S.page='rules'; S.bars=[{kind:'error',title:'Исправьте ошибки перед созданием шаблона',text:`В разделе «Правила оформления» ошибок: ${errs}.`}]; S.mode='page'; renderNav(); renderPage(); renderModes(); renderPreview();
+    const bad=Object.keys(S.raw).find(k=>validate(k,S.raw[k])); const el=document.querySelector(`[data-nb="${bad}"]`); if(el) el.focus(); return; }
+  openDialog('progress');
+  clearTimeout(S.t1); clearTimeout(S.t2);
+  S.t1=setTimeout(()=>{ if(S.dialog==='progress'){ S.stepN=1; renderDialog(); } },700);
+  S.t2=setTimeout(()=>{ if(S.dialog==='progress'){ S.last=fileName(); openDialog(S.word?'success':'noword'); renderCreate(); } },3200);
+}
+
+/* ===================================================================
+   ДИАЛОГИ
+   =================================================================== */
+function openDialog(d){ S.dialog=d; if(d==='progress') S.stepN=0; renderDialog(); }
+function closeDialog(){ S.dialog=null; renderDialog(); }
+function fcard(pdf){ const n=S.last||fileName(); return `<div class="fcard"><div class="fr"><span class="ic">&#xE8A5;</span><div><span class="fn">${esc(n)}</span><span class="fp">C:\\Users\\Student\\Documents\\Учёба</span></div></div>
+   ${pdf?`<div class="fr"><span class="ic">&#xEA90;</span><div><span class="fn">${esc(n.replace(/\.docx$/,'.pdf'))}</span><span class="fp">C:\\Users\\Student\\Documents\\Учёба</span></div></div>`:''}</div>`; }
+function renderDialog(){
+  const host=document.getElementById('dlgHost'); if(!host) return;
+  if(!S.dialog){ host.innerHTML=''; return; }
+  const stepsHTML=(states)=>`<div class="steps" aria-live="polite">${[['Собираю документ'],['Word обновляет содержание и нумерацию'],...(S.pdf?[['Сохраняю PDF']]:[])].map(([t],i)=>{
+      const st=states[i]; const icon=st==='done'?'<span class="ic">&#xEC61;</span>':st==='run'?'<span class="spin"></span>':st==='warn'?'<span class="ic">&#xE7BA;</span>':st==='fail'?'<span class="ic">&#xEB90;</span>':'<span class="ic">&#xEA3A;</span>';
+      const txt=st==='warn'&&i===1?'Word не найден — содержание обновится при открытии':st==='warn'&&i===2?'PDF не сохранён — нужен Microsoft Word':t;
+      return `<div class="step ${st||'wait'}">${icon}<span>${txt}</span></div>`; }).join('')}</div>`;
+  let b='',f='';
+  const D=S.dialog;
+  if(D==='progress'){ const n=S.stepN||0;
+    b=`<h2 class="dlg-t" aria-live="assertive">Создание шаблона</h2>${stepsHTML([n>0?'done':'run',n>0?'run':'',''])}<div class="pbar" role="progressbar" aria-label="Создание шаблона"></div><div class="help" style="margin-top:12px">Обычно это занимает от 5 до 30 секунд.</div>`;
+    f=`<button class="btn btn-secondary" style="max-width:none;flex:0 0 140px" onclick="closeDialog();S.bars=[{kind:'info',title:'Создание шаблона отменено.',text:'Файл не сохранён.'}];renderPage()">Отмена</button>`; }
+  if(D==='success'){
+    b=`<h2 class="dlg-t"><span class="ic" style="color:var(--success)">&#xEC61;</span>Шаблон готов</h2>${fcard(S.pdf)}<div>${S.open?'Шаблон открыт в Word.':'Содержание, номера страниц, рисунков и таблиц уже обновлены.'}</div>`;
+    f=S.open?`<button class="btn btn-secondary">Показать в <u>п</u>апке</button><button class="btn btn-primary" onclick="closeDialog()">Готово</button>`
+            :`<button class="btn btn-primary"><u>О</u>ткрыть</button><button class="btn btn-secondary">Показать в <u>п</u>апке</button><button class="btn btn-secondary" onclick="closeDialog()">Закрыть</button>`; }
+  if(D==='noword'){
+    b=`<h2 class="dlg-t"><span class="ic" style="color:var(--warning)">&#xE7BA;</span>Шаблон создан</h2>${fcard(false)}
+      <div class="ib warning" style="padding-right:16px"><span class="ic">&#xE7BA;</span><div class="ib-tx"><b>Содержание обновится при открытии</b><br>Microsoft Word не найден, поэтому содержание и номера рисунков пока не заполнены. Когда вы откроете файл, Word спросит, обновить ли поля, — нажмите «Да».${S.pdf?'<br>PDF не сохранён: для него нужен Microsoft Word.':''}</div></div>`;
+    f=`<button class="btn btn-primary"><u>О</u>ткрыть</button><button class="btn btn-secondary">Показать в <u>п</u>апке</button><button class="btn btn-secondary" onclick="closeDialog()">Закрыть</button>`; }
+  if(D==='locked'){
+    b=`<h2 class="dlg-t"><span class="ic" style="color:var(--error)">&#xEB90;</span>Не удалось сохранить шаблон</h2>${stepsHTML(['fail','',''])}<div>Файл «${esc(fileName())}» открыт в Word или другой программе. Закройте его и нажмите «Повторить» — или сохраните шаблон под другим именем.</div>`;
+    f=`<button class="btn btn-primary" onclick="startCreate()"><u>П</u>овторить</button><button class="btn btn-secondary">Сохранить <u>к</u>ак…</button><button class="btn btn-secondary" onclick="closeDialog()">Отмена</button>`; }
+  if(D==='share'){
+    b=`<h2 class="dlg-t">Поделиться профилем</h2><div style="margin-bottom:16px">Отправьте файл профиля студентам или коллегам. Они откроют его в Конструкторе: «Вид работы» → «Импортировать профиль».</div>
+      <div class="fcard" style="margin-bottom:8px"><div class="fr"><span class="ic">&#xE8A5;</span><div><span class="fn">Курсовая работа — моя методичка.json</span><span class="fp">Профиль оформления · 11 КБ</span></div></div></div>
+      <label class="chk"><input type="checkbox" checked><span class="box ic">&#xE73E;</span><span>Включить данные учебного заведения</span></label>
+      <div class="help" style="margin:0 0 0 28px">Вуз, институт, кафедра и город. ФИО, группа и тема в профиль не попадают.</div>
+      <div class="help" id="copied" style="margin-top:12px;display:none"><span style="color:var(--success)" class="ic">&#xE73E;</span> Файл скопирован — вставьте его в письмо или мессенджер (Ctrl+V).</div>`;
+    f=`<button class="btn btn-primary" onclick="this.innerHTML='Скопировано';document.getElementById('copied').style.display='block'"><u>К</u>опировать файл</button><button class="btn btn-secondary">Сохранить <u>к</u>ак…</button><button class="btn btn-secondary" onclick="closeDialog()">Закрыть</button>`; }
+  if(D==='zoom'){
+    host.innerHTML=`<div class="smoke" onclick="if(event.target===this)closeDialog()"><div class="dlg" style="width:auto;max-width:none" role="dialog" aria-label="Предпросмотр"><div class="dlg-b" style="padding:16px 24px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><h2 class="dlg-t" style="margin:0">Предпросмотр</h2><button class="btn btn-secondary" onclick="closeDialog()">Закрыть</button></div><div id="zoomHost"></div></div></div></div>`;
+    const zh=document.getElementById('zoomHost'); const hh=(S.min?648:768)*0.9-100; renderPreview(zh,hh/1.4142,hh); return; }
+  host.innerHTML=`<div class="smoke"><div class="dlg" role="dialog" aria-modal="true"><div class="dlg-b">${b}</div><div class="dlg-f">${f}</div></div></div>`;
+}
+function openZoom(){ S.dialog='zoom'; renderDialog(); }
+
+/* ===================================================================
+   ЛИСТ КОМПОНЕНТОВ
+   =================================================================== */
+function sheetHTML(){
+  const states=['default','hover','pressed','focus','disabled','error'];
+  const cls={default:'',hover:'is-hover',pressed:'is-pressed',focus:'is-focus',disabled:'is-disabled',error:''};
+  const head=`<div></div>${states.map(s=>`<div class="hd">${s}</div>`).join('')}`;
+  const btnRow=(name,c,icon)=>`<div class="rl">${name}</div>${states.map(s=>s==='error'?'<div class="cap2">—</div>':`<div><button class="btn ${c} ${cls[s]}">${icon?'<span class="ic">&#xE74E;</span>':''}Кнопка</button></div>`).join('')}`;
+  const tb=s=>`<input class="tb ${s==='hover'?'is-hover':s==='focus'||s==='pressed'?'is-focusin':s==='disabled'?'is-disabled':s==='error'?'err':''}" value="${s==='default'||s==='hover'?'':'ИС-31'}" placeholder="Например: ИС-31" ${s==='disabled'?'disabled':''}>${s==='error'?'<div class="help err"><span class="ic">&#xE783;</span>Курс — число от 1 до 6</div>':''}`;
+  const nbS=s=>`<div class="nb ${s==='hover'?'is-hover':s==='focus'||s==='pressed'?'is-focusin':s==='disabled'?'is-disabled':s==='error'?'err':''}"><input value="${s==='error'?'60':'30'}" ${s==='disabled'?'disabled':''}><span class="suf">мм</span><button class="sp ic ${s==='hover'?'is-hover':''}">&#xE70D;</button><button class="sp ic">&#xE70E;</button></div>${s==='error'?'<div class="help err"><span class="ic">&#xE783;</span>Введите число от 0 до 50</div>':''}`;
+  const cbS=s=>s==='error'?`<div class="cb err"><div class="cbv"></div><span class="ic chev">&#xE70D;</span></div><div class="help err"><span class="ic">&#xE783;</span>Укажите шрифт</div>`:`<div class="cb"><div class="cbv ${s==='hover'?'is-hover':s==='pressed'?'is-open':s==='focus'?'is-focus':s==='disabled'?'is-disabled':''}">Times New Roman</div><span class="ic chev">&#xE70D;</span></div>`;
+  const tgS=(s,on)=>s==='error'?'<div class="cap2">—</div>':`<label class="tg ${cls[s]}"><span class="st">${on?'Вкл.':'Откл.'}</span><input type="checkbox" ${on?'checked':''} ${s==='disabled'?'disabled':''}><span class="track"><span class="knob"></span></span></label>`;
+  const chS=(s,on)=>s==='error'?'<div class="cap2">—</div>':`<label class="chk ${cls[s]}"><input type="checkbox" ${on?'checked':''} ${s==='disabled'?'disabled':''}><span class="box ic">&#xE73E;</span><span>Сохранить также PDF</span></label>`;
+  const segS=s=>s==='error'?'<div class="cap2">—</div>':`<div class="seg ${s==='disabled'?'is-disabled':''}"><button class="sel ${s==='focus'?'is-focus':''}">1,5</button><button class="${s==='hover'?'is-hover':s==='pressed'?'is-pressed':''}">2,0</button></div>`;
+  const navS=s=>s==='error'?`<div class="nav-item" style="width:232px;margin:0"><span class="ic">&#xED5E;</span><span class="tx"><span class="l1">Правила оформления</span><span class="l2 err">Ошибок: 1</span></span><span class="nav-badge">1</span></div>`
+     :`<div class="nav-item ${s==='hover'?'':''} ${s==='focus'?'is-focus':''}" style="width:232px;margin:0;${s==='hover'?'background:var(--fill-subtle-hover)':s==='pressed'?'background:var(--fill-subtle-pressed);color:var(--text2)':s==='disabled'?'color:var(--text-dis)':''}"><span class="ic">&#xE779;</span><span class="tx"><span class="l1">Титульный лист</span><span class="l2">Заполнено 4 из 11</span></span></div>`;
+  const pcS=s=>`<div class="pcard ${cls[s]} ${s==='disabled'?'dis':''} ${s==='error'?'broken':''}" style="width:280px"><span class="tile"><span class="ic">${s==='disabled'?'&#xE8A5;':'&#xE7BE;'}</span></span><span><span class="pt">${s==='disabled'?'Реферат':'Курсовая работа'}</span><span class="pd">${s==='error'?'Файл профиля повреждён':s==='disabled'?'Появится в следующей версии.':'По ГОСТ 7.32-2017. Титульный лист с дисциплиной и оценкой.'}</span></span>${s==='disabled'?'<span class="soon">Скоро</span>':''}</div>`;
+  const oiS=s=>`<div class="oitem sub ${s==='hover'?'is-hover':s==='pressed'?'drag':s==='focus'?'sel':''} ${s==='focus'?'is-focus':''}" style="width:auto;margin:0 4px"><span class="grip ic">&#xE76F;</span><span class="num">1.1</span><input class="ot" value="${s==='error'?'Очень длинное название параграфа…':'Понятие запасов'}" style="${s==='error'?'border-color:var(--error);box-shadow:inset 0 -1px 0 var(--error)':''}" ${s==='disabled'?'disabled':''}><span class="acts" style="${s==='hover'||s==='focus'?'visibility:visible':''}"><button class="btn btn-subtle btn-icon"><span class="ic">&#xE74D;</span></button></span></div>`;
+  const col=(name,fn)=>`<div class="rl">${name}</div>${states.map(s=>`<div>${fn(s)}</div>`).join('')}`;
+  const tokens=[['Bg.Window','--bg-window'],['Bg.Layer','--bg-layer'],['Bg.Card','--bg-card'],['Bg.CardSecondary','--bg-card2'],['Fill.Segmented','--fill-segmented'],['Fill.AccentSubtle','--fill-accent-subtle'],
+    ['Stroke.Card','--stroke-card'],['Stroke.ControlStrong','--stroke-strong'],['Stroke.Divider','--stroke-divider'],['Text.Primary','--text'],['Text.Secondary','--text2'],['Text.Placeholder','--text-ph'],
+    ['Text.Disabled','--text-dis'],['Accent.Default','--accent'],['Accent.Hover','--accent-hover'],['Accent.Pressed','--accent-pressed'],['Accent.Disabled','--accent-dis'],['Focus.Outer','--focus-outer'],
+    ['Text.Success','--success'],['Bg.Success','--bg-success'],['Text.Warning','--warning'],['Bg.Warning','--bg-warning'],['Text.Error','--error'],['Bg.Error','--bg-error']];
+  return `
+  <h2>Цветовые токены (${S.theme==='light'?'светлая':'тёмная'} тема)</h2>
+  <div class="swatches">${tokens.map(([n,v])=>`<div class="swatch"><div class="c" style="background:var(${v})"></div><div><b>${n}</b><br><span class="cap2" data-var="${v}"></span></div></div>`).join('')}</div>
+  <h2>Типографика (Segoe UI)</h2>
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <div style="font-size:28px;line-height:36px;font-weight:600">Title 28/36 SemiBold — Правила оформления</div>
+    <div style="font-size:20px;line-height:28px;font-weight:600">Subtitle 20/28 SemiBold — Шаблон готов</div>
+    <div style="font-size:18px;line-height:24px">Body Large 18/24 Regular — Глав пока нет</div>
+    <div style="font-weight:600">Body Strong 14/20 SemiBold — Учебное заведение</div>
+    <div>Body 14/20 Regular — Пустые поля останутся в шаблоне подсказками в [скобках].</div>
+    <div class="t-caption" style="color:var(--text2)">Caption 12/16 Regular — Инициалы перед фамилией: И. И. Иванов.</div>
+    <div class="mono">Mono 12/16 Cascadia Mono — PermissionError: [Errno 13]</div>
+  </div>
+  <h2>Кнопки</h2>
+  <div class="st-table">${head}${btnRow('Primary','btn-primary',true)}${btnRow('Secondary','btn-secondary',true)}${btnRow('Subtle','btn-subtle',true)}
+    <div class="rl">Primary Large</div><div style="grid-column:span 2"><button class="btn btn-primary btn-large" style="width:300px"><span class="ic">&#xE8A5;</span>Создать шаблон…</button></div><div class="rl">Иконка 32×32</div><div><button class="btn btn-subtle btn-icon"><span class="ic">&#xE74D;</span></button> <button class="btn btn-subtle btn-icon is-hover"><span class="ic">&#xE74D;</span></button></div><div></div><div></div></div>
+  <h2>Поля ввода</h2>
+  <div class="st-table">${head}${col('TextBox',tb)}${col('NumberBox',nbS)}${col('ComboBox',cbS)}</div>
+  <div class="row" style="margin-top:16px"><div class="cell"><span class="cap2">ComboBox — открытый список</span><div class="cb"><div class="cbv is-open">Times New Roman</div><span class="ic chev">&#xE70D;</span></div>
+    <div class="flyout" style="margin-top:4px"><div class="it s" style="font-family:'Times New Roman'">Times New Roman</div><div class="it h" style="font-family:Arial">Arial</div><div class="it" style="font-family:Calibri">Calibri</div><div class="it" style="font-family:'PT Serif'">PT Serif</div></div></div></div>
+  <h2>Выбор</h2>
+  <div class="st-table">${head}${col('Toggle (выкл.)',s=>tgS(s,false))}${col('Toggle (вкл.)',s=>tgS(s,true))}${col('Checkbox (нет)',s=>chS(s,false))}${col('Checkbox (да)',s=>chS(s,true))}${col('Сегменты',segS)}</div>
+  <h2>Навигация, карточки, список структуры</h2>
+  <div class="st-table" style="grid-template-columns:150px repeat(3,minmax(0,1fr))"><div></div><div class="hd">default</div><div class="hd">hover</div><div class="hd">pressed</div>
+    <div class="rl">Пункт навигации</div>${['default','hover','pressed'].map(s=>`<div>${navS(s)}</div>`).join('')}
+    <div></div><div class="hd">focus</div><div class="hd">disabled</div><div class="hd">error</div>
+    <div class="rl"></div>${['focus','disabled','error'].map(s=>`<div>${navS(s)}</div>`).join('')}
+    <div class="rl">Выбран</div><div><div class="nav-item sel" style="width:232px;margin:0"><span class="ic">&#xE779;</span><span class="tx"><span class="l1">Титульный лист</span><span class="l2">Заполнено 4 из 11</span></span></div></div><div></div><div></div>
+  </div>
+  <div class="st-table" style="grid-template-columns:150px repeat(3,minmax(0,1fr));margin-top:16px"><div></div><div class="hd">default</div><div class="hd">hover</div><div class="hd">pressed</div>
+    <div class="rl">Карточка профиля</div>${['default','hover','pressed'].map(s=>`<div>${pcS(s)}</div>`).join('')}
+    <div></div><div class="hd">focus / selected</div><div class="hd">disabled («Скоро»)</div><div class="hd">error</div>
+    <div class="rl"></div><div><div class="pcard sel is-focus" style="width:280px"><span class="tile"><span class="ic">&#xE7BE;</span></span><span><span class="pt">Курсовая работа</span><span class="pd">По ГОСТ 7.32-2017. Титульный лист с дисциплиной и оценкой.</span></span><span class="check"><span class="ic">&#xE73E;</span></span></div></div><div>${pcS('disabled')}</div><div>${pcS('error')}</div>
+  </div>
+  <div class="st-table" style="grid-template-columns:150px repeat(3,minmax(0,1fr));margin-top:16px"><div></div><div class="hd">default</div><div class="hd">hover</div><div class="hd">dragging</div>
+    <div class="rl">Элемент структуры</div>${['default','hover','pressed'].map(s=>`<div class="card" style="padding:4px 0">${oiS(s)}</div>`).join('')}
+    <div></div><div class="hd">selected + focus</div><div class="hd">disabled</div><div class="hd">error</div>
+    <div class="rl"></div>${['focus','disabled','error'].map(s=>`<div class="card" style="padding:4px 0">${oiS(s)}${s==='error'?'<div class="help err" style="padding:0 12px 6px 96px"><span class="ic">&#xE783;</span>Слишком длинный текст — не больше 300 символов</div>':''}${s==='disabled'?'<div class="cap2" style="padding:0 12px 6px">не используется</div>':''}</div>`).join('')}
+  </div>
+  <h2>Инфобары</h2>
+  <div style="display:flex;flex-direction:column;gap:8px;max-width:640px">
+    ${ib('info','Добро пожаловать!','Шаблон создаётся за три шага.',null,0)}
+    ${ib('success','','Профиль «Курсовая — кафедра ИСиТ» импортирован и выбран.',null,0)}
+    ${ib('warning','Содержание обновится при открытии','Microsoft Word не найден.',null,0,true)}
+    ${ib('error','Исправьте ошибки перед созданием шаблона','В разделе «Правила оформления» ошибок: 1.',null,0)}
+    ${ib('info','','Правила сброшены к ГОСТ 7.32-2017.','<u>О</u>тменить',0)}
+  </div>
+  <h2>Панель результата (карточка файла)</h2>
+  <div style="width:432px">${(()=>{const l=S.last;S.last='Курсовая работа – И. И. Иванов.docx';const h=fcard(true);S.last=l;return h;})()}</div>
+  <h2>Фокус клавиатуры</h2>
+  <div class="row"><button class="btn btn-secondary is-focus">Внешняя 2 px + внутренняя 1 px</button><input class="tb is-focusin" style="width:220px" value="Поле: нижняя линия 2 px"></div>`;
+}
+
+/* ===================================================================
+   ЭКРАНЫ-ПРЕСЕТЫ
+   =================================================================== */
+const FILLED = {university:'Казанский национальный исследовательский технический университет им. А. Н. Туполева – КАИ',institute:'Институт компьютерных технологий и защиты информации',department:'прикладной математики и информатики',city:'Казань',student:'А. Р. Сафина',group:'4311'};
+const NOTES = {
+  first:'Первый запуск: раздел «Вид работы», приветственный инфобар, профилей кафедр нет (пустое состояние). Попробуйте выбрать ВКР или импортировать профиль. Навигация, поля, сегменты и переключатели кликабельны.',
+  title:'Титульный лист курсовой, частично заполнен. Вводите текст — лист справа обновляется; клик по жёлтой подсказке на листе ставит фокус в поле. Введите «Иванов Иван Иванович» в ФИО — появится умная подсказка.',
+  vkr:'Титульный лист ВКР: 19 полей, блок «Шапка» раскрыт, в поле «Год» — ошибка валидации. Счётчик считает только поля-подсказки (из 14).',
+  rules:'Правила: в поле «Левое» значение 60 (ошибка, значок в навигации), положение заголовков изменено («Изменено · по ГОСТ…»). Фокус или наведение на правило подсвечивает его на схеме страницы. Нажмите «Создать шаблон…» — переход к ошибке.',
+  structure:'Структура: выбранный параграф подсвечен и в списке, и в содержании справа. Действия строки: добавить параграф, выше/ниже, удалить (с «Отменить»).',
+  progress:'Создание шаблона: идёт обновление полей Word. Через 2–3 с автоматически переходит в «Готово».',
+  success:'Успех: «Открыть после создания» выключено — основная кнопка «Открыть».',
+  noword:'Нет Word: шаблон создан, предупреждение вместо ошибки; PDF отключён в панели создания.',
+  locked:'Ошибка: файл открыт в Word.',
+  share:'Диалог «Поделиться профилем». Нажмите «Копировать файл».',
+  min:'Минимальный размер 1024×680: компактная навигация 48 px (подписи — во всплывающих подсказках), предпросмотр 360 px.',
+  sheet:'Лист компонентов: все состояния (default, hover, pressed, focus, disabled, error) и токены текущей темы.'
+};
+function screen(name){
+  const theme=S?S.theme:'light'; S=freshState(); S.theme=theme; S.screen=name;
+  if(name!=='first'){ S.welcome=false; Object.assign(S.values,FILLED); }
+  if(name==='first'){ S.page='type'; }
+  if(name==='title'||name==='min'){ S.page='title'; }
+  if(name==='vkr'){ S.page='title'; S.profile='vkr'; S.headerOpen=true; S.values.topic='Разработка веб-сервиса учёта заявок для отдела технической поддержки'; S.values.year='26'; }
+  if(name==='rules'){ S.page='rules'; S.mode='page'; S.raw.mL='60'; S.rules.hAlign='center'; }
+  if(name==='structure'){ S.page='structure'; S.mode='toc';
+    S.chapters=[{t:'Теоретические основы управления запасами',s:[{t:'Понятие и виды запасов'},{t:'Методы управления запасами'}]},{t:'Анализ системы управления запасами ООО «Волга-Трейд»',s:[{t:'Характеристика предприятия'},{t:'',ph:'Название параграфа 2.2'}]}];
+    S.selRow='1.0'; }
+  if(['progress','success','noword','locked'].includes(name)){ S.page='title'; S.values.topic='Управление запасами на предприятии оптовой торговли'; S.values.discipline='Логистика'; S.values.supervisor='Р. Т. Хасанов'; S.values.supervisor_position='доцент, канд. экон. наук'; S.values.course='3'; }
+  if(name==='success'){ S.open=false; S.last=fileName(); }
+  if(name==='noword'){ S.word=false; S.pdf=false; S.open=false; S.last=fileName(); }
+  if(name==='share'){ S.page='rules'; S.mode='page'; S.rules.hAlign='center'; S.rules.size=14; }
+  if(name==='min') S.min=true;
+  S.mode = S.page==='rules'?'page':S.page==='structure'?'toc':'title';
+  renderStage();
+  if(name==='progress'){ startCreate(); }
+  if(name==='success'||name==='noword'||name==='locked'||name==='share') openDialog(name);
+  if(name==='structure'){ /* no-op */ }
+  document.getElementById('note').textContent=NOTES[name]||'';
+  document.querySelectorAll('.demo [data-s]').forEach(b=>b.classList.toggle('on',b.dataset.s===name));
+  if(name==='sheet') fillSwatchValues();
+}
+function fillSwatchValues(){ const root=document.querySelector('.sheet'); if(!root) return; const cs=getComputedStyle(root);
+  root.querySelectorAll('[data-var]').forEach(el=>{ el.textContent=cs.getPropertyValue(el.dataset.var).trim(); }); }
+function setTheme(t){ S.theme=t; document.querySelectorAll('.demo [data-theme]').forEach(b=>b.classList.toggle('on',b.dataset.theme===t));
+  const scr=S.screen, dlg=S.dialog; renderStage(); if(scr==='sheet') fillSwatchValues(); if(dlg){ S.dialog=dlg; renderDialog(); } }
+
+document.querySelectorAll('.demo [data-s]').forEach(b=>b.onclick=()=>screen(b.dataset.s));
+document.querySelectorAll('.demo [data-theme]').forEach(b=>b.onclick=()=>setTheme(b.dataset.theme));
+document.addEventListener('keydown',e=>{
+  if(!S||S.screen==='sheet') return;
+  if(e.ctrlKey&&e.key==='Enter'){ e.preventDefault(); startCreate(); }
+  if(e.ctrlKey&&['1','2','3','4'].includes(e.key)){ e.preventDefault(); go(['type','title','rules','structure'][Number(e.key)-1]); }
+  if(e.key==='Escape'&&S.dialog&&S.dialog!=='progress') closeDialog();
+});
+screen('first');
+</script>
+</body>
+</html>

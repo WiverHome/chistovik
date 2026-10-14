@@ -1,0 +1,40 @@
+<UserControl x:Class="ShablonRabot.App.Views.MessageDialogView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:ShablonRabot.App.Controls">
+    <!-- Диалог с текстом и кнопками (подтверждения 7.4–7.8, ошибка импорта 7.3) -->
+    <Border Style="{StaticResource DialogCard}" AutomationProperties.Name="{Binding Title}">
+        <StackPanel>
+            <StackPanel Margin="24,24,24,24">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Style="{StaticResource DialogStatusIcon}" />
+                    <TextBlock Text="{Binding Title}" Style="{StaticResource DialogTitle}" TextWrapping="Wrap" MaxWidth="400" />
+                </StackPanel>
+                <TextBlock Text="{Binding Text}" Style="{StaticResource Text.Body}" Margin="0,12,0,0" />
+            </StackPanel>
+            <Border Style="{StaticResource DialogFooter}">
+                <ItemsControl ItemsSource="{Binding Buttons}" HorizontalAlignment="Right" Focusable="False">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Rows="1" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button x:Name="B" Style="{StaticResource DialogButton}" Command="{Binding DataContext.ChooseCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    CommandParameter="{Binding Result}" c:Input.DefaultFocus="{Binding IsDefaultFocus}" IsDefault="{Binding IsDefaultFocus}"
+                                    AutomationProperties.Name="{Binding Text, Converter={x:Static c:Converters.StripAccessKey}}">
+                                <AccessText Text="{Binding Text}" />
+                            </Button>
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding IsPrimary}" Value="True">
+                                    <Setter TargetName="B" Property="Style" Value="{StaticResource DialogPrimary}" />
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Border>
+        </StackPanel>
+    </Border>
+</UserControl>

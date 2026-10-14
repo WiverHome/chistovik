@@ -1,0 +1,38 @@
+<UserControl x:Class="ShablonRabot.App.Views.SettingsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:ShablonRabot.App.Controls">
+    <!-- Раздел «Параметры» (DESIGN.md 4.5) -->
+    <ScrollViewer Style="{StaticResource PageScroll}">
+        <StackPanel Style="{StaticResource PageContent}">
+            <TextBlock Text="Параметры" Style="{StaticResource Text.Title}" />
+            <c:InfoBar Margin="0,16,0,0" DataContext="{Binding InfoBar}" />
+            <Border Style="{StaticResource Card}" Margin="0,24,0,0">
+                <StackPanel>
+                    <c:SettingRow Header="Тема" Description="Оформление окна приложения. Лист в предпросмотре всегда белый.">
+                        <ListBox Style="{StaticResource Segmented}" ItemsSource="{Binding ThemeChoices}" SelectedValue="{Binding Theme}"
+                                 AutomationProperties.Name="Тема" />
+                    </c:SettingRow>
+                    <Border Style="{StaticResource Divider}" />
+                    <c:SettingRow Header="Папка для шаблонов" Description="Здесь откроется окно сохранения, если вы ещё ничего не сохраняли.">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding DefaultFolder}" Style="{StaticResource Text.Caption}" VerticalAlignment="Center" MaxWidth="220"
+                                       TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" ToolTip="{Binding DefaultFolder}" Margin="0,0,12,0" />
+                            <Button Content="Изменить…" Command="{Binding ChangeFolderCommand}" MinWidth="0" />
+                        </StackPanel>
+                    </c:SettingRow>
+                    <Border Style="{StaticResource Divider}" />
+                    <c:SettingRow Header="Сохранённые данные" Description="Поля титульного листа, изменённые правила и структура, импортированные профили.">
+                        <Button Content="Очистить…" Command="{Binding ClearDataCommand}" MinWidth="0" />
+                    </c:SettingRow>
+                    <Border Style="{StaticResource Divider}" />
+                    <c:SettingRow Header="Папка профилей" Description="Копии импортированных и сохранённых профилей кафедр.">
+                        <Button Content="Открыть папку" Style="{StaticResource Button.Link}" Command="{Binding OpenProfilesFolderCommand}" />
+                    </c:SettingRow>
+                    <Border Style="{StaticResource Divider}" />
+                    <c:SettingRow Header="О программе" Description="{Binding AboutText}" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

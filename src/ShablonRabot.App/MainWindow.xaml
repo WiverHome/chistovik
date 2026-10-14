@@ -1,0 +1,209 @@
+<Window x:Class="ShablonRabot.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:ShablonRabot.App.ViewModels"
+        xmlns:v="clr-namespace:ShablonRabot.App.Views"
+        xmlns:c="clr-namespace:ShablonRabot.App.Controls"
+        x:Name="Root" Title="Конструктор шаблонов работ" Icon="Assets/app.ico"
+        Width="1280" Height="800" MinWidth="1024" MinHeight="680" WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource Brush.Bg.Window}" Foreground="{DynamicResource Brush.Text.Primary}"
+        FontFamily="{StaticResource Font.UI}" FontSize="14" UseLayoutRounding="True" TextOptions.TextFormattingMode="Display"
+        AllowDrop="True" d:DataContext="{d:DesignInstance vm:MainViewModel}"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d">
+    <Window.InputBindings>
+        <KeyBinding Key="Enter" Modifiers="Ctrl" Command="{Binding GenerateCommand}" />
+        <KeyBinding Key="O" Modifiers="Ctrl" Command="{Binding ImportCommand}" />
+        <KeyBinding Key="S" Modifiers="Ctrl+Shift" Command="{Binding SaveProfileCommand}" />
+        <KeyBinding Key="D" Modifiers="Ctrl" Command="{Binding DetectCommand}" CommandParameter="file" />
+        <KeyBinding Key="V" Modifiers="Ctrl+Shift" Command="{Binding DetectFromClipboardCommand}" />
+    </Window.InputBindings>
+
+    <Window.Resources>
+        <!-- Пункт навигации (DESIGN.md 3.4, 12.11) -->
+        <Style x:Key="NavItem" TargetType="ListBoxItem">
+            <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual}" />
+            <Setter Property="Margin" Value="4,0,4,4" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="AutomationProperties.Name" Value="{Binding AutomationName}" />
+            <Setter Property="ToolTipService.InitialShowDelay" Value="500" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Grid x:Name="Row" Height="56" Background="Transparent">
+                            <Border x:Name="Bd" CornerRadius="4" Background="Transparent" />
+                            <Border x:Name="Bar" Width="3" Height="16" CornerRadius="1.5" HorizontalAlignment="Left"
+                                    Background="{DynamicResource Brush.Accent.Default}" Visibility="Collapsed" />
+                            <TextBlock Text="{Binding Glyph}" Style="{StaticResource Icon}" HorizontalAlignment="Left" Margin="12,0,0,0"
+                                       Foreground="{DynamicResource Brush.Text.Primary}" />
+                            <StackPanel x:Name="Texts" VerticalAlignment="Center" Margin="44,0,36,0">
+                                <TextBlock Text="{Binding Title}" Style="{StaticResource Text.Body}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                                <TextBlock x:Name="Sub" Text="{Binding Subtitle}" Style="{StaticResource Text.Caption}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                            </StackPanel>
+                            <Ellipse x:Name="Dot" Width="6" Height="6" HorizontalAlignment="Right" Margin="0,0,12,0" Visibility="Collapsed"
+                                     Fill="{DynamicResource Brush.Accent.Default}" />
+                            <Border x:Name="Badge" Width="16" Height="16" CornerRadius="8" HorizontalAlignment="Right" Margin="0,0,12,0"
+                                    Background="{DynamicResource Brush.Fill.Error}" Visibility="Collapsed">
+                                <TextBlock Text="{Binding ErrorCount}" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center"
+                                           VerticalAlignment="Center" Foreground="{DynamicResource Brush.Text.OnError}" />
+                            </Border>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Fill.SubtleHover}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Fill.SubtleSelected}" />
+                                <Setter TargetName="Bar" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                            <DataTrigger Binding="{Binding IsModified}" Value="True">
+                                <Setter TargetName="Dot" Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding HasErrors}" Value="True">
+                                <Setter TargetName="Badge" Property="Visibility" Value="Visible" />
+                                <Setter TargetName="Sub" Property="Foreground" Value="{DynamicResource Brush.Text.Error}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsCompact, ElementName=Root}" Value="True">
+                                <Setter TargetName="Row" Property="Height" Value="40" />
+                                <Setter TargetName="Row" Property="Width" Value="40" />
+                                <Setter TargetName="Texts" Property="Visibility" Value="Collapsed" />
+                                <Setter TargetName="Dot" Property="Visibility" Value="Collapsed" />
+                                <Setter TargetName="Badge" Property="Width" Value="8" />
+                                <Setter TargetName="Badge" Property="Height" Value="8" />
+                                <Setter TargetName="Badge" Property="VerticalAlignment" Value="Top" />
+                                <Setter TargetName="Badge" Property="Margin" Value="0,6,6,0" />
+                                <Setter Property="ToolTip" Value="{Binding ToolTip}" />
+                            </DataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Диалоги -->
+        <DataTemplate DataType="{x:Type vm:MessageDialogViewModel}">
+            <v:MessageDialogView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:GenerationDialogViewModel}">
+            <v:GenerationDialogView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:SaveProfileDialogViewModel}">
+            <v:SaveProfileDialogView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ShareDialogViewModel}">
+            <v:ShareDialogView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:DetectDialogViewModel}">
+            <v:DetectDialogView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ZoomDialogViewModel}">
+            <v:ZoomDialogView />
+        </DataTemplate>
+    </Window.Resources>
+
+    <Grid x:Name="LayoutRoot">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition x:Name="NavColumn" Width="240" />
+            <ColumnDefinition Width="*" MinWidth="440" />
+            <ColumnDefinition x:Name="PreviewColumn" Width="400" />
+        </Grid.ColumnDefinitions>
+
+        <!-- ================================================= Редактор -->
+        <Border Grid.Column="1" Background="{DynamicResource Brush.Bg.Layer}" BorderBrush="{DynamicResource Brush.Stroke.Card}"
+                BorderThickness="1,1,1,0" CornerRadius="8,8,0,0" Margin="0,0,0,0" ClipToBounds="True"
+                KeyboardNavigation.TabNavigation="Local" KeyboardNavigation.TabIndex="1">
+            <ContentControl x:Name="Editor" Focusable="False" Content="{Binding}">
+                <ContentControl.Style>
+                    <Style TargetType="ContentControl">
+                        <Setter Property="ContentTemplate">
+                            <Setter.Value>
+                                <DataTemplate><v:TypePage /></DataTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding CurrentPage}" Value="TitlePage">
+                                <Setter Property="ContentTemplate"><Setter.Value><DataTemplate><v:TitlePageView /></DataTemplate></Setter.Value></Setter>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding CurrentPage}" Value="Rules">
+                                <Setter Property="ContentTemplate"><Setter.Value><DataTemplate><v:RulesPage /></DataTemplate></Setter.Value></Setter>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding CurrentPage}" Value="Structure">
+                                <Setter Property="ContentTemplate"><Setter.Value><DataTemplate><v:StructurePage /></DataTemplate></Setter.Value></Setter>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding CurrentPage}" Value="Settings">
+                                <Setter Property="ContentTemplate"><Setter.Value><DataTemplate><v:SettingsPage /></DataTemplate></Setter.Value></Setter>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ContentControl.Style>
+            </ContentControl>
+        </Border>
+
+        <!-- ================================================= Предпросмотр и создание -->
+        <v:PreviewPane Grid.Column="2" KeyboardNavigation.TabIndex="2" />
+
+        <!-- ================================================= Навигация (поверх колонки, чтобы раскрываться в компактном режиме) -->
+        <Border x:Name="NavHost" Grid.Column="0" Grid.ColumnSpan="2" HorizontalAlignment="Left" Width="240"
+                Background="{DynamicResource Brush.Bg.Window}" KeyboardNavigation.TabNavigation="Local" KeyboardNavigation.TabIndex="0"
+                Panel.ZIndex="5">
+            <Grid Margin="0,8">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Button x:Name="Burger" Style="{StaticResource Button.Icon}" Width="40" Height="40" Margin="4,0,0,4" HorizontalAlignment="Left"
+                        Visibility="Collapsed" Click="OnBurger" AutomationProperties.Name="Развернуть навигацию" ToolTip="Развернуть навигацию">
+                    <TextBlock Text="&#xE700;" Style="{StaticResource Icon}" Foreground="{DynamicResource Brush.Text.Primary}" />
+                </Button>
+                <ListBox x:Name="NavList" Grid.Row="1" ItemsSource="{Binding Nav}" SelectedItem="{Binding SelectedNav, Mode=TwoWay}"
+                         ItemContainerStyle="{StaticResource NavItem}" Background="Transparent" BorderThickness="0"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled" KeyboardNavigation.TabNavigation="Once"
+                         AutomationProperties.Name="Разделы" SelectionChanged="OnNavSelected">
+                    <ListBox.Template>
+                        <ControlTemplate TargetType="ListBox">
+                            <ItemsPresenter />
+                        </ControlTemplate>
+                    </ListBox.Template>
+                </ListBox>
+                <StackPanel Grid.Row="2">
+                    <Border Height="1" Margin="12,0,12,4" Background="{DynamicResource Brush.Stroke.Divider}" />
+                    <Button x:Name="SettingsButton" Margin="4,0" Height="36" Style="{StaticResource Button.Subtle}"
+                            HorizontalContentAlignment="Stretch" Padding="0" Click="OnSettings"
+                            AutomationProperties.Name="Параметры" ToolTip="Параметры (Ctrl+,)">
+                        <Grid>
+                            <Border x:Name="SettingsBar" Width="3" Height="16" CornerRadius="1.5" HorizontalAlignment="Left"
+                                    Background="{DynamicResource Brush.Accent.Default}"
+                                    Visibility="{Binding CurrentPage, Converter={StaticResource Equals}, ConverterParameter=Settings}" />
+                            <TextBlock Text="&#xE713;" Style="{StaticResource Icon}" HorizontalAlignment="Left" Margin="12,0,0,0"
+                                       Foreground="{DynamicResource Brush.Text.Primary}" />
+                            <TextBlock x:Name="SettingsText" Text="Параметры" Margin="44,0,0,0" VerticalAlignment="Center" />
+                        </Grid>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ================================================= Перетаскивание профиля -->
+        <Border x:Name="DropOverlay" Grid.ColumnSpan="3" Visibility="Collapsed" Panel.ZIndex="20" IsHitTestVisible="False"
+                Background="{DynamicResource Brush.Fill.AccentSubtle}" Opacity="0.95">
+            <Grid Margin="24">
+                <Rectangle RadiusX="8" RadiusY="8" StrokeThickness="2" StrokeDashArray="4 3" Stroke="{DynamicResource Brush.Accent.Default}" />
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <TextBlock x:Name="DropIcon" Text="&#xE8B5;" Style="{StaticResource Icon}" FontSize="32" Foreground="{DynamicResource Brush.Accent.Default}" />
+                    <TextBlock x:Name="DropText" Text="Отпустите, чтобы импортировать профиль" Style="{StaticResource Text.Subtitle}" Margin="0,12,0,0" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ================================================= Слой диалогов (12.14) -->
+        <Grid x:Name="DialogLayer" Grid.ColumnSpan="3" Panel.ZIndex="30"
+              Visibility="{Binding HasDialog, Converter={StaticResource BoolToVisibility}}"
+              KeyboardNavigation.TabNavigation="Cycle" KeyboardNavigation.ControlTabNavigation="Cycle"
+              KeyboardNavigation.DirectionalNavigation="Contained" FocusManager.IsFocusScope="False">
+            <Border Background="{DynamicResource Brush.Bg.Smoke}" MouseDown="OnSmokeClick" />
+            <ContentControl x:Name="DialogContent" Content="{Binding Dialog}" Focusable="False" HorizontalAlignment="Center"
+                            VerticalAlignment="Center" Margin="24" />
+        </Grid>
+    </Grid>
+</Window>

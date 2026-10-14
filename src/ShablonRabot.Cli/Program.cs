@@ -1,0 +1,43 @@
+using ShablonRabot.Core;
+
+// shablon <профиль.json | kursovaya | vkr | eskd | referat | practice | kontrolnaya | dissertation> -o файл.docx [--pdf] [--no-word]
+if (args.Length == 0)
+{
+    Console.WriteLine("Использование: shablon <профиль.json | kursovaya | vkr | eskd | referat | practice | kontrolnaya | dissertation> -o файл.docx [--pdf] [--no-word]");
+    return 1;
+}
+
+// shablon detect <файл> | shablon detect --text "требования"
+if (args[0] == "detect")
+{
+    Console.OutputEncoding = System.Text.Encoding.UTF8;
+    var detection = args[1] == "--text"
+        ? ShablonRabot.Core.Detection.RequirementsParser.Parse(args[2])
+        : ShablonRabot.Core.Detection.SampleAnalyzer.AnalyzeFile(args[1]);
+    foreach (var r in detection.Rules.OrderBy(r => Array.IndexOf(ShablonRabot.Core.Detection.Rules.Order, r.Key)))
+        Console.WriteLine($"{r.Name,-34} {r.Display,-28} {r.Confidence,-6} {r.Evidence}");
+    var v = detection.Verdict!;
+    Console.WriteLine($"=> {v.Title}. {v.Summary(detection.Rules.Count)}");
+    foreach (var d in v.Differences) Console.WriteLine($"   - {d.Name} — {d.Found}, по ГОСТ {d.Required}");
+    return 0;
+}
+
+var source = args[0];
+var profile = BuiltInProfiles.All.Any(p => p.Id == source) ? BuiltInProfiles.Load(source) : ProfileJson.LoadForImport(source);
+var outIndex = Array.IndexOf(args, "-o");
+var output = outIndex >= 0 ? args[outIndex + 1] : $"{profile.Name}.docx";
+
+var result = TemplateService.Generate(profile, Path.GetFullPath(output), pdf: args.Contains("--pdf"),
+    useWord: !args.Contains("--no-word"), progress: new Progress<GenerationStage>(s => Console.WriteLine($"… {s}")));
+Console.WriteLine($"Готово: {result.DocxPath}{(result.PdfPath != null ? " + PDF" : "")}");
+if (!result.FieldsUpdated) Console.WriteLine($"Поля не обновлены Word ({result.WordIssue}{(result.WordError != null ? ": " + result.WordError : "")}) — обновятся при открытии файла.");
+
+if (args.Contains("--validate"))
+{
+    using var doc = DocumentFormat.OpenXml.Packaging.WordprocessingDocument.Open(result.DocxPath, false);
+    var errors = new DocumentFormat.OpenXml.Validation.OpenXmlValidator().Validate(doc).ToList();
+    foreach (var e in errors.Take(20)) Console.WriteLine($"XML: {e.Description} @ {e.Path?.XPath}");
+    Console.WriteLine($"Ошибок схемы: {errors.Count}");
+    return errors.Count == 0 ? 0 : 2;
+}
+return 0;

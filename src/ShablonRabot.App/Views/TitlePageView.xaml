@@ -1,0 +1,134 @@
+<UserControl x:Class="ShablonRabot.App.Views.TitlePageView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:ShablonRabot.App.Controls">
+    <!-- Раздел «Титульный лист» (DESIGN.md 4.2) -->
+    <UserControl.Resources>
+        <DataTemplate x:Key="Field">
+            <StackPanel>
+                <TextBlock x:Name="Lbl" Text="{Binding Label}" Style="{StaticResource FieldLabel}" />
+                <TextBox x:Name="Box" Text="{Binding Value, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"
+                         c:Input.Placeholder="{Binding Placeholder}" c:Input.FieldKey="{Binding Key}"
+                         MaxLength="{Binding MaxLength}"
+                         AutomationProperties.Name="{Binding Label}" AutomationProperties.HelpText="{Binding HelpOrError}" />
+                <ComboBox x:Name="Combo" Visibility="Collapsed" IsEditable="True" Width="Auto" ItemsSource="{Binding Options}"
+                          Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" c:Input.FieldKey="{Binding Key}"
+                          c:Input.Placeholder="{Binding Placeholder}" AutomationProperties.Name="{Binding Label}" />
+                <!-- Подсказка или ошибка под полем -->
+                <TextBlock x:Name="Help" Text="{Binding Help}" Style="{StaticResource FieldHelp}"
+                           Visibility="{Binding Help, Converter={StaticResource NullToCollapsed}}" />
+                <ContentControl x:Name="Err" Content="{Binding Error}" ContentTemplate="{StaticResource ErrorLine}" Style="{StaticResource MessageHost}" />
+                <!-- Умная подсказка -->
+                <Grid Margin="0,4,0,0" Visibility="{Binding Tip, Converter={StaticResource NullToCollapsed}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="&#xEA80;" Style="{StaticResource Icon}" FontSize="12" Foreground="{DynamicResource Brush.Text.Secondary}"
+                               VerticalAlignment="Top" Margin="0,2,6,0" />
+                    <TextBlock Grid.Column="1" Style="{StaticResource Text.Caption}" TextWrapping="Wrap">
+                        <Run Text="{Binding Tip, Mode=OneWay}" />
+                        <Hyperlink Command="{Binding FixCommand}" Foreground="{DynamicResource Brush.Accent.Text}" TextDecorations="{x:Null}"
+                                   FocusVisualStyle="{StaticResource FocusVisual}"><Run Text="{Binding TipFix, Mode=OneWay}" /></Hyperlink>
+                    </TextBlock>
+                </Grid>
+            </StackPanel>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding IsMultiline}" Value="True">
+                    <Setter TargetName="Box" Property="TextWrapping" Value="Wrap" />
+                    <Setter TargetName="Box" Property="Height" Value="56" />
+                    <Setter TargetName="Box" Property="VerticalContentAlignment" Value="Top" />
+                    <Setter TargetName="Box" Property="VerticalScrollBarVisibility" Value="Auto" />
+                    <Setter TargetName="Box" Property="c:Input.NoEnter" Value="True" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsCombo}" Value="True">
+                    <Setter TargetName="Box" Property="Visibility" Value="Collapsed" />
+                    <Setter TargetName="Combo" Property="Visibility" Value="Visible" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding HasErrors}" Value="True">
+                    <Setter TargetName="Help" Property="Visibility" Value="Collapsed" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <Style x:Key="FieldItem" TargetType="ContentPresenter">
+            <Setter Property="c:FormPanel.Half" Value="{Binding IsHalf}" />
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer x:Name="Scroll" Style="{StaticResource PageScroll}">
+        <StackPanel Style="{StaticResource PageContent}">
+            <Grid>
+                <TextBlock Text="Титульный лист" Style="{StaticResource Text.Title}" />
+                <StackPanel Style="{StaticResource StatusChip}" HorizontalAlignment="Right">
+                    <TextBlock Text="&#xE73E;" Style="{StaticResource Icon}" FontSize="12" Foreground="{DynamicResource Brush.Text.Success}" Margin="0,0,6,0" />
+                    <TextBlock Text="Сохраняется автоматически" Style="{StaticResource Text.Caption}" VerticalAlignment="Center" />
+                </StackPanel>
+            </Grid>
+            <TextBlock Style="{StaticResource PageSubtitle}"
+                       Text="Пустые поля останутся в шаблоне подсказками в [скобках] — их можно заполнить позже прямо в Word." />
+            <WrapPanel Style="{StaticResource CommandBar}">
+                <Button Style="{StaticResource CommandSubtle}" Command="{Binding ClearFieldsCommand}" Tag="&#xE894;"
+                        ContentTemplate="{StaticResource IconText}" Content="Очистить _поля" />
+            </WrapPanel>
+            <c:InfoBar Margin="0,8,0,0" DataContext="{Binding InfoBar}" />
+
+            <ItemsControl ItemsSource="{Binding Fields.Groups}" Focusable="False">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel>
+                            <Grid Margin="0,24,0,8">
+                                <TextBlock Text="{Binding Title}" Style="{StaticResource Text.BodyStrong}" />
+                                <TextBlock Text="{Binding Counter}" Style="{StaticResource Text.Caption}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                            </Grid>
+                            <Border Style="{StaticResource Card}" Padding="20,16">
+                                <StackPanel>
+                                    <ItemsControl ItemsSource="{Binding Fields}" ItemTemplate="{StaticResource Field}" Focusable="False"
+                                                  ItemContainerStyle="{StaticResource FieldItem}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <c:FormPanel />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                    </ItemsControl>
+                                    <!-- Блок «Шапка»: министерство и тип учреждения -->
+                                    <StackPanel Visibility="{Binding HasHeader, Converter={StaticResource BoolToVisibility}}">
+                                        <Border Height="1" Background="{DynamicResource Brush.Stroke.Divider}" Margin="0,16,0,4" />
+                                        <Expander Margin="-8,0" AutomationProperties.Name="Шапка: министерство и тип учреждения">
+                                            <Expander.Header>
+                                                <Grid>
+                                                    <TextBlock Text="Шапка: министерство и тип учреждения" Style="{StaticResource Text.Body}" />
+                                                    <TextBlock Text="{Binding HeaderState}" Style="{StaticResource Text.Caption}" HorizontalAlignment="Right"
+                                                               VerticalAlignment="Center" Margin="0,0,24,0" />
+                                                </Grid>
+                                            </Expander.Header>
+                                            <StackPanel Margin="8,8,8,0">
+                                                <ItemsControl ItemsSource="{Binding HeaderFields}" ItemTemplate="{StaticResource Field}" Focusable="False">
+                                                    <ItemsControl.ItemsPanel>
+                                                        <ItemsPanelTemplate>
+                                                            <c:FormPanel />
+                                                        </ItemsPanelTemplate>
+                                                    </ItemsControl.ItemsPanel>
+                                                </ItemsControl>
+                                                <Button Content="Вернуть по умолчанию" Style="{StaticResource Button.Link}" HorizontalAlignment="Left"
+                                                        Margin="0,8,0,0" FontSize="12" Command="{Binding ResetHeaderCommand}"
+                                                        Visibility="{Binding HeaderChanged, Converter={StaticResource BoolToVisibility}}" />
+                                            </StackPanel>
+                                        </Expander>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <Button Style="{StaticResource NextButton}" AutomationProperties.Name="Далее: правила оформления" Command="{Binding NavigateCommand}" CommandParameter="Rules">
+                <StackPanel Orientation="Horizontal">
+                    <AccessText Text="_Далее: правила оформления" VerticalAlignment="Center" />
+                    <TextBlock Text="&#xE72A;" Style="{StaticResource Icon}" Margin="8,0,0,0" />
+                </StackPanel>
+            </Button>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

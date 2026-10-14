@@ -1,0 +1,227 @@
+<UserControl x:Class="ShablonRabot.App.Views.GenerationDialogView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:ShablonRabot.App.Controls">
+    <!-- Диалог «Создание шаблона» (DESIGN.md 6.2): этапы → итог -->
+    <UserControl.Resources>
+        <DataTemplate x:Key="Step">
+            <StackPanel Orientation="Horizontal" Height="28">
+                <Grid Width="16" Height="16" Margin="0,0,12,0">
+                    <TextBlock x:Name="Pending" Text="&#xEA3A;" Style="{StaticResource Icon}" Foreground="{DynamicResource Brush.Text.Disabled}" />
+                    <c:Spinner x:Name="Spin" Visibility="Collapsed" />
+                    <TextBlock x:Name="Done" Text="&#xEC61;" Style="{StaticResource Icon}" Foreground="{DynamicResource Brush.Text.Success}" Visibility="Collapsed" />
+                    <TextBlock x:Name="Skip" Text="&#xE7BA;" Style="{StaticResource Icon}" Foreground="{DynamicResource Brush.Text.Warning}" Visibility="Collapsed" />
+                    <TextBlock x:Name="Fail" Text="&#xEB90;" Style="{StaticResource Icon}" Foreground="{DynamicResource Brush.Text.Error}" Visibility="Collapsed" />
+                </Grid>
+                <TextBlock x:Name="T" Text="{Binding Text}" Style="{StaticResource Text.Body}" VerticalAlignment="Center"
+                           AutomationProperties.LiveSetting="Polite" />
+            </StackPanel>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding State}" Value="Pending">
+                    <Setter TargetName="T" Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="Running">
+                    <Setter TargetName="Pending" Property="Visibility" Value="Collapsed" />
+                    <Setter TargetName="Spin" Property="Visibility" Value="Visible" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="Done">
+                    <Setter TargetName="Pending" Property="Visibility" Value="Collapsed" />
+                    <Setter TargetName="Done" Property="Visibility" Value="Visible" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="Skipped">
+                    <Setter TargetName="Pending" Property="Visibility" Value="Collapsed" />
+                    <Setter TargetName="Skip" Property="Visibility" Value="Visible" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="Failed">
+                    <Setter TargetName="Pending" Property="Visibility" Value="Collapsed" />
+                    <Setter TargetName="Fail" Property="Visibility" Value="Visible" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <!-- Карточка файла -->
+        <Style x:Key="FileCard" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual}" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="Transparent" CornerRadius="4" Padding="0,4">
+                            <ContentPresenter />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Fill.SubtleHover}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Border Style="{StaticResource DialogCard}" AutomationProperties.Name="{Binding Title}">
+        <StackPanel>
+            <StackPanel Margin="24">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Style="{StaticResource DialogStatusIcon}" />
+                    <TextBlock x:Name="TitleText" Text="{Binding Title}" Style="{StaticResource DialogTitle}" />
+                </StackPanel>
+
+                <!-- A. Идёт создание -->
+                <StackPanel Margin="0,16,0,0" Visibility="{Binding IsProgress, Converter={StaticResource BoolToVisibility}}">
+                    <ItemsControl ItemsSource="{Binding Steps}" ItemTemplate="{StaticResource Step}" Focusable="False" />
+                    <ProgressBar Style="{StaticResource ProgressIndeterminate}" Margin="0,12,0,0" AutomationProperties.Name="Создание шаблона" />
+                    <TextBlock Text="{Binding Hint}" Style="{StaticResource Text.Caption}" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite" />
+                </StackPanel>
+
+                <!-- B/C. Готово: карточка файла -->
+                <StackPanel Margin="0,16,0,0" Visibility="{Binding HasFile, Converter={StaticResource BoolToVisibility}}">
+                    <Border Background="{DynamicResource Brush.Bg.CardSecondary}" CornerRadius="4" Padding="8,4">
+                        <StackPanel>
+                            <Button Style="{StaticResource FileCard}" Command="{Binding OpenCommand}" ToolTip="{Binding DocxPath}"
+                                    AutomationProperties.Name="{Binding DocxName, StringFormat='Открыть {0}'}">
+                                <Grid Margin="4,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="&#xE8A5;" Style="{StaticResource Icon}" FontSize="20" VerticalAlignment="Top" Margin="0,2,12,0"
+                                               Foreground="{DynamicResource Brush.Text.Primary}" />
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="{Binding DocxName}" Style="{StaticResource Text.BodyStrong}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                                        <TextBlock Text="{Binding Folder}" Style="{StaticResource Text.Caption}" TextWrapping="NoWrap" />
+                                    </StackPanel>
+                                </Grid>
+                            </Button>
+                            <Button Style="{StaticResource FileCard}" Command="{Binding OpenPdfCommand}" ToolTip="{Binding PdfPath}"
+                                    Visibility="{Binding PdfName, Converter={StaticResource NullToCollapsed}}"
+                                    AutomationProperties.Name="{Binding PdfName, StringFormat='Открыть {0}'}">
+                                <Grid Margin="4,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="&#xEA90;" Style="{StaticResource Icon}" FontSize="20" VerticalAlignment="Top" Margin="0,2,12,0"
+                                               Foreground="{DynamicResource Brush.Text.Error}" />
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="{Binding PdfName}" Style="{StaticResource Text.BodyStrong}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                                        <TextBlock Text="{Binding Folder}" Style="{StaticResource Text.Caption}" TextWrapping="NoWrap" />
+                                    </StackPanel>
+                                </Grid>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+                    <!-- C. Предупреждение -->
+                    <Border Margin="0,12,0,0" CornerRadius="4" BorderThickness="1" BorderBrush="{DynamicResource Brush.Stroke.Infobar}"
+                            Background="{DynamicResource Brush.Bg.Warning}" Padding="16,12"
+                            Visibility="{Binding WarningTitle, Converter={StaticResource NullToCollapsed}}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="&#xE7BA;" Style="{StaticResource Icon}" Foreground="{DynamicResource Brush.Text.Warning}" VerticalAlignment="Top" Margin="0,2,12,0" />
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="{Binding WarningTitle}" Style="{StaticResource Text.BodyStrong}" />
+                                <TextBlock Text="{Binding WarningText}" Style="{StaticResource Text.Body}" Margin="0,2,0,0" />
+                                <TextBlock Text="{Binding WarningPdf}" Style="{StaticResource Text.Body}" Margin="0,6,0,0"
+                                           Visibility="{Binding WarningPdf, Converter={StaticResource NullToCollapsed}}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+
+                <TextBlock Text="{Binding Text}" Style="{StaticResource Text.Body}" Margin="0,12,0,0"
+                           Visibility="{Binding Text, Converter={StaticResource NullToCollapsed}}" />
+
+                <!-- F. Подробности ошибки -->
+                <Expander Margin="-8,8,-8,0" Visibility="{Binding HasDetails, Converter={StaticResource BoolToVisibility}}" Header="Подробности" AutomationProperties.Name="Подробности">
+                    <StackPanel Margin="8,4,8,0">
+                        <TextBox Text="{Binding Details, Mode=OneWay}" IsReadOnly="True" FontFamily="{StaticResource Font.Mono}" FontSize="12"
+                                 MaxHeight="120" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top" />
+                        <Button Style="{StaticResource Button.Link}" HorizontalAlignment="Left" Margin="0,8,0,0" FontSize="12"
+                                Command="{Binding CopyDetailsCommand}">
+                            <TextBlock>
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="Скопировать подробности" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Copied}" Value="True">
+                                                <Setter Property="Text" Value="Скопировано" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Button>
+                    </StackPanel>
+                </Expander>
+            </StackPanel>
+
+            <!-- Кнопки по состоянию -->
+            <Border Style="{StaticResource DialogFooter}">
+                <Grid HorizontalAlignment="Right">
+                    <!-- A -->
+                    <UniformGrid Rows="1" Visibility="{Binding Phase, Converter={StaticResource Equals}, ConverterParameter=Progress}">
+                        <Button Style="{StaticResource DialogButton}" Content="Отмена" Command="{Binding CancelCommand}" c:Input.DefaultFocus="True" />
+                    </UniformGrid>
+                    <!-- B/C, Word не открывал файл -->
+                    <UniformGrid Rows="1" x:Name="DoneButtons">
+                        <UniformGrid.Visibility>
+                            <MultiBinding Converter="{x:Static c:Converters.AllTrue}">
+                                <Binding Path="IsDone" />
+                                <Binding Path="OpenedAutomatically" Converter="{x:Static c:Converters.Not}" />
+                            </MultiBinding>
+                        </UniformGrid.Visibility>
+                        <Button Style="{StaticResource DialogPrimary}" Command="{Binding OpenCommand}" c:Input.DefaultFocus="True" IsDefault="True" AutomationProperties.Name="Открыть">
+                            <AccessText Text="_Открыть" />
+                        </Button>
+                        <Button Style="{StaticResource DialogButton}" Command="{Binding ShowInFolderCommand}" AutomationProperties.Name="Показать в папке">
+                            <AccessText Text="Показать в _папке" />
+                        </Button>
+                        <Button Style="{StaticResource DialogButton}" Content="Закрыть" Command="{Binding CloseCommand}" IsCancel="True" />
+                    </UniformGrid>
+                    <!-- B/C, файл уже открыт в Word -->
+                    <UniformGrid Rows="1">
+                        <UniformGrid.Visibility>
+                            <MultiBinding Converter="{x:Static c:Converters.AllTrue}">
+                                <Binding Path="IsDone" />
+                                <Binding Path="OpenedAutomatically" />
+                            </MultiBinding>
+                        </UniformGrid.Visibility>
+                        <Button Style="{StaticResource DialogButton}" Command="{Binding ShowInFolderCommand}" AutomationProperties.Name="Показать в папке">
+                            <AccessText Text="Показать в _папке" />
+                        </Button>
+                        <Button Style="{StaticResource DialogPrimary}" Content="Готово" Command="{Binding CloseCommand}" c:Input.DefaultFocus="True" IsDefault="True" />
+                    </UniformGrid>
+                    <!-- D. Файл занят -->
+                    <UniformGrid Rows="1" Visibility="{Binding Phase, Converter={StaticResource Equals}, ConverterParameter=Locked}">
+                        <Button Style="{StaticResource DialogPrimary}" Command="{Binding RetryCommand}" c:Input.DefaultFocus="True" IsDefault="True" AutomationProperties.Name="Повторить">
+                            <AccessText Text="_Повторить" />
+                        </Button>
+                        <Button Style="{StaticResource DialogButton}" Command="{Binding SaveAsCommand}" AutomationProperties.Name="Сохранить как…">
+                            <AccessText Text="Сохранить _как…" />
+                        </Button>
+                        <Button Style="{StaticResource DialogButton}" Content="Отмена" Command="{Binding CloseCommand}" />
+                    </UniformGrid>
+                    <!-- E. Нет доступа -->
+                    <UniformGrid Rows="1" Visibility="{Binding Phase, Converter={StaticResource Equals}, ConverterParameter=NoAccess}">
+                        <Button Style="{StaticResource DialogPrimary}" Command="{Binding SaveAsCommand}" c:Input.DefaultFocus="True" IsDefault="True" AutomationProperties.Name="Сохранить как…">
+                            <AccessText Text="Сохранить _как…" />
+                        </Button>
+                        <Button Style="{StaticResource DialogButton}" Content="Отмена" Command="{Binding CloseCommand}" />
+                    </UniformGrid>
+                    <!-- F. Прочая ошибка -->
+                    <UniformGrid Rows="1" Visibility="{Binding Phase, Converter={StaticResource Equals}, ConverterParameter=Error}">
+                        <Button Style="{StaticResource DialogPrimary}" Command="{Binding RetryCommand}" c:Input.DefaultFocus="True" IsDefault="True" AutomationProperties.Name="Повторить">
+                            <AccessText Text="_Повторить" />
+                        </Button>
+                        <Button Style="{StaticResource DialogButton}" Content="Закрыть" Command="{Binding CloseCommand}" />
+                    </UniformGrid>
+                </Grid>
+            </Border>
+        </StackPanel>
+    </Border>
+</UserControl>

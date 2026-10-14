@@ -1,0 +1,29 @@
+<UserControl x:Class="ShablonRabot.App.Views.SaveProfileDialogView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:ShablonRabot.App.Controls">
+    <!-- Диалог 7.1 «Сохранить профиль» -->
+    <Border Style="{StaticResource DialogCard}" AutomationProperties.Name="{Binding Title}">
+        <StackPanel>
+            <StackPanel Margin="24">
+                <TextBlock Text="{Binding Title}" Style="{StaticResource DialogTitle}" />
+                <TextBlock Text="Название профиля" Style="{StaticResource FieldLabel}" Margin="0,16,0,4" />
+                <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}" c:Input.DefaultFocus="True" AutomationProperties.Name="Название профиля"
+                         AutomationProperties.HelpText="Так профиль будет называться в списке «Вид работы»." />
+                <TextBlock Text="Так профиль будет называться в списке «Вид работы»." Style="{StaticResource FieldHelp}"
+                           Visibility="{Binding Error, Converter={StaticResource ZeroToVisible}}" />
+                <ContentControl Content="{Binding Error}" ContentTemplate="{StaticResource ErrorLine}" Style="{StaticResource MessageHost}" />
+                <CheckBox IsChecked="{Binding IncludeOrg}" Margin="0,16,0,0" Content="Включить данные учебного заведения" />
+                <TextBlock Text="Вуз, институт, кафедра и город. ФИО, группа и тема в профиль не попадают." Style="{StaticResource Text.Caption}" Margin="28,0,0,0" />
+            </StackPanel>
+            <Border Style="{StaticResource DialogFooter}">
+                <UniformGrid Rows="1" HorizontalAlignment="Right">
+                    <Button Style="{StaticResource DialogPrimary}" Command="{Binding SaveCommand}" IsDefault="True" AutomationProperties.Name="Сохранить">
+                        <AccessText Text="_Сохранить…" />
+                    </Button>
+                    <Button Style="{StaticResource DialogButton}" Content="Отмена" Command="{Binding CancelCommand}" />
+                </UniformGrid>
+            </Border>
+        </StackPanel>
+    </Border>
+</UserControl>

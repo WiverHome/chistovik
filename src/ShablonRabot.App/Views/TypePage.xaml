@@ -1,0 +1,242 @@
+<UserControl x:Class="ShablonRabot.App.Views.TypePage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:ShablonRabot.App.Controls"
+             xmlns:vm="clr-namespace:ShablonRabot.App.ViewModels">
+    <!-- Раздел «Вид работы» (DESIGN.md 4.1) -->
+    <UserControl.Resources>
+        <!-- Карточка профиля: RadioButton с шаблоном (12.12) -->
+        <Style x:Key="ProfileCard" TargetType="RadioButton">
+            <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual.Card}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="MinHeight" Value="112" />
+            <Setter Property="Margin" Value="0,0,16,16" />
+            <Setter Property="GroupName" Value="Profiles" />
+            <Setter Property="IsChecked" Value="{Binding IsChecked, Mode=TwoWay}" />
+            <Setter Property="IsEnabled" Value="{Binding IsEnabled}" />
+            <Setter Property="AutomationProperties.Name" Value="{Binding AutomationName}" />
+            <Setter Property="AutomationProperties.HelpText" Value="{Binding Description}" />
+            <EventSetter Event="GotKeyboardFocus" Handler="OnCardFocus" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Bd" CornerRadius="8" BorderThickness="1" Padding="16"
+                                Background="{DynamicResource Brush.Bg.Card}" BorderBrush="{DynamicResource Brush.Stroke.Card}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="40" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Border x:Name="Tile" Width="40" Height="40" CornerRadius="6" VerticalAlignment="Top"
+                                        Background="{DynamicResource Brush.Fill.AccentSubtle}">
+                                    <TextBlock x:Name="Glyph" Text="{Binding Glyph}" Style="{StaticResource Icon}" FontSize="20"
+                                               Foreground="{DynamicResource Brush.Accent.Text}" />
+                                </Border>
+                                <StackPanel Grid.Column="1" Margin="12,0,8,0">
+                                    <TextBlock x:Name="T" Text="{Binding Title}" Style="{StaticResource Text.BodyStrong}" MaxHeight="40" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock x:Name="D" Text="{Binding Description}" Style="{StaticResource Text.Caption}" Margin="0,4,0,0"
+                                               MaxHeight="48" TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                                <Grid Grid.Column="2" VerticalAlignment="Top">
+                                    <Border x:Name="Check" Width="20" Height="20" CornerRadius="10" Visibility="Collapsed"
+                                            Background="{DynamicResource Brush.Accent.Default}">
+                                        <TextBlock Text="&#xE73E;" Style="{StaticResource Icon}" FontSize="12" Foreground="{DynamicResource Brush.Text.OnAccent}" />
+                                    </Border>
+                                    <Border x:Name="Soon" Height="20" CornerRadius="10" Padding="8,0" Visibility="Collapsed"
+                                            Background="{DynamicResource Brush.Fill.Segmented}">
+                                        <TextBlock Text="Скоро" Style="{StaticResource Text.CaptionStrong}" VerticalAlignment="Center" />
+                                    </Border>
+                                    <Button x:Name="More" Style="{StaticResource Button.Icon}" Margin="0,-6,-6,0" Visibility="Collapsed"
+                                            AutomationProperties.Name="{Binding MenuName}" ToolTip="Действия с профилем" Click="OnMore">
+                                        <TextBlock Text="&#xE712;" Style="{StaticResource Icon}" />
+                                        <Button.ContextMenu>
+                                            <ContextMenu>
+                                                <MenuItem Header="Показать файл"
+                                                          Command="{Binding Tag.ShowProfileFileCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                          CommandParameter="{Binding}">
+                                                    <MenuItem.Icon><TextBlock Text="&#xE838;" Style="{StaticResource Icon}" Foreground="{DynamicResource Brush.Text.Primary}" /></MenuItem.Icon>
+                                                </MenuItem>
+                                                <MenuItem Header="Удалить из списка"
+                                                          Command="{Binding Tag.RemoveProfileCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                          CommandParameter="{Binding}">
+                                                    <MenuItem.Icon><TextBlock Text="&#xE74D;" Style="{StaticResource Icon}" Foreground="{DynamicResource Brush.Text.Primary}" /></MenuItem.Icon>
+                                                </MenuItem>
+                                            </ContextMenu>
+                                        </Button.ContextMenu>
+                                    </Button>
+                                </Grid>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Fill.ControlHover}" />
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Brush.Stroke.ControlBottom}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Fill.ControlPressed}" />
+                            </Trigger>
+                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Brush.Accent.Default}" />
+                                <Setter TargetName="Bd" Property="BorderThickness" Value="2" />
+                                <Setter TargetName="Bd" Property="Padding" Value="15" />
+                                <Setter TargetName="Check" Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsImported}" Value="True">
+                                <Setter TargetName="More" Property="Visibility" Value="Visible" />
+                                <Setter TargetName="Check" Property="Margin" Value="0,0,36,0" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsSoon}" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Bg.CardSecondary}" />
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Brush.Stroke.Card}" />
+                                <Setter TargetName="T" Property="Foreground" Value="{DynamicResource Brush.Text.Disabled}" />
+                                <Setter TargetName="D" Property="Foreground" Value="{DynamicResource Brush.Text.Disabled}" />
+                                <Setter TargetName="Tile" Property="Background" Value="{DynamicResource Brush.Fill.Segmented}" />
+                                <Setter TargetName="Glyph" Property="Foreground" Value="{DynamicResource Brush.Text.Disabled}" />
+                                <Setter TargetName="Soon" Property="Visibility" Value="Visible" />
+                                <Setter Property="Cursor" Value="Arrow" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsBroken}" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Brush.Text.Error}" />
+                                <Setter TargetName="D" Property="Foreground" Value="{DynamicResource Brush.Text.Error}" />
+                                <Setter TargetName="More" Property="IsEnabled" Value="True" />
+                            </DataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <ItemsPanelTemplate x:Key="CardGrid">
+            <UniformGrid Columns="2" Margin="0,0,-16,-16" />
+        </ItemsPanelTemplate>
+    </UserControl.Resources>
+
+    <ScrollViewer Style="{StaticResource PageScroll}">
+        <StackPanel Style="{StaticResource PageContent}">
+            <TextBlock Text="Вид работы" Style="{StaticResource Text.Title}" />
+            <TextBlock Style="{StaticResource PageSubtitle}"
+                       Text="Выберите, какую работу оформляете. От этого зависят поля титульного листа и состав разделов." />
+            <WrapPanel Style="{StaticResource CommandBar}">
+                <Button Style="{StaticResource CommandButton}" Command="{Binding ImportCommand}" Tag="&#xE8B5;"
+                        ContentTemplate="{StaticResource IconText}" Content="_Импортировать профиль…" ToolTip="Импортировать профиль (Ctrl+O)" />
+            </WrapPanel>
+
+            <c:InfoBar Margin="0,8,0,0" DataContext="{Binding InfoBar}" />
+            <Border Style="{StaticResource Card}" Background="{DynamicResource Brush.Bg.Info}" Padding="16,12,8,12" Margin="0,8,0,0"
+                    Visibility="{Binding ShowWelcome, Converter={StaticResource BoolToVisibility}}"
+                    AutomationProperties.LiveSetting="Polite">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="&#xE946;" Style="{StaticResource Icon}" VerticalAlignment="Top" Margin="0,2,12,0"
+                               Foreground="{DynamicResource Brush.Accent.Default}" />
+                    <StackPanel Grid.Column="1">
+                        <TextBlock Text="Добро пожаловать!" Style="{StaticResource Text.BodyStrong}" />
+                        <TextBlock Style="{StaticResource Text.Body}" Margin="0,2,0,0"
+                                   Text="Шаблон создаётся за три шага: выберите вид работы, заполните титульный лист и нажмите «Создать шаблон». Не знаете, какой у вас ГОСТ? Загрузите пример работы или вставьте требования методички — правила определятся сами." />
+                    </StackPanel>
+                    <Button Grid.Column="2" Style="{StaticResource Button.Icon}" VerticalAlignment="Top" Command="{Binding DismissWelcomeCommand}"
+                            AutomationProperties.Name="Закрыть уведомление" ToolTip="Закрыть уведомление">
+                        <TextBlock Text="&#xE711;" Style="{StaticResource Icon}" />
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- Блок-приглашение: определить правила по примеру (DESIGN.md 17.2) -->
+            <Border Margin="0,16,0,0" CornerRadius="8" BorderThickness="1" BorderBrush="{DynamicResource Brush.Stroke.Card}" Padding="16"
+                    Background="{DynamicResource Brush.Fill.AccentSubtle}" Visibility="{Binding HasDetectedSource, Converter={StaticResource BoolToCollapsedInverse}}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="40" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Border Width="40" Height="40" CornerRadius="6" Background="{DynamicResource Brush.Bg.Card}" VerticalAlignment="Top">
+                        <TextBlock Text="&#xE721;" Style="{StaticResource Icon}" FontSize="20" Foreground="{DynamicResource Brush.Accent.Text}" />
+                    </Border>
+                    <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                        <TextBlock Text="Есть пример работы или требования методички?" Style="{StaticResource Text.BodyStrong}" />
+                        <TextBlock Text="Определим поля, шрифт и интервалы сами и подскажем, на какой ГОСТ это похоже." Style="{StaticResource Text.BodySecondary}" Margin="0,2,0,0" />
+                        <WrapPanel Margin="0,12,0,0">
+                            <Button Command="{Binding DetectCommand}" CommandParameter="file" Margin="0,0,8,0" MinWidth="0" Tag="&#xE8E5;"
+                                    ContentTemplate="{StaticResource IconText}" Content="_Загрузить пример…" AutomationProperties.Name="Загрузить пример работы"
+                                    ToolTip="Определить правила по файлу работы (Ctrl+D)" />
+                            <Button Command="{Binding DetectCommand}" CommandParameter="text" MinWidth="0" Tag="&#xE77F;"
+                                    ContentTemplate="{StaticResource IconText}" Content="_Вставить требования…" AutomationProperties.Name="Вставить требования методички"
+                                    ToolTip="Определить правила по тексту требований (Ctrl+Shift+V — сразу из буфера)" />
+                        </WrapPanel>
+                    </StackPanel>
+                </Grid>
+            </Border>
+            <!-- После применения — одна строка -->
+            <Border Margin="0,16,0,0" CornerRadius="8" BorderThickness="1" BorderBrush="{DynamicResource Brush.Stroke.Card}" Padding="16,0" MinHeight="48"
+                    Background="{DynamicResource Brush.Fill.AccentSubtle}" Visibility="{Binding HasDetectedSource, Converter={StaticResource BoolToVisibility}}">
+                <DockPanel VerticalAlignment="Center">
+                    <TextBlock Text="&#xE721;" Style="{StaticResource Icon}" Margin="0,0,12,0" Foreground="{DynamicResource Brush.Accent.Text}" DockPanel.Dock="Left" />
+                    <Button DockPanel.Dock="Right" Style="{StaticResource Button.Link}" Content="Определить заново" Command="{Binding DetectCommand}" CommandParameter="file" Margin="12,0,0,0" />
+                    <TextBlock Text="{Binding DetectedSourceText}" Style="{StaticResource Text.Body}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" VerticalAlignment="Center" />
+                </DockPanel>
+            </Border>
+
+            <TextBlock Text="Встроенные профили" Style="{StaticResource GroupTitle}" />
+            <ItemsControl ItemsSource="{Binding BuiltInCards}" ItemsPanel="{StaticResource CardGrid}" Focusable="False"
+                          KeyboardNavigation.DirectionalNavigation="Contained">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <RadioButton Style="{StaticResource ProfileCard}" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <TextBlock Text="Профили кафедр" Style="{StaticResource GroupTitle}" Margin="0,32,0,0" />
+            <TextBlock Style="{StaticResource Text.Caption}" Margin="0,0,0,8"
+                       Text="Профиль — файл .json с правилами методички. Его может выдать кафедра или руководитель." />
+            <ItemsControl ItemsSource="{Binding ImportedTiles}" ItemsPanel="{StaticResource CardGrid}" Focusable="False">
+                <ItemsControl.Resources>
+                    <DataTemplate DataType="{x:Type vm:ProfileCard}">
+                        <RadioButton Style="{StaticResource ProfileCard}" />
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type vm:ImportTile}">
+                <Button Command="{Binding DataContext.ImportCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" MinHeight="112" Margin="0,0,16,16" FocusVisualStyle="{StaticResource FocusVisual.Card}" Cursor="Hand"
+                        AutomationProperties.Name="Импортировать профиль" HorizontalContentAlignment="Stretch">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Grid x:Name="G" Background="Transparent">
+                                <Rectangle RadiusX="8" RadiusY="8" StrokeDashArray="4 3" Stroke="{DynamicResource Brush.Stroke.ControlStrong}" StrokeThickness="1" />
+                                <Grid Margin="16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="40" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Width="40" Height="40" CornerRadius="6" VerticalAlignment="Top" Background="{DynamicResource Brush.Fill.Segmented}">
+                                        <TextBlock Text="&#xE710;" Style="{StaticResource Icon}" FontSize="20" Foreground="{DynamicResource Brush.Text.Primary}" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                                        <TextBlock Text="Импортировать профиль…" Style="{StaticResource Text.BodyStrong}" />
+                                        <TextBlock Text="Выберите файл .json или перетащите его в окно." Style="{StaticResource Text.Caption}" Margin="0,4,0,0" />
+                                    </StackPanel>
+                                </Grid>
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="G" Property="Background" Value="{DynamicResource Brush.Fill.SubtleHover}" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+                    </DataTemplate>
+                </ItemsControl.Resources>
+            </ItemsControl>
+
+            <Button Style="{StaticResource NextButton}" AutomationProperties.Name="Далее: титульный лист" Command="{Binding NavigateCommand}" CommandParameter="TitlePage">
+                <StackPanel Orientation="Horizontal">
+                    <AccessText Text="_Далее: титульный лист" VerticalAlignment="Center" />
+                    <TextBlock Text="&#xE72A;" Style="{StaticResource Icon}" Margin="8,0,0,0" />
+                </StackPanel>
+            </Button>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -1,0 +1,38 @@
+{
+  "_comment": "Профиль «ВКР / диплом». Наследует всё из kursovaya.json и переопределяет только отличия.",
+  "extends": "kursovaya.json",
+  "name": "Выпускная квалификационная работа",
+
+  "fields": {
+    "work_type": "ВЫПУСКНАЯ КВАЛИФИКАЦИОННАЯ РАБОТА",
+    "work_kind": "(бакалаврская работа)",
+    "specialty": "[код] [Наименование направления подготовки]",
+    "profile": "[Направленность (профиль)]",
+    "head_position": "[должность, учёная степень]",
+    "head": "И. О. Фамилия",
+    "normcontrol": "И. О. Фамилия"
+  },
+
+  "title_page": {
+    "blocks": [
+      { "type": "lines", "align": "center", "lines": ["{ministry}", "{org_form}", "«{university}»"] },
+      { "type": "lines", "align": "center", "space_before_pt": 12, "lines": ["{institute}", "Кафедра {department}"] },
+      { "type": "lines", "align": "left", "indent_left_cm": 9, "space_before_pt": 24, "lines": [
+        "ДОПУСТИТЬ К ЗАЩИТЕ",
+        "Заведующий кафедрой",
+        "{head_position}",
+        "________________ {head}",
+        "«___» _______________ {year} г."
+      ] },
+      { "type": "lines", "align": "center", "space_before_pt": 48, "bold": true, "size_pt": 16, "lines": ["{work_type}"] },
+      { "type": "lines", "align": "center", "lines": ["{work_kind}"] },
+      { "type": "lines", "align": "center", "space_before_pt": 12, "bold": true, "lines": ["на тему: «{topic}»"] },
+      { "type": "lines", "align": "center", "space_before_pt": 12, "lines": ["по направлению подготовки {specialty}", "направленность (профиль) «{profile}»"] },
+      { "type": "signatures", "space_before_pt": 60, "col_widths_cm": [6.5, 9], "rows": [
+        ["Обучающийся\nгруппы {group}", "________________ {student}"],
+        ["Руководитель\n{supervisor_position}", "________________ {supervisor}"],
+        ["Нормоконтролёр", "________________ {normcontrol}"]
+      ] }
+    ]
+  }
+}

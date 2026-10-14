@@ -1,0 +1,407 @@
+<UserControl x:Class="ShablonRabot.App.Views.DetectDialogView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:ShablonRabot.App.Controls"
+             xmlns:v="clr-namespace:ShablonRabot.App.Views">
+    <!-- Диалог «Определить правила по примеру» (DESIGN.md 17.4) -->
+    <UserControl.InputBindings>
+        <KeyBinding Key="Enter" Modifiers="Ctrl" Command="{Binding ApplyOrAnalyzeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+        <KeyBinding Key="O" Modifiers="Ctrl" Command="{Binding ChooseFileCommand}" />
+    </UserControl.InputBindings>
+    <UserControl.Resources>
+        <Style x:Key="Pill" TargetType="Border">
+            <Setter Property="Height" Value="20" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="8,0" />
+            <Setter Property="Margin" Value="8,0,0,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Background" Value="{DynamicResource Brush.Fill.Segmented}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Rule.Confidence}" Value="High">
+                    <Setter Property="Background" Value="{DynamicResource Brush.Bg.Success}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Rule.Confidence}" Value="Low">
+                    <Setter Property="Background" Value="{DynamicResource Brush.Bg.Warning}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="PillText" TargetType="TextBlock" BasedOn="{StaticResource Text.CaptionStrong}">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Rule.Confidence}" Value="High">
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Success}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Rule.Confidence}" Value="Low">
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Warning}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="Row" TargetType="Border">
+            <Setter Property="Padding" Value="16,12" />
+            <Setter Property="MinHeight" Value="56" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource Brush.Fill.SubtleHover}" />
+                </Trigger>
+                <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource Brush.Fill.AccentSubtle}" />
+                </Trigger>
+                <DataTrigger Binding="{Binding IsSame}" Value="True">
+                    <Setter Property="Cursor" Value="Arrow" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <!-- Строка найденного правила (17.4.5) -->
+        <DataTemplate x:Key="RuleRow">
+            <StackPanel>
+                <Border Style="{StaticResource Row}" MouseLeftButtonUp="OnRowClick">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="32" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" MaxWidth="220" />
+                        </Grid.ColumnDefinitions>
+                        <CheckBox x:Name="Check" IsChecked="{Binding IsChecked}" VerticalAlignment="Top" MinHeight="20"
+                                  AutomationProperties.Name="{Binding AutomationName}" />
+                        <TextBlock x:Name="SameIcon" Text="&#xE73E;" Style="{StaticResource Icon}" VerticalAlignment="Top" HorizontalAlignment="Left"
+                                   Margin="2,2,0,0" Foreground="{DynamicResource Brush.Text.Success}" Visibility="Collapsed" />
+                        <StackPanel Grid.Column="1" Margin="0,0,16,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock x:Name="RuleName" Text="{Binding Name}" Style="{StaticResource Text.Body}" />
+                                <Border Style="{StaticResource Pill}">
+                                    <TextBlock Text="{Binding ConfidenceText}" Style="{StaticResource PillText}" />
+                                </Border>
+                            </StackPanel>
+                            <TextBlock Text="{Binding Evidence}" Style="{StaticResource Text.Caption}" Margin="0,2,0,0" MaxHeight="32"
+                                       TextTrimming="CharacterEllipsis" ToolTip="{Binding Evidence}" />
+                            <ContentControl Content="{Binding PartialHint}" Style="{StaticResource MessageHost}">
+                                <ContentControl.ContentTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}" Style="{StaticResource Text.Caption}" Margin="0,2,0,0" />
+                                    </DataTemplate>
+                                </ContentControl.ContentTemplate>
+                            </ContentControl>
+                            <StackPanel x:Name="LowHint" Orientation="Horizontal" Margin="0,2,0,0" Visibility="Collapsed">
+                                <TextBlock Text="&#xE7BA;" Style="{StaticResource Icon}" FontSize="12" Margin="0,0,6,0" Foreground="{DynamicResource Brush.Text.Warning}" />
+                                <TextBlock Text="Определено неуверенно — проверьте значение." Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Text.Warning}" />
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" HorizontalAlignment="Right">
+                            <TextBlock x:Name="Value" Text="{Binding Value}" Style="{StaticResource Text.BodyStrong}" TextAlignment="Right" TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding CurrentText}" Style="{StaticResource Text.Caption}" TextAlignment="Right" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+                <Border Style="{StaticResource Divider}" />
+            </StackPanel>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding IsSame}" Value="True">
+                    <Setter TargetName="Check" Property="Visibility" Value="Collapsed" />
+                    <Setter TargetName="SameIcon" Property="Visibility" Value="Visible" />
+                    <Setter TargetName="RuleName" Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+                    <Setter TargetName="Value" Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsLow}" Value="True">
+                    <Setter TargetName="LowHint" Property="Visibility" Value="Visible" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <Border Style="{StaticResource DialogCard}" Width="640" AutomationProperties.Name="Определить правила по примеру"
+            MaxHeight="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType=Window}, Converter={x:Static v:DetectDialogView.MaxHeightConverter}}">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- Шапка -->
+            <StackPanel Margin="24,24,24,16">
+                <TextBlock Text="Определить правила по примеру" Style="{StaticResource DialogTitle}" />
+                <ListBox Style="{StaticResource Segmented}" Margin="0,16,0,0" SelectedIndex="{Binding SourceIndex}" ItemsSource="{Binding Sources}"
+                         AutomationProperties.Name="Источник правил" IsEnabled="{Binding IsAnalyzing, Converter={x:Static c:Converters.Not}}" />
+            </StackPanel>
+
+            <!-- Тело -->
+            <ScrollViewer Grid.Row="1" Style="{StaticResource PageScroll}" x:Name="Body">
+                <StackPanel Margin="24,0,24,24">
+
+                    <!-- Выбор: пример работы -->
+                    <StackPanel x:Name="ChooseFile">
+                        <StackPanel.Visibility>
+                            <MultiBinding Converter="{x:Static c:Converters.AllTrue}">
+                                <Binding Path="IsChoose" />
+                                <Binding Path="IsFileSource" />
+                            </MultiBinding>
+                        </StackPanel.Visibility>
+                        <Button x:Name="DropZone" Height="168" Command="{Binding ChooseFileCommand}" FocusVisualStyle="{StaticResource FocusVisual.Card}"
+                                Cursor="Hand" AllowDrop="True" AutomationProperties.Name="Выбрать файл примера"
+                                AutomationProperties.HelpText=".docx — точнее всего. .doc, .rtf и .odt откроет Microsoft Word, PDF читается приблизительно.">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Grid x:Name="G" Background="Transparent">
+                                        <Rectangle RadiusX="8" RadiusY="8" StrokeDashArray="4 3" Stroke="{DynamicResource Brush.Stroke.ControlStrong}" StrokeThickness="1" />
+                                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                            <TextBlock Text="&#xE8E5;" Style="{StaticResource Icon}" FontSize="32" Foreground="{DynamicResource Brush.Text.Secondary}" />
+                                            <TextBlock Text="Перетащите сюда файл работы или выберите его" Style="{StaticResource Text.Body}" Margin="0,12,0,0" HorizontalAlignment="Center" />
+                                            <Border Background="{DynamicResource Brush.Fill.Control}" BorderBrush="{DynamicResource Brush.Stroke.Control}" BorderThickness="1"
+                                                    CornerRadius="4" Padding="12,5" Margin="0,12,0,0" HorizontalAlignment="Center">
+                                                <TextBlock Text="Выбрать файл…" Style="{StaticResource Text.Body}" />
+                                            </Border>
+                                            <TextBlock Style="{StaticResource Text.Caption}" Margin="0,12,0,0" HorizontalAlignment="Center" TextAlignment="Center"
+                                                       Text="{Binding FormatsText, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                                        </StackPanel>
+                                    </Grid>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="G" Property="Background" Value="{DynamicResource Brush.Fill.SubtleHover}" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                            <TextBlock Text="&#xEA80;" Style="{StaticResource Icon}" FontSize="12" Margin="0,2,6,0" VerticalAlignment="Top" Foreground="{DynamicResource Brush.Text.Secondary}" />
+                            <TextBlock Text="Лучше всего подходит работа, которую уже принял нормоконтроль, или образец с кафедры." Style="{StaticResource Text.Caption}" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Выбор: текст требований -->
+                    <StackPanel>
+                        <StackPanel.Visibility>
+                            <MultiBinding Converter="{x:Static c:Converters.AllTrue}">
+                                <Binding Path="IsChoose" />
+                                <Binding Path="IsFileSource" Converter="{x:Static c:Converters.Not}" />
+                            </MultiBinding>
+                        </StackPanel.Visibility>
+                        <TextBox x:Name="RequirementsInput" MinHeight="200" MaxHeight="320" AcceptsReturn="True" TextWrapping="Wrap" VerticalContentAlignment="Top"
+                                 VerticalScrollBarVisibility="Auto" MaxLength="20000" Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}"
+                                 AutomationProperties.Name="Текст требований" AutomationProperties.HelpText="{Binding TextError}"
+                                 c:Input.Placeholder="Вставьте требования из методички или сообщения преподавателя. Например: «Поля: левое — 30 мм, правое — 10 мм, верхнее и нижнее — 20 мм. Шрифт Times New Roman, 14 пт, интервал полуторный, абзацный отступ 1,25 см»." />
+                        <ContentControl Content="{Binding TextError}" ContentTemplate="{StaticResource ErrorLine}" Style="{StaticResource MessageHost}" />
+                        <Grid Margin="0,4,0,0" MinHeight="32">
+                            <TextBlock Text="Подойдёт любой текст на русском. Картинки и скриншоты не распознаются." Style="{StaticResource Text.Caption}" VerticalAlignment="Center" Margin="0,0,180,0" />
+                            <Button HorizontalAlignment="Right" Style="{StaticResource Button.Subtle}" Command="{Binding PasteCommand}" Tag="&#xE77F;"
+                                    ContentTemplate="{StaticResource IconText}" Content="Вставить из буфера" AutomationProperties.Name="Вставить из буфера" />
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- Приватность (в состоянии выбора) -->
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0" Visibility="{Binding IsChoose, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Text="&#xE72E;" Style="{StaticResource Icon}" FontSize="12" Margin="0,2,6,0" VerticalAlignment="Top" Foreground="{DynamicResource Brush.Text.Secondary}" />
+                        <TextBlock Text="Файл и текст обрабатываются на этом компьютере и никуда не отправляются." Style="{StaticResource Text.Caption}" />
+                    </StackPanel>
+
+                    <!-- Анализ -->
+                    <StackPanel Visibility="{Binding IsAnalyzing, Converter={StaticResource BoolToVisibility}}">
+                        <Border Background="{DynamicResource Brush.Bg.CardSecondary}" CornerRadius="4" Padding="12" Margin="0,0,0,16"
+                                Visibility="{Binding IsFileSource, Converter={StaticResource BoolToVisibility}}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="&#xE8A5;" Style="{StaticResource Icon}" FontSize="20" Margin="0,0,12,0" Foreground="{DynamicResource Brush.Text.Primary}" />
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="{Binding FileName}" Style="{StaticResource Text.BodyStrong}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                                    <TextBlock Text="{Binding FileInfo}" Style="{StaticResource Text.Caption}" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                        <StackPanel Orientation="Horizontal">
+                            <c:Spinner Margin="0,0,12,0" />
+                            <TextBlock Text="{Binding Stage}" Style="{StaticResource Text.Body}" AutomationProperties.LiveSetting="Polite" />
+                        </StackPanel>
+                        <ProgressBar Style="{StaticResource ProgressIndeterminate}" Margin="0,12,0,0" AutomationProperties.Name="Определение правил" />
+                        <TextBlock Text="Обычно несколько секунд. Если файл открывает Word — до 30 секунд." Style="{StaticResource Text.Caption}" Margin="0,8,0,0" />
+                    </StackPanel>
+
+                    <!-- Результат -->
+                    <StackPanel Visibility="{Binding IsResult, Converter={StaticResource BoolToVisibility}}">
+                        <Grid Height="32">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="&#xE8A5;" Style="{StaticResource Icon}" Margin="0,0,8,0" Foreground="{DynamicResource Brush.Text.Primary}" />
+                                <TextBlock Text="{Binding SourceLine}" Style="{StaticResource Text.Body}" TextTrimming="CharacterEllipsis" MaxWidth="420" TextWrapping="NoWrap" />
+                            </StackPanel>
+                            <Button HorizontalAlignment="Right" Style="{StaticResource Button.Link}" Content="{Binding SourceLink}" Command="{Binding BackCommand}" />
+                        </Grid>
+                        <!-- Предупреждение источника -->
+                        <Border Margin="0,8,0,0" CornerRadius="4" BorderThickness="1" BorderBrush="{DynamicResource Brush.Stroke.Infobar}" Background="{DynamicResource Brush.Bg.Warning}"
+                                Padding="16,12" Visibility="{Binding SourceWarningTitle, Converter={StaticResource NullToCollapsed}}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="&#xE7BA;" Style="{StaticResource Icon}" VerticalAlignment="Top" Margin="0,2,12,0" Foreground="{DynamicResource Brush.Text.Warning}" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource Text.Body}">
+                                    <Run Text="{Binding SourceWarningTitle, Mode=OneWay}" FontWeight="SemiBold" /> <Run Text="{Binding SourceWarningText, Mode=OneWay}" />
+                                </TextBlock>
+                            </Grid>
+                        </Border>
+                        <!-- Вердикт ГОСТ -->
+                        <Border Margin="0,16,0,0" Background="{DynamicResource Brush.Bg.CardSecondary}" CornerRadius="8" Padding="16">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="40" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Border x:Name="VerdictTile" Width="40" Height="40" CornerRadius="6" VerticalAlignment="Top">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="{DynamicResource Brush.Fill.Segmented}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding VerdictKind}" Value="Matches">
+                                                    <Setter Property="Background" Value="{DynamicResource Brush.Bg.Success}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding VerdictKind}" Value="CustomRules">
+                                                    <Setter Property="Background" Value="{DynamicResource Brush.Fill.AccentSubtle}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock FontSize="20">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock" BasedOn="{StaticResource Icon}">
+                                                <Setter Property="Text" Value="&#xE946;" />
+                                                <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding VerdictKind}" Value="Matches">
+                                                        <Setter Property="Text" Value="&#xEC61;" />
+                                                        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Success}" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding VerdictKind}" Value="CustomRules">
+                                                        <Setter Property="Foreground" Value="{DynamicResource Brush.Accent.Default}" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Border>
+                                <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                                    <TextBlock Text="{Binding VerdictTitle}" Style="{StaticResource Text.BodyStrong}" />
+                                    <TextBlock Text="{Binding VerdictText}" Style="{StaticResource Text.Body}" Margin="0,2,0,0" />
+                                    <ItemsControl ItemsSource="{Binding Differences}" Margin="0,8,0,0" Focusable="False">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Style="{StaticResource Text.Caption}"><Run Text="— " /><Run Text="{Binding Mode=OneWay}" /></TextBlock>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <Button Style="{StaticResource Button.Link}" FontSize="12" HorizontalAlignment="Left" Margin="0,4,0,0" Content="{Binding MoreDiffsText}"
+                                            Command="{Binding ToggleAllDiffsCommand}" Visibility="{Binding MoreDiffsText, Converter={StaticResource NullToCollapsed}}" />
+                                    <TextBlock Style="{StaticResource Text.Caption}" Margin="0,8,0,0"
+                                               Text="Это сравнение с эталонами ГОСТ, а не проверка нормоконтроля. Если требования кафедры отличаются, главнее они." />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                        <!-- Заголовок списка -->
+                        <Grid Height="40" Margin="0,16,0,0">
+                            <CheckBox IsChecked="{Binding AllChecked}" IsThreeState="False" Click="OnAllClick" Content="{Binding ListHeader}" VerticalAlignment="Center"
+                                      AutomationProperties.Name="{Binding ListHeader}" />
+                            <TextBlock Text="Уверенность: высокая · средняя · низкая" Style="{StaticResource Text.Caption}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                        </Grid>
+                        <!-- Найденные правила -->
+                        <Border Style="{StaticResource Card}">
+                            <ItemsControl ItemsSource="{Binding ResultGroups}" Focusable="False">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Title}" Style="{StaticResource Text.CaptionStrong}" Margin="16,8,0,4" />
+                                            <ItemsControl ItemsSource="{Binding Rows}" ItemTemplate="{StaticResource RuleRow}" Focusable="False" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Border>
+                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0" Visibility="{Binding NotFoundText, Converter={StaticResource NullToCollapsed}}">
+                            <TextBlock Text="&#xE946;" Style="{StaticResource Icon}" FontSize="12" Margin="0,2,6,0" VerticalAlignment="Top" Foreground="{DynamicResource Brush.Text.Secondary}" />
+                            <TextBlock Text="{Binding NotFoundText}" Style="{StaticResource Text.Caption}" MaxWidth="560" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Ошибка -->
+                    <Border Visibility="{Binding IsError, Converter={StaticResource BoolToVisibility}}" CornerRadius="4" BorderThickness="1"
+                            BorderBrush="{DynamicResource Brush.Stroke.Infobar}" Padding="16,12" AutomationProperties.LiveSetting="Assertive">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="{DynamicResource Brush.Bg.Error}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ErrorIsWarning}" Value="True">
+                                        <Setter Property="Background" Value="{DynamicResource Brush.Bg.Warning}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock VerticalAlignment="Top" Margin="0,2,12,0">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource Icon}">
+                                        <Setter Property="Text" Value="&#xEB90;" />
+                                        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Error}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ErrorIsWarning}" Value="True">
+                                                <Setter Property="Text" Value="&#xE7BA;" />
+                                                <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Warning}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="{Binding ErrorTitle}" Style="{StaticResource Text.BodyStrong}" />
+                                <TextBlock Text="{Binding ErrorText}" Style="{StaticResource Text.Body}" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Подвал -->
+            <Border Grid.Row="2" Style="{StaticResource DialogFooter}">
+                <Grid>
+                    <TextBlock Text="{Binding FooterText}" Style="{StaticResource Text.Caption}" VerticalAlignment="Center" MaxWidth="240" HorizontalAlignment="Left" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <!-- Текст: «Определить» -->
+                        <Button Style="{StaticResource DialogPrimary}" Command="{Binding AnalyzeTextCommand}" AutomationProperties.Name="Определить">
+                            <Button.Visibility>
+                                <MultiBinding Converter="{x:Static c:Converters.AllTrue}">
+                                    <Binding Path="IsChoose" />
+                                    <Binding Path="IsFileSource" Converter="{x:Static c:Converters.Not}" />
+                                </MultiBinding>
+                            </Button.Visibility>
+                            <AccessText Text="_Определить" />
+                        </Button>
+                        <!-- Результат: «Применить N правил» -->
+                        <Button Style="{StaticResource DialogPrimary}" Command="{Binding ApplyCommand}" Visibility="{Binding IsResult, Converter={StaticResource BoolToVisibility}}"
+                                AutomationProperties.Name="{Binding ApplyText}" IsDefault="{Binding IsResult}">
+                            <AccessText Text="{Binding ApplyText, StringFormat='_{0}'}" />
+                        </Button>
+                        <!-- Ошибки -->
+                        <Button Style="{StaticResource DialogPrimary}" Command="{Binding ChooseFileCommand}" Visibility="{Binding CanChooseOther, Converter={StaticResource BoolToVisibility}}"
+                                AutomationProperties.Name="Выбрать другой файл">
+                            <AccessText Text="_Выбрать другой файл" />
+                        </Button>
+                        <Button Style="{StaticResource DialogButton}" Command="{Binding SwitchToTextCommand}" Visibility="{Binding CanSwitchToText, Converter={StaticResource BoolToVisibility}}"
+                                AutomationProperties.Name="Вставить требования">
+                            <AccessText Text="Вставить _требования" />
+                        </Button>
+                        <Button Style="{StaticResource DialogPrimary}" Command="{Binding RetryCommand}" Visibility="{Binding CanRetry, Converter={StaticResource BoolToVisibility}}"
+                                AutomationProperties.Name="Повторить">
+                            <AccessText Text="_Повторить" />
+                        </Button>
+                        <Button Style="{StaticResource DialogButton}" Content="Отмена" Command="{Binding CancelCommand}" c:Input.DefaultFocus="True" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

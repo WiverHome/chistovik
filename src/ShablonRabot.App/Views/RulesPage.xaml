@@ -1,0 +1,250 @@
+<UserControl x:Class="ShablonRabot.App.Views.RulesPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:ShablonRabot.App.Controls"
+             xmlns:vm="clr-namespace:ShablonRabot.App.ViewModels">
+    <!-- Раздел «Правила оформления» (DESIGN.md 4.3) -->
+    <UserControl.Resources>
+        <Style TargetType="c:SettingRow" BasedOn="{StaticResource {x:Type c:SettingRow}}">
+            <Setter Property="RevertCommand" Value="{Binding Rules.RevertCommand}" />
+            <Setter Property="RevertParameter" Value="{Binding Tag, RelativeSource={RelativeSource Self}}" />
+        </Style>
+        <Style x:Key="RowDivider" TargetType="Border" BasedOn="{StaticResource Divider}" />
+    </UserControl.Resources>
+
+    <ScrollViewer Style="{StaticResource PageScroll}">
+        <StackPanel Style="{StaticResource PageContent}" DataContext="{Binding}">
+            <Grid>
+                <TextBlock Text="Правила оформления" Style="{StaticResource Text.Title}" Margin="0,0,200,0" />
+                <StackPanel Style="{StaticResource StatusChip}" HorizontalAlignment="Right">
+                    <TextBlock Text="&#xEC61;" Style="{StaticResource Icon}" FontSize="12" Foreground="{DynamicResource Brush.Text.Success}" Margin="0,0,6,0"
+                               Visibility="{Binding Rules.ChangedCount, Converter={StaticResource ZeroToVisible}}" />
+                    <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.Accent.Default}" Margin="0,0,6,0" VerticalAlignment="Center"
+                             Visibility="{Binding Rules.ChangedCount, Converter={StaticResource NullToCollapsed}}" />
+                    <TextBlock Text="{Binding Rules.StatusText}" Style="{StaticResource Text.Caption}" VerticalAlignment="Center" />
+                </StackPanel>
+            </Grid>
+            <TextBlock Style="{StaticResource PageSubtitle}"
+                       Text="{Binding Rules.DefaultsText}" />
+            <!-- Источник правил (DESIGN.md 17.8) -->
+            <WrapPanel Margin="0,8,0,0" Visibility="{Binding HasDetectedSource, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Text="&#xE721;" Style="{StaticResource Icon}" FontSize="12" Margin="0,0,6,0" Foreground="{DynamicResource Brush.Text.Secondary}" />
+                <TextBlock Text="{Binding DetectedSourceText}" Style="{StaticResource Text.Caption}" VerticalAlignment="Center" />
+                <Button Style="{StaticResource Button.Link}" FontSize="12" Margin="8,0,0,0" Content="Показать результат" Command="{Binding ShowDetectResultCommand}"
+                        Visibility="{Binding CanShowDetectResult, Converter={StaticResource BoolToVisibility}}" />
+                <Button Style="{StaticResource Button.Link}" FontSize="12" Margin="8,0,0,0" Content="Определить заново" Command="{Binding DetectCommand}" CommandParameter="file" />
+            </WrapPanel>
+            <WrapPanel Style="{StaticResource CommandBar}">
+                <Button Style="{StaticResource CommandButton}" Tag="&#xE721;" ContentTemplate="{StaticResource IconText}" Content="Определить по _примеру…"
+                        Command="{Binding DetectCommand}" CommandParameter="file" AutomationProperties.Name="Определить по примеру"
+                        ToolTip="Определить правила по примеру работы или тексту требований (Ctrl+D)" />
+                <Button x:Name="ResetButton" Style="{StaticResource CommandButton}"
+                        IsEnabled="{Binding CanResetRules}" Click="OnReset" AutomationProperties.Name="{Binding ResetButtonText}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE72C;" Style="{StaticResource Icon}" Margin="0,0,8,0" />
+                        <AccessText Text="{Binding ResetButtonAccess}" VerticalAlignment="Center" />
+                        <TextBlock Text="&#xE70D;" Style="{StaticResource Icon}" FontSize="12" Margin="8,0,0,0"
+                                   Visibility="{Binding IsImportedProfile, Converter={StaticResource BoolToVisibility}}" />
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource CommandButton}" Tag="&#xE74E;" ContentTemplate="{StaticResource IconText}"
+                        Content="Со_хранить профиль…" Command="{Binding SaveProfileCommand}" ToolTip="Сохранить профиль (Ctrl+Shift+S)" />
+                <Button Style="{StaticResource CommandButton}" Tag="&#xE72D;" ContentTemplate="{StaticResource IconText}"
+                        Content="П_оделиться…" Command="{Binding ShareCommand}" />
+            </WrapPanel>
+            <c:InfoBar Margin="0,8,0,0" DataContext="{Binding InfoBar}" />
+
+            <!-- ============ Страница -->
+            <TextBlock Text="Страница" Style="{StaticResource GroupTitle}" />
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <c:SettingRow Tag="margins" Header="Поля страницы" AlwaysStacked="True"
+                                  Description="Расстояние от края листа до текста. Левое поле шире — под переплёт."
+                                  IsChanged="{Binding Rules[margins].IsChanged}" ChangedText="{Binding Rules[margins].ChangedText}"
+                                  RevertName="{Binding Rules[margins].RevertName}">
+                        <StackPanel>
+                                <UniformGrid Columns="4" x:Name="MarginsGrid" SizeChanged="OnMarginsSize">
+                                    <StackPanel Margin="0,0,8,0">
+                                        <TextBlock Text="Левое" Style="{StaticResource Text.Caption}" Margin="0,0,0,4" />
+                                        <c:NumberBox Width="Auto" Unit="мм" Min="0" Max="50" Label="Левое поле" c:Input.FieldKey="margin-left"
+                                                     Text="{Binding Rules.MarginLeft.Text, ValidatesOnNotifyDataErrors=True}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,8,0">
+                                        <TextBlock Text="Правое" Style="{StaticResource Text.Caption}" Margin="0,0,0,4" />
+                                        <c:NumberBox Width="Auto" Unit="мм" Min="0" Max="50" Label="Правое поле" c:Input.FieldKey="margin-right"
+                                                     Text="{Binding Rules.MarginRight.Text, ValidatesOnNotifyDataErrors=True}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,8,0">
+                                        <TextBlock Text="Верхнее" Style="{StaticResource Text.Caption}" Margin="0,0,0,4" />
+                                        <c:NumberBox Width="Auto" Unit="мм" Min="0" Max="50" Label="Верхнее поле" c:Input.FieldKey="margin-top"
+                                                     Text="{Binding Rules.MarginTop.Text, ValidatesOnNotifyDataErrors=True}" />
+                                    </StackPanel>
+                                    <StackPanel>
+                                        <TextBlock Text="Нижнее" Style="{StaticResource Text.Caption}" Margin="0,0,0,4" />
+                                        <c:NumberBox Width="Auto" Unit="мм" Min="0" Max="50" Label="Нижнее поле" c:Input.FieldKey="margin-bottom"
+                                                     Text="{Binding Rules.MarginBottom.Text, ValidatesOnNotifyDataErrors=True}" />
+                                    </StackPanel>
+                                </UniformGrid>
+                            <ContentControl Content="{Binding Rules.MarginsError}" ContentTemplate="{StaticResource ErrorLine}" Style="{StaticResource MessageHost}" Margin="0,4,0,0" />
+                            <ContentControl Content="{Binding Rules.MarginsWarning}" ContentTemplate="{StaticResource WarningLine}" Style="{StaticResource MessageHost}" Margin="0,4,0,0" />
+                        </StackPanel>
+                    </c:SettingRow>
+                    <Border Style="{StaticResource RowDivider}" />
+                    <c:SettingRow Tag="pageNumber" Header="Номер страницы" Description="Где стоит номер на каждой странице, кроме титульного листа."
+                                  IsChanged="{Binding Rules[pageNumber].IsChanged}" ChangedText="{Binding Rules[pageNumber].ChangedText}"
+                                  RevertName="{Binding Rules[pageNumber].RevertName}">
+                        <ComboBox ItemsSource="{x:Static vm:RulesViewModel.PageNumberAligns}" DisplayMemberPath="Label" SelectedValuePath="Value"
+                                  SelectedValue="{Binding Rules.PageNumberAlign}" AutomationProperties.Name="Номер страницы" />
+                    </c:SettingRow>
+                </StackPanel>
+            </Border>
+
+            <!-- ============ Основной текст -->
+            <TextBlock Text="Основной текст" Style="{StaticResource GroupTitle}" />
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <c:SettingRow Tag="font" Header="Шрифт"
+                                  Description="Шрифт всего документа. ГОСТ не называет конкретный шрифт, но обычно требуют Times New Roman."
+                                  IsChanged="{Binding Rules[font].IsChanged}" ChangedText="{Binding Rules[font].ChangedText}" RevertName="{Binding Rules[font].RevertName}">
+                        <c:SettingRow.Footer>
+                            <ContentControl Content="{Binding Rules.FontWarning}" ContentTemplate="{StaticResource WarningLine}" Style="{StaticResource MessageHost}" />
+                        </c:SettingRow.Footer>
+                        <StackPanel Width="220">
+                            <ComboBox IsEditable="True" ItemsSource="{x:Static vm:RulesViewModel.FontList}" c:Input.FieldKey="font"
+                                      Text="{Binding Rules.Font, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"
+                                      AutomationProperties.Name="Шрифт" IsTextSearchEnabled="True">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}" FontFamily="{Binding}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+                    </c:SettingRow>
+                    <Border Style="{StaticResource RowDivider}" />
+                    <c:SettingRow Tag="fontSize" Header="Размер шрифта"
+                                  Description="Кегль основного текста. По ГОСТ — не меньше 12 пт, чаще требуют 14. Заголовки и подписи того же размера изменятся вместе с ним."
+                                  IsChanged="{Binding Rules[fontSize].IsChanged}" ChangedText="{Binding Rules[fontSize].ChangedText}" RevertName="{Binding Rules[fontSize].RevertName}">
+                        <c:SettingRow.Footer>
+                            <StackPanel>
+                                <ContentControl Content="{Binding Rules.FontSize.Error}" ContentTemplate="{StaticResource ErrorLine}" Style="{StaticResource MessageHost}" />
+                            </StackPanel>
+                        </c:SettingRow.Footer>
+                        <StackPanel Width="128">
+                            <c:NumberBox Unit="пт" Min="10" Max="16" Label="Размер шрифта" c:Input.FieldKey="fontSize"
+                                         Text="{Binding Rules.FontSize.Text, ValidatesOnNotifyDataErrors=True}" />
+                        </StackPanel>
+                    </c:SettingRow>
+                    <Border Style="{StaticResource RowDivider}" />
+                    <c:SettingRow Tag="lineSpacing" Header="Межстрочный интервал" Description="Расстояние между строками. 1,5 — полуторный, как требует ГОСТ."
+                                  IsChanged="{Binding Rules[lineSpacing].IsChanged}" ChangedText="{Binding Rules[lineSpacing].ChangedText}" RevertName="{Binding Rules[lineSpacing].RevertName}">
+                        <ListBox Style="{StaticResource Segmented}" ItemsSource="{x:Static vm:RulesViewModel.LineSpacings}"
+                                 SelectedValue="{Binding Rules.LineSpacing}" AutomationProperties.Name="Межстрочный интервал" />
+                    </c:SettingRow>
+                    <Border Style="{StaticResource RowDivider}" />
+                    <c:SettingRow Tag="indent" Header="Абзацный отступ" Description="Отступ первой строки абзаца («красная строка»). По ГОСТ — 1,25 см."
+                                  IsChanged="{Binding Rules[indent].IsChanged}" ChangedText="{Binding Rules[indent].ChangedText}" RevertName="{Binding Rules[indent].RevertName}">
+                        <c:SettingRow.Footer>
+                            <StackPanel>
+                                <ContentControl Content="{Binding Rules.Indent.Error}" ContentTemplate="{StaticResource ErrorLine}" Style="{StaticResource MessageHost}" />
+                            </StackPanel>
+                        </c:SettingRow.Footer>
+                        <StackPanel Width="128">
+                            <c:NumberBox Unit="см" Min="0" Max="2.5" Step="0.05" Decimals="2" Label="Абзацный отступ" c:Input.FieldKey="indent"
+                                         Text="{Binding Rules.Indent.Text, ValidatesOnNotifyDataErrors=True}" />
+                        </StackPanel>
+                    </c:SettingRow>
+                    <Border Style="{StaticResource RowDivider}" />
+                    <c:SettingRow Tag="align" Header="Выравнивание" Description="Как текст прилегает к краям. «По ширине» — ровные края с обеих сторон."
+                                  IsChanged="{Binding Rules[align].IsChanged}" ChangedText="{Binding Rules[align].ChangedText}" RevertName="{Binding Rules[align].RevertName}">
+                        <ListBox Style="{StaticResource Segmented}" ItemsSource="{x:Static vm:RulesViewModel.TextAligns}"
+                                 SelectedValue="{Binding Rules.TextAlign}" AutomationProperties.Name="Выравнивание" />
+                    </c:SettingRow>
+                    <Border Style="{StaticResource RowDivider}" />
+                    <c:SettingRow Tag="hyphenation" Header="Автоматические переносы"
+                                  Description="Word сам переносит длинные слова — в тексте по ширине становится меньше растянутых пробелов."
+                                  IsChanged="{Binding Rules[hyphenation].IsChanged}" ChangedText="{Binding Rules[hyphenation].ChangedText}" RevertName="{Binding Rules[hyphenation].RevertName}">
+                        <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding Rules.Hyphenation}" AutomationProperties.Name="Автоматические переносы" />
+                    </c:SettingRow>
+                </StackPanel>
+            </Border>
+
+            <!-- ============ Заголовки -->
+            <TextBlock Text="Заголовки" Style="{StaticResource GroupTitle}" />
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <c:SettingRow Tag="headingAlign" Header="Положение заголовков глав"
+                                  Description="Заголовки глав, параграфов и пунктов. По ГОСТ — с абзацного отступа, но многие методички требуют по центру."
+                                  IsChanged="{Binding Rules[headingAlign].IsChanged}" ChangedText="{Binding Rules[headingAlign].ChangedText}" RevertName="{Binding Rules[headingAlign].RevertName}">
+                        <ListBox Style="{StaticResource Segmented}" ItemsSource="{x:Static vm:RulesViewModel.HeadingAligns}"
+                                 SelectedValue="{Binding Rules.HeadingAlign}" AutomationProperties.Name="Положение заголовков глав" />
+                    </c:SettingRow>
+                    <Border Style="{StaticResource RowDivider}" />
+                    <c:SettingRow Tag="chapterNewPage" Header="Каждая глава с новой страницы" Description="Перед заголовком главы вставляется разрыв страницы."
+                                  IsChanged="{Binding Rules[chapterNewPage].IsChanged}" ChangedText="{Binding Rules[chapterNewPage].ChangedText}" RevertName="{Binding Rules[chapterNewPage].RevertName}">
+                        <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding Rules.ChapterNewPage}" AutomationProperties.Name="Каждая глава с новой страницы" />
+                    </c:SettingRow>
+                    <Border Style="{StaticResource RowDivider}" />
+                    <c:SettingRow Tag="structuralUpper" Header="Структурные заголовки прописными"
+                                  Description="ВВЕДЕНИЕ, ЗАКЛЮЧЕНИЕ, СПИСОК ИСПОЛЬЗОВАННЫХ ИСТОЧНИКОВ, ПРИЛОЖЕНИЕ — заглавными буквами."
+                                  IsChanged="{Binding Rules[structuralUpper].IsChanged}" ChangedText="{Binding Rules[structuralUpper].ChangedText}" RevertName="{Binding Rules[structuralUpper].RevertName}">
+                        <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding Rules.StructuralUpper}" AutomationProperties.Name="Структурные заголовки прописными" />
+                    </c:SettingRow>
+                    <Border Style="{StaticResource RowDivider}" />
+                    <c:SettingRow Tag="tocLevels" Header="Уровни в содержании"
+                                  Description="Какие заголовки попадут в содержание: 1 — только главы, 2 — главы и параграфы, 3 — ещё и пункты."
+                                  IsChanged="{Binding Rules[tocLevels].IsChanged}" ChangedText="{Binding Rules[tocLevels].ChangedText}" RevertName="{Binding Rules[tocLevels].RevertName}">
+                        <ListBox Style="{StaticResource Segmented}" ItemsSource="{x:Static vm:RulesViewModel.TocLevelChoices}"
+                                 SelectedValue="{Binding Rules.TocLevels}" AutomationProperties.Name="Уровни в содержании" />
+                    </c:SettingRow>
+                </StackPanel>
+            </Border>
+
+            <!-- ============ Рисунки и таблицы -->
+            <TextBlock Text="Рисунки и таблицы" Style="{StaticResource GroupTitle}" />
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <c:SettingRow Tag="figurePrefix" Header="Подпись рисунка" Description="Слово перед номером рисунка."
+                                  IsChanged="{Binding Rules[figurePrefix].IsChanged}" ChangedText="{Binding Rules[figurePrefix].ChangedText}" RevertName="{Binding Rules[figurePrefix].RevertName}">
+                        <ListBox Style="{StaticResource Segmented}" ItemsSource="{x:Static vm:RulesViewModel.FigurePrefixes}"
+                                 SelectedValue="{Binding Rules.FigurePrefix}" AutomationProperties.Name="Подпись рисунка" />
+                    </c:SettingRow>
+                    <Border Style="{StaticResource RowDivider}" />
+                    <c:SettingRow Tag="separator" Header="Знак в подписи"
+                                  Description="{Binding Rules.SeparatorExample, StringFormat='Что стоит между номером и названием рисунка или таблицы. {0}'}"
+                                  IsChanged="{Binding Rules[separator].IsChanged}" ChangedText="{Binding Rules[separator].ChangedText}" RevertName="{Binding Rules[separator].RevertName}">
+                        <ListBox Style="{StaticResource Segmented}" ItemsSource="{x:Static vm:RulesViewModel.Separators}"
+                                 SelectedValue="{Binding Rules.Separator}" AutomationProperties.Name="Знак в подписи" />
+                    </c:SettingRow>
+                    <Border Style="{StaticResource RowDivider}" />
+                    <c:SettingRow Tag="tableCaptionAlign" Header="Подпись таблицы" Description="Где стоит надпись «Таблица 1 – …» над таблицей."
+                                  IsChanged="{Binding Rules[tableCaptionAlign].IsChanged}" ChangedText="{Binding Rules[tableCaptionAlign].ChangedText}" RevertName="{Binding Rules[tableCaptionAlign].RevertName}">
+                        <ListBox Style="{StaticResource Segmented}" ItemsSource="{x:Static vm:RulesViewModel.TableCaptionAligns}"
+                                 SelectedValue="{Binding Rules.TableCaptionAlign}" AutomationProperties.Name="Подпись таблицы" />
+                    </c:SettingRow>
+                    <Border Style="{StaticResource RowDivider}" />
+                    <c:SettingRow Tag="tableFontSize" Header="Шрифт в таблицах" Description="Размер текста внутри таблиц. Обычно на 1–2 пт меньше основного."
+                                  IsChanged="{Binding Rules[tableFontSize].IsChanged}" ChangedText="{Binding Rules[tableFontSize].ChangedText}" RevertName="{Binding Rules[tableFontSize].RevertName}">
+                        <c:SettingRow.Footer>
+                            <StackPanel>
+                                <ContentControl Content="{Binding Rules.TableFontSize.Error}" ContentTemplate="{StaticResource ErrorLine}" Style="{StaticResource MessageHost}" />
+                                <ContentControl Content="{Binding Rules.TableFontWarning}" ContentTemplate="{StaticResource WarningLine}" Style="{StaticResource MessageHost}" />
+                            </StackPanel>
+                        </c:SettingRow.Footer>
+                        <StackPanel Width="128">
+                            <c:NumberBox Unit="пт" Min="10" Max="14" Label="Шрифт в таблицах" c:Input.FieldKey="tableFontSize"
+                                         Text="{Binding Rules.TableFontSize.Text, ValidatesOnNotifyDataErrors=True}" />
+                        </StackPanel>
+                    </c:SettingRow>
+                </StackPanel>
+            </Border>
+
+            <Button Style="{StaticResource NextButton}" AutomationProperties.Name="Далее: структура работы" Command="{Binding NavigateCommand}" CommandParameter="Structure">
+                <StackPanel Orientation="Horizontal">
+                    <AccessText Text="_Далее: структура работы" VerticalAlignment="Center" />
+                    <TextBlock Text="&#xE72A;" Style="{StaticResource Icon}" Margin="8,0,0,0" />
+                </StackPanel>
+            </Button>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
