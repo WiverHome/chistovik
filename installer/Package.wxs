@@ -1,17 +1,17 @@
 <!-- Установщик для текущего пользователя: права администратора не нужны (важно для компьютеров в вузе). -->
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
-  <Package Name="Конструктор шаблонов работ" Manufacturer="Конструктор шаблонов" Version="$(Version)"
+  <Package Name="Чистовик" Manufacturer="Чистовик" Version="$(Version)"
            UpgradeCode="6C1D2E4A-7B3F-4F0E-9A51-2D8C3B7E5F10" Scope="perUser" Language="1049" Codepage="65001">
-    <SummaryInformation Description="Конструктор шаблонов курсовых и выпускных работ" Codepage="1251" />
-    <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage="Уже установлена более новая версия «Конструктора шаблонов работ»." />
+    <SummaryInformation Description="Чистовик — шаблоны студенческих работ по ГОСТ" Codepage="1251" />
+    <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage="Уже установлена более новая версия «Чистовика»." />
     <MediaTemplate EmbedCab="yes" />
 
     <Icon Id="AppIcon" SourceFile="$(IconPath)" />
     <Property Id="ARPPRODUCTICON" Value="AppIcon" />
     <Property Id="ARPCOMMENTS" Value="Шаблоны курсовых, ВКР, рефератов, отчётов по практике и диссертаций по ГОСТ" />
-    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Запустить «Конструктор шаблонов работ»" />
+    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Запустить «Чистовик»" />
     <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOX" Value="1" />
-    <CustomAction Id="LaunchApp" Directory="INSTALLFOLDER" ExeCommand="&quot;[INSTALLFOLDER]KonstruktorShablonov.exe&quot;" Return="asyncNoWait" Impersonate="yes" />
+    <CustomAction Id="LaunchApp" Directory="INSTALLFOLDER" ExeCommand="&quot;[INSTALLFOLDER]Chistovik.exe&quot;" Return="asyncNoWait" Impersonate="yes" />
 
     <ui:WixUI Id="WixUI_Minimal" />
     <UI>
@@ -25,33 +25,33 @@
 
     <StandardDirectory Id="LocalAppDataFolder">
       <Directory Id="ProgramsDir" Name="Programs">
-        <Directory Id="INSTALLFOLDER" Name="KonstruktorShablonov" />
+        <Directory Id="INSTALLFOLDER" Name="Chistovik" />
       </Directory>
     </StandardDirectory>
     <StandardDirectory Id="ProgramMenuFolder" />
     <StandardDirectory Id="DesktopFolder" />
 
     <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
-      <Component Id="MainExe" Guid="3F1B6A2C-8D4E-4A57-9C21-6E0F5B7D2A11">
-        <File Id="AppExe" Source="$(AppDir)\KonstruktorShablonov.exe" />
-        <RegistryValue Root="HKCU" Key="Software\KonstruktorShablonov" Name="Installed" Type="integer" Value="1" KeyPath="yes" />
+      <Component Id="MainExe" Guid="E153C0FB-95BB-4F69-81C5-D9F4FC20D95B">
+        <File Id="AppExe" Source="$(AppDir)\Chistovik.exe" />
+        <RegistryValue Root="HKCU" Key="Software\Chistovik" Name="Installed" Type="integer" Value="1" KeyPath="yes" />
         <RemoveFolder Id="RemoveProgramsDir" Directory="ProgramsDir" On="uninstall" />
         <RemoveFolder Id="RemoveInstallFolder" On="uninstall" />
       </Component>
-      <Component Id="StartMenuShortcut" Guid="7A2C9E41-5B3D-4F6A-8E12-0C4D7B9F3E22">
-        <Shortcut Id="StartMenuLink" Directory="ProgramMenuFolder" Name="Конструктор шаблонов работ"
-                  Description="Шаблоны курсовых и ВКР по ГОСТ" Target="[INSTALLFOLDER]KonstruktorShablonov.exe"
+      <Component Id="StartMenuShortcut" Guid="F0A5427C-97B0-4733-828C-50DAEF361DF2">
+        <Shortcut Id="StartMenuLink" Directory="ProgramMenuFolder" Name="Чистовик"
+                  Description="Шаблоны студенческих работ по ГОСТ" Target="[INSTALLFOLDER]Chistovik.exe"
                   WorkingDirectory="INSTALLFOLDER" Icon="AppIcon" />
-        <RegistryValue Root="HKCU" Key="Software\KonstruktorShablonov" Name="StartMenu" Type="integer" Value="1" KeyPath="yes" />
+        <RegistryValue Root="HKCU" Key="Software\Chistovik" Name="StartMenu" Type="integer" Value="1" KeyPath="yes" />
       </Component>
-      <Component Id="DesktopShortcut" Guid="C5E83D17-2A9F-4B60-91D4-8F27A6E0B533">
-        <Shortcut Id="DesktopLink" Directory="DesktopFolder" Name="Конструктор шаблонов работ"
-                  Target="[INSTALLFOLDER]KonstruktorShablonov.exe" WorkingDirectory="INSTALLFOLDER" Icon="AppIcon" />
-        <RegistryValue Root="HKCU" Key="Software\KonstruktorShablonov" Name="Desktop" Type="integer" Value="1" KeyPath="yes" />
+      <Component Id="DesktopShortcut" Guid="4A8C475A-87DC-4049-B734-537A7074C72E">
+        <Shortcut Id="DesktopLink" Directory="DesktopFolder" Name="Чистовик"
+                  Target="[INSTALLFOLDER]Chistovik.exe" WorkingDirectory="INSTALLFOLDER" Icon="AppIcon" />
+        <RegistryValue Root="HKCU" Key="Software\Chistovik" Name="Desktop" Type="integer" Value="1" KeyPath="yes" />
       </Component>
     </ComponentGroup>
 
-    <Feature Id="Main" Title="Конструктор шаблонов работ">
+    <Feature Id="Main" Title="Чистовик">
       <ComponentGroupRef Id="AppFiles" />
     </Feature>
   </Package>

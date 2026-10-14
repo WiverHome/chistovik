@@ -34,10 +34,12 @@ public sealed class WindowPlacement
     public bool Maximized { get; set; }
 }
 
-/// <summary>Настройки и данные пользователя между запусками (%APPDATA%\KonstruktorShablonov\settings.json).</summary>
+/// <summary>Настройки и данные пользователя между запусками (%APPDATA%\Chistovik\settings.json).</summary>
 public sealed class AppSettings
 {
-    public static readonly string Dir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "KonstruktorShablonov");
+    public static readonly string Dir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Chistovik");
+    /// <summary>Папка версии 1.0, когда программа называлась «Конструктор шаблонов работ».</summary>
+    static readonly string LegacyDir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "KonstruktorShablonov");
     public static readonly string ProfilesDir = System.IO.Path.Combine(Dir, "profiles");
     static readonly string FilePath = System.IO.Path.Combine(Dir, "settings.json");
 
@@ -64,15 +66,57 @@ public sealed class AppSettings
 
     public static AppSettings Load()
     {
+        var migrated = MigrateLegacyDir();
         try
         {
-            return File.Exists(FilePath)
+            var settings = File.Exists(FilePath)
                 ? JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(FilePath), ProfileJson.Options) ?? new()
                 : new();
+            if (migrated)
+            {
+                // Импортированные профили лежали в старой папке — пути в настройках указывают туда
+                foreach (var imp in settings.Imported)
+                    if (imp.Path.StartsWith(LegacyDir, StringComparison.OrdinalIgnoreCase))
+                        imp.Path = Dir + imp.Path[LegacyDir.Length..];
+                settings.Save();
+            }
+            return settings;
         }
         catch (Exception)
         {
             return new(); // повреждённый файл настроек не должен мешать запуску
+        }
+    }
+
+    /// <summary>
+    /// Переносит данные версии 1.0 (%APPDATA%\KonstruktorShablonov) в новую папку, если новой ещё нет.
+    /// Возвращает true, если перенос был.
+    /// </summary>
+    static bool MigrateLegacyDir()
+    {
+        try
+        {
+            if (Directory.Exists(Dir) || !Directory.Exists(LegacyDir)) return false;
+            try { Directory.Move(LegacyDir, Dir); }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+                // Папку нельзя переместить (открыта в Проводнике, нет прав) — копируем, старая остаётся как есть
+                foreach (var file in Directory.EnumerateFiles(LegacyDir, "*", SearchOption.AllDirectories))
+                {
+                    try
+                    {
+                        var target = System.IO.Path.Combine(Dir, System.IO.Path.GetRelativePath(LegacyDir, file));
+                        Directory.CreateDirectory(System.IO.Path.GetDirectoryName(target)!);
+                        File.Copy(file, target, overwrite: false);
+                    }
+                    catch (Exception fe) when (fe is IOException or UnauthorizedAccessException) { /* один файл не мешает остальным */ }
+                }
+            }
+            return true;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return false; // не получилось — начнём с чистых настроек, старая папка не тронута
         }
     }
 

@@ -66,12 +66,12 @@ $tile = RoundRect 22 24 64 64 12
 $g.FillPath((New-Object Drawing.SolidBrush (C "#FFFFFF")), $tile)
 $g.DrawImage($icon, 30, 32, 48, 48)
 # Название и подпись
-$title = New-Object Drawing.Font("Segoe UI Semibold", 15, [Drawing.FontStyle]::Regular, [Drawing.GraphicsUnit]::Pixel)
+$title = New-Object Drawing.Font("Segoe UI Semibold", 24, [Drawing.FontStyle]::Regular, [Drawing.GraphicsUnit]::Pixel)
 $small = New-Object Drawing.Font("Segoe UI", 12, [Drawing.FontStyle]::Regular, [Drawing.GraphicsUnit]::Pixel)
 $white = New-Object Drawing.SolidBrush (C "#FFFFFF")
 $soft = New-Object Drawing.SolidBrush (C "#FFFFFF" 215)
-$g.DrawString("Конструктор`nшаблонов работ", $title, $white, (New-Object Drawing.RectangleF(20, 102, ($panel - 22), 44)))
-$g.DrawString("Курсовые, ВКР, рефераты и отчёты — сразу по ГОСТ", $small, $soft, (New-Object Drawing.RectangleF(21, 150, ($panel - 30), 62)))
+$g.DrawString("Чистовик", $title, $white, (New-Object Drawing.RectangleF(18, 102, ($panel - 20), 34)))
+$g.DrawString("Шаблоны студенческих работ — сразу по ГОСТ", $small, $soft, (New-Object Drawing.RectangleF(21, 140, ($panel - 30), 70)))
 # Тонкая граница панели
 $g.FillRectangle((New-Object Drawing.SolidBrush (C "#E6F0FA")), $panel, 0, 3, 312)
 $g.Dispose()

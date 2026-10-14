@@ -10,13 +10,13 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
-    <AssemblyName>KonstruktorShablonov</AssemblyName>
+    <AssemblyName>Chistovik</AssemblyName>
     <RootNamespace>ShablonRabot.App</RootNamespace>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>1.0.0</Version>
-    <Product>Конструктор шаблонов работ</Product>
-    <Company>Конструктор шаблонов</Company>
+    <Version>1.1.0</Version>
+    <Product>Чистовик</Product>
+    <Company>Чистовик</Company>
     <Description>Шаблоны курсовых и выпускных работ по ГОСТ</Description>
     <SatelliteResourceLanguages>ru</SatelliteResourceLanguages>
   </PropertyGroup>

@@ -56,9 +56,9 @@ public partial class App : Application
         {
             // Окно, которое закрывается или ещё не показано, не может быть владельцем сообщения
             if (MainWindow is { IsVisible: true, IsLoaded: true } owner)
-                MessageBox.Show(owner, text, "Конструктор шаблонов работ", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(owner, text, "Чистовик", MessageBoxButton.OK, MessageBoxImage.Error);
             else
-                MessageBox.Show(text, "Конструктор шаблонов работ", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(text, "Чистовик", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         catch (Exception ex) { LogError(ex); }
     }

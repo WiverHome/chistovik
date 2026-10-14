@@ -262,7 +262,7 @@ public sealed class MainViewModel : ObservableObject
         }
     }
     public string DefaultFolder => _settings.DefaultDirectory ?? Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-    public string AboutText => $"Версия {Version} · Правила по умолчанию: ГОСТ 7.32-2017";
+    public string AboutText => $"«Чистовик» — шаблоны студенческих работ по ГОСТ. Версия {Version} · ГОСТ 7.32-2017, ГОСТ Р 2.105-2019, ГОСТ Р 7.0.11-2011";
 
     /// <summary>Запрос фокуса в представлении: ключ поля титула, имя правила или «error».</summary>
     public event Action<AppPage, string>? FocusRequested;
@@ -735,7 +735,7 @@ public sealed class MainViewModel : ObservableObject
         if (Rules.HasErrors) { _ = ShowValidationErrorAsync(); return; }
         var name = $"{ProfileTitle} — моя методичка";
         var dialog = new ShareDialogViewModel(SafeFileName(name + ".json"));
-        var dir = Path.Combine(Path.GetTempPath(), "KonstruktorShablonov");
+        var dir = Path.Combine(Path.GetTempPath(), "Chistovik");
         var temp = Path.Combine(dir, dialog.FileName);
         void Write()
         {

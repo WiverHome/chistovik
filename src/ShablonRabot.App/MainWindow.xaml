@@ -4,7 +4,7 @@
         xmlns:vm="clr-namespace:ShablonRabot.App.ViewModels"
         xmlns:v="clr-namespace:ShablonRabot.App.Views"
         xmlns:c="clr-namespace:ShablonRabot.App.Controls"
-        x:Name="Root" Title="Конструктор шаблонов работ" Icon="Assets/app.ico"
+        x:Name="Root" Title="Чистовик" Icon="Assets/app.ico"
         Width="1280" Height="800" MinWidth="1024" MinHeight="680" WindowStartupLocation="CenterScreen"
         Background="{DynamicResource Brush.Bg.Window}" Foreground="{DynamicResource Brush.Text.Primary}"
         FontFamily="{StaticResource Font.UI}" FontSize="14" UseLayoutRounding="True" TextOptions.TextFormattingMode="Display"

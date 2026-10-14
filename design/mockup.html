@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<title>Конструктор шаблонов — макет</title>
+<title>Чистовик — макет</title>
 <meta name="viewport" content="width=1340">
 <style>
 /* ============================================================
@@ -555,7 +555,7 @@ function renderStage(){
   if(S.screen==='sheet'){ stage.innerHTML=`<div class="sheet theme-${S.theme}">${sheetHTML()}</div>`; return; }
   stage.innerHTML=`
   <div class="window theme-${S.theme} ${S.min?'min':''}" id="win">
-    <div class="titlebar"><span class="appico ic">&#xE8A5;</span><span class="title">Конструктор шаблонов работ</span>
+    <div class="titlebar"><span class="appico ic">&#xE8A5;</span><span class="title">Чистовик</span>
       <span class="cap ic">&#xE921;</span><span class="cap ic">&#xE922;</span><span class="cap close ic">&#xE8BB;</span></div>
     <div class="client">
       <nav class="nav" id="nav" aria-label="Разделы"></nav>
@@ -830,7 +830,7 @@ function pageSettings(){
     <div class="srow"><div class="stx"><span class="stitle">Тема</span><span class="sdesc">Оформление окна приложения. Лист в предпросмотре всегда белый.</span></div><div class="sctl"><div class="seg"><button>Как в Windows</button><button class="${S.theme==='light'?'sel':''}" onclick="setTheme('light')">Светлая</button><button class="${S.theme==='dark'?'sel':''}" onclick="setTheme('dark')">Тёмная</button></div></div></div>
     <div class="srow"><div class="stx"><span class="stitle">Папка для шаблонов</span><span class="sdesc">C:\\Users\\Student\\Documents</span></div><div class="sctl"><button class="btn btn-secondary">Изменить…</button></div></div>
     <div class="srow"><div class="stx"><span class="stitle">Сохранённые данные</span><span class="sdesc">Поля титульного листа, изменённые правила и структура, импортированные профили.</span></div><div class="sctl"><button class="btn btn-secondary">Очистить…</button></div></div>
-    <div class="srow"><div class="stx"><span class="stitle">Папка профилей</span><span class="sdesc">%APPDATA%\\KonstruktorShablonov\\profiles</span></div><div class="sctl"><a class="link">Открыть папку</a></div></div>
+    <div class="srow"><div class="stx"><span class="stitle">Папка профилей</span><span class="sdesc">%APPDATA%\\Chistovik\\profiles</span></div><div class="sctl"><a class="link">Открыть папку</a></div></div>
     <div class="srow"><div class="stx"><span class="stitle">О программе</span><span class="sdesc">Версия 1.0.0 · Правила по умолчанию: ГОСТ 7.32-2017</span></div></div>
   </div></div>`;
 }
@@ -1011,7 +1011,7 @@ function renderDialog(){
     b=`<h2 class="dlg-t"><span class="ic" style="color:var(--error)">&#xEB90;</span>Не удалось сохранить шаблон</h2>${stepsHTML(['fail','',''])}<div>Файл «${esc(fileName())}» открыт в Word или другой программе. Закройте его и нажмите «Повторить» — или сохраните шаблон под другим именем.</div>`;
     f=`<button class="btn btn-primary" onclick="startCreate()"><u>П</u>овторить</button><button class="btn btn-secondary">Сохранить <u>к</u>ак…</button><button class="btn btn-secondary" onclick="closeDialog()">Отмена</button>`; }
   if(D==='share'){
-    b=`<h2 class="dlg-t">Поделиться профилем</h2><div style="margin-bottom:16px">Отправьте файл профиля студентам или коллегам. Они откроют его в Конструкторе: «Вид работы» → «Импортировать профиль».</div>
+    b=`<h2 class="dlg-t">Поделиться профилем</h2><div style="margin-bottom:16px">Отправьте файл профиля студентам или коллегам. Они откроют его в «Чистовике»: «Вид работы» → «Импортировать профиль».</div>
       <div class="fcard" style="margin-bottom:8px"><div class="fr"><span class="ic">&#xE8A5;</span><div><span class="fn">Курсовая работа — моя методичка.json</span><span class="fp">Профиль оформления · 11 КБ</span></div></div></div>
       <label class="chk"><input type="checkbox" checked><span class="box ic">&#xE73E;</span><span>Включить данные учебного заведения</span></label>
       <div class="help" style="margin:0 0 0 28px">Вуз, институт, кафедра и город. ФИО, группа и тема в профиль не попадают.</div>
