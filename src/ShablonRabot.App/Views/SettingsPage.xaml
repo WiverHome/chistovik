@@ -22,12 +22,16 @@
                         </StackPanel>
                     </c:SettingRow>
                     <Border Style="{StaticResource Divider}" />
-                    <c:SettingRow Header="Сохранённые данные" Description="Поля титульного листа, изменённые правила и структура, импортированные профили.">
+                    <c:SettingRow Header="Сохранённые данные" Description="Поля титульного листа, изменённые правила и структура, импортированные профили, черновики и ключ ИИ.">
                         <Button Content="Очистить…" Command="{Binding ClearDataCommand}" MinWidth="0" />
                     </c:SettingRow>
                     <Border Style="{StaticResource Divider}" />
                     <c:SettingRow Header="Папка профилей" Description="Копии импортированных и сохранённых профилей кафедр.">
                         <Button Content="Открыть папку" Style="{StaticResource Button.Link}" Command="{Binding OpenProfilesFolderCommand}" />
+                    </c:SettingRow>
+                    <Border Style="{StaticResource Divider}" />
+                    <c:SettingRow Header="ИИ-помощник" Description="{Binding Ai.StatusText}">
+                        <Button Content="Настроить" Command="{Binding NavigateCommand}" CommandParameter="Ai" MinWidth="0" AutomationProperties.Name="Настроить ИИ-помощник" />
                     </c:SettingRow>
                     <Border Style="{StaticResource Divider}" />
                     <c:SettingRow Header="Обучение" Description="Короткий обзор: как сделать шаблон и проверить готовую работу.">

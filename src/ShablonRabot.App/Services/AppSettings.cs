@@ -13,6 +13,21 @@ public sealed class ProfileState
     /// <summary>Правила определены по примеру: источник и итог сравнения с ГОСТ (DESIGN.md 17.5, п. 6).</summary>
     public string? DetectedSource { get; set; }
     public string? DetectedVerdict { get; set; }
+    /// <summary>Черновики разделов, написанные с ИИ (ключи — <see cref="Core.Ai.Drafts"/>).</summary>
+    public Dictionary<string, string>? Drafts { get; set; }
+    /// <summary>Пожелания к работе для ИИ: на чьём примере, что важно преподавателю.</summary>
+    public string? AiNotes { get; set; }
+}
+
+/// <summary>Подключение к ИИ. Ключ зашифрован DPAPI — расшифровать его может только этот пользователь Windows.</summary>
+public sealed class AiSettings
+{
+    public string Provider { get; set; } = "anthropic";
+    public string? BaseUrl { get; set; }
+    public string? Model { get; set; }
+    public string? Key { get; set; }
+    /// <summary>Модели, которые вернул сервис при подключении.</summary>
+    public List<string>? Models { get; set; }
 }
 
 public sealed class ImportedProfile
@@ -60,6 +75,7 @@ public sealed class AppSettings
     /// <summary>vo — вуз, spo — колледж или техникум; null — определить по последнему виду работы.</summary>
     public string? EducationLevel { get; set; }
     public string Theme { get; set; } = "system";
+    public AiSettings Ai { get; set; } = new();
     public WindowPlacement? Window { get; set; }
 
     public ProfileState For(string profileKey)

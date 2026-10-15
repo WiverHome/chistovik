@@ -1,0 +1,336 @@
+<UserControl x:Class="ShablonRabot.App.Views.AiPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:ShablonRabot.App.Controls"
+             xmlns:vm="clr-namespace:ShablonRabot.App.ViewModels">
+    <!-- Раздел «ИИ-помощник»: подключение по API-ключу, задачи и черновики для шаблона -->
+    <UserControl.Resources>
+        <!-- Плитка задачи -->
+        <Style x:Key="TaskTile" TargetType="ListBoxItem">
+            <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual.Card}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Margin" Value="0,0,8,8" />
+            <Setter Property="AutomationProperties.Name" Value="{Binding Title}" />
+            <Setter Property="AutomationProperties.HelpText" Value="{Binding Description}" />
+            <Setter Property="ToolTip" Value="{Binding Description}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Bd" CornerRadius="8" BorderThickness="1" Padding="12,10" MinHeight="64"
+                                Background="{DynamicResource Brush.Bg.Card}" BorderBrush="{DynamicResource Brush.Stroke.Card}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Border x:Name="Tile" Width="32" Height="32" CornerRadius="6" VerticalAlignment="Top"
+                                        Background="{DynamicResource Brush.Fill.AccentSubtle}">
+                                    <TextBlock x:Name="Glyph" Text="{Binding Glyph}" Style="{StaticResource Icon}" FontSize="16" Foreground="{DynamicResource Brush.Accent.Text}" />
+                                </Border>
+                                <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Title}" Style="{StaticResource Text.BodyStrong}" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Text="{Binding Description}" Style="{StaticResource Text.Caption}" TextWrapping="Wrap" MaxHeight="34" TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Fill.ControlHover}" />
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Brush.Stroke.ControlBottom}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Brush.Accent.Default}" />
+                                <Setter TargetName="Bd" Property="BorderThickness" Value="2" />
+                                <Setter TargetName="Bd" Property="Padding" Value="11,9" />
+                                <Setter TargetName="Tile" Property="Background" Value="{DynamicResource Brush.Accent.Default}" />
+                                <Setter TargetName="Glyph" Property="Foreground" Value="{DynamicResource Brush.Text.OnAccent}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="MultilineBox" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+            <Setter Property="AcceptsReturn" Value="True" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="VerticalContentAlignment" Value="Top" />
+            <Setter Property="Padding" Value="11,7,11,8" />
+            <Setter Property="SpellCheck.IsEnabled" Value="True" />
+            <Setter Property="Language" Value="ru-RU" />
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer x:Name="Scroll" Style="{StaticResource PageScroll}">
+        <StackPanel Style="{StaticResource PageContent}" MaxWidth="820">
+            <TextBlock Text="ИИ-помощник" Style="{StaticResource Text.Title}" />
+            <TextBlock Style="{StaticResource PageSubtitle}"
+                       Text="Составит план, напишет черновики введения, параграфов и заключения, приведёт текст в порядок и оформит список литературы. Черновик можно вставить прямо в шаблон." />
+            <c:InfoBar Margin="0,16,0,0" DataContext="{Binding DataContext.InfoBar, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+
+            <!-- ============================================ Подключение -->
+            <Border Style="{StaticResource Card}" Margin="0,20,0,0" Padding="20"
+                    Visibility="{Binding Ai.IsSetupOpen, Converter={StaticResource BoolToVisibility}}">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE8D7;" Style="{StaticResource Icon}" Foreground="{DynamicResource Brush.Accent.Text}" Margin="0,0,10,0" VerticalAlignment="Center" />
+                        <TextBlock Text="Подключите ИИ" Style="{StaticResource Text.Subtitle}" />
+                    </StackPanel>
+                    <TextBlock Style="{StaticResource Text.BodySecondary}" Margin="0,6,0,0" TextWrapping="Wrap"
+                               Text="Нужен API-ключ сервиса ИИ. Запросы оплачивает владелец ключа по тарифам сервиса." />
+
+                    <TextBlock Text="Сервис" Style="{StaticResource FieldLabel}" Margin="0,16,0,4" />
+                    <ComboBox Width="320" HorizontalAlignment="Left" ItemsSource="{x:Static vm:AiViewModel.Providers}" DisplayMemberPath="Title"
+                              SelectedValuePath="Id" SelectedValue="{Binding Ai.ProviderId}" AutomationProperties.Name="Сервис ИИ" />
+
+                    <TextBlock Text="Адрес API" Style="{StaticResource FieldLabel}" Margin="0,16,0,4"
+                               Visibility="{Binding Ai.IsCustom, Converter={StaticResource BoolToVisibility}}" />
+                    <TextBox Text="{Binding Ai.BaseUrl, UpdateSourceTrigger=PropertyChanged}" c:Input.Placeholder="https://…/v1"
+                             AutomationProperties.Name="Адрес API" Visibility="{Binding Ai.IsCustom, Converter={StaticResource BoolToVisibility}}" />
+                    <TextBlock Style="{StaticResource FieldHelp}" Visibility="{Binding Ai.IsCustom, Converter={StaticResource BoolToVisibility}}" TextWrapping="Wrap"
+                               Text="Адрес, совместимый с OpenAI. Например, http://localhost:11434/v1 — Ollama на этом компьютере (ключ не нужен)." />
+
+                    <TextBlock Text="API-ключ" Style="{StaticResource FieldLabel}" Margin="0,16,0,4" />
+                    <PasswordBox x:Name="KeyBox" AutomationProperties.Name="API-ключ" c:Input.Placeholder="{Binding Ai.KeyPlaceholder}" />
+                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                        <TextBlock Text="{Binding Ai.KeyHint}" Style="{StaticResource Text.Caption}" VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="560" />
+                        <Button Style="{StaticResource Button.Link}" Content="Где взять ключ" Command="{Binding Ai.OpenKeysPageCommand}" Margin="12,0,0,0" FontSize="12"
+                                Visibility="{Binding Ai.HasKeysPage, Converter={StaticResource BoolToVisibility}}" />
+                    </StackPanel>
+
+                    <TextBlock Text="Модель" Style="{StaticResource FieldLabel}" Margin="0,16,0,4" />
+                    <ComboBox Width="320" HorizontalAlignment="Left" IsEditable="True" ItemsSource="{Binding Ai.Models}"
+                              Text="{Binding Ai.Model, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Модель" />
+                    <TextBlock Style="{StaticResource FieldHelp}" Text="Подходит модель по умолчанию. Список моделей сервиса появится после подключения." />
+
+                    <!-- Ошибка подключения -->
+                    <Border Margin="0,16,0,0" Padding="12" CornerRadius="6" Background="{DynamicResource Brush.Bg.Error}"
+                            Visibility="{Binding Ai.HasConnectError, Converter={StaticResource BoolToVisibility}}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="&#xEA39;" Style="{StaticResource Icon}" Foreground="{DynamicResource Brush.Text.Error}" VerticalAlignment="Top" Margin="0,2,10,0" />
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="{Binding Ai.ConnectErrorTitle}" Style="{StaticResource Text.BodyStrong}" />
+                                <TextBlock Text="{Binding Ai.ConnectError}" Style="{StaticResource Text.Body}" TextWrapping="Wrap" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,20,0,0">
+                        <Button Style="{StaticResource Button.Primary}" Content="Подключить" Command="{Binding Ai.ConnectCommand}" MinWidth="120" />
+                        <c:Spinner Margin="12,0,0,0" VerticalAlignment="Center" Visibility="{Binding Ai.IsTesting, Converter={StaticResource BoolToVisibility}}" />
+                        <TextBlock Text="Проверяем ключ…" Style="{StaticResource Text.Caption}" Margin="8,0,0,0" VerticalAlignment="Center"
+                                   Visibility="{Binding Ai.IsTesting, Converter={StaticResource BoolToVisibility}}" />
+                        <Button Content="Отмена" Command="{Binding Ai.CancelSetupCommand}" Margin="8,0,0,0"
+                                Visibility="{Binding Ai.IsConnected, Converter={StaticResource BoolToVisibility}}" />
+                        <Button Style="{StaticResource Button.Link}" Content="Отключить и удалить ключ" Command="{Binding Ai.DisconnectCommand}" Margin="16,0,0,0"
+                                VerticalAlignment="Center" Visibility="{Binding Ai.IsConnected, Converter={StaticResource BoolToVisibility}}" />
+                    </StackPanel>
+
+                    <Border Background="{DynamicResource Brush.Bg.CardSecondary}" CornerRadius="6" Padding="12,10" Margin="0,20,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="&#xE72E;" Style="{StaticResource Icon}" Foreground="{DynamicResource Brush.Text.Secondary}" VerticalAlignment="Top" Margin="0,2,10,0" />
+                            <TextBlock Grid.Column="1" Style="{StaticResource Text.Caption}" TextWrapping="Wrap"
+                                       Text="Ключ хранится только на этом компьютере, зашифрованным средствами Windows. В запросе к сервису — вид работы, тема, дисциплина, план и текст, который вы вставили. ФИО, вуз и группа не отправляются." />
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <StackPanel Visibility="{Binding Ai.ShowWork, Converter={StaticResource BoolToVisibility}}">
+                <!-- ============================================ Подключено и о работе -->
+                <Border Style="{StaticResource Card}" Margin="0,20,0,0" Padding="20,16">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Border Width="40" Height="40" CornerRadius="6" VerticalAlignment="Top" Background="{DynamicResource Brush.Fill.AccentSubtle}">
+                                <TextBlock Text="&#xE8A5;" Style="{StaticResource Icon}" FontSize="20" Foreground="{DynamicResource Brush.Accent.Text}" />
+                            </Border>
+                            <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                                <TextBlock Text="{Binding Ai.WorkType}" Style="{StaticResource Text.BodyStrong}" />
+                                <TextBlock Text="{Binding Ai.TopicText}" Style="{StaticResource Text.Body}" TextWrapping="Wrap" Margin="0,2,0,0" />
+                                <TextBlock Text="{Binding Ai.DisciplineText}" Style="{StaticResource Text.Caption}" Margin="0,2,0,0"
+                                           Visibility="{Binding Ai.DisciplineText, Converter={StaticResource NullToCollapsed}}" />
+                                <TextBlock Text="{Binding Ai.PlanText}" Style="{StaticResource Text.Caption}" Margin="0,2,0,0" />
+                                <WrapPanel Margin="0,6,0,0">
+                                    <Button Style="{StaticResource Button.Link}" Content="Изменить тему" FontSize="12" Command="{Binding NavigateCommand}" CommandParameter="TitlePage" Margin="0,0,16,0" />
+                                    <Button Style="{StaticResource Button.Link}" Content="Открыть структуру" FontSize="12" Command="{Binding NavigateCommand}" CommandParameter="Structure" />
+                                </WrapPanel>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" HorizontalAlignment="Right" Margin="16,0,0,0">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <TextBlock Text="&#xE73E;" Style="{StaticResource Icon}" FontSize="12" Foreground="{DynamicResource Brush.Text.Success}" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding Ai.ConnectionText}" Style="{StaticResource Text.Caption}" MaxWidth="240" TextTrimming="CharacterEllipsis"
+                                               ToolTip="{Binding Ai.ConnectionText}" VerticalAlignment="Center" />
+                                </StackPanel>
+                                <Button Style="{StaticResource Button.Link}" Content="Изменить подключение" FontSize="12" HorizontalAlignment="Right" Margin="0,4,0,0"
+                                        Command="{Binding Ai.ChangeConnectionCommand}" />
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock Text="{Binding Ai.ConnectInfo}" Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Text.Warning}" Margin="52,8,0,0"
+                                   TextWrapping="Wrap" Visibility="{Binding Ai.ConnectInfo, Converter={StaticResource NullToCollapsed}}" />
+                        <TextBlock Text="Пожелания к работе (необязательно)" Style="{StaticResource FieldLabel}" Margin="52,14,0,4" />
+                        <TextBox Style="{StaticResource MultilineBox}" Margin="52,0,0,0" Height="56" Text="{Binding Ai.Notes, UpdateSourceTrigger=PropertyChanged, Delay=400}"
+                                 c:Input.Placeholder="Например: на примере ООО «Север»; преподаватель просит три главы и практическую часть с расчётами"
+                                 AutomationProperties.Name="Пожелания к работе" />
+                    </StackPanel>
+                </Border>
+
+                <!-- ============================================ Задачи -->
+                <TextBlock Text="Что сделать" Style="{StaticResource Text.Subtitle}" Margin="0,24,0,12" />
+                <ListBox ItemsSource="{x:Static vm:AiViewModel.Tasks}" SelectedValuePath="Task" SelectedValue="{Binding Ai.Task}"
+                         ItemContainerStyle="{StaticResource TaskTile}" Background="Transparent" BorderThickness="0" Margin="0,0,-8,0"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled" KeyboardNavigation.TabNavigation="Once"
+                         AutomationProperties.Name="Задача для ИИ">
+                    <ListBox.Template>
+                        <ControlTemplate TargetType="ListBox">
+                            <ItemsPresenter />
+                        </ControlTemplate>
+                    </ListBox.Template>
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="3" />
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                </ListBox>
+
+                <Border Style="{StaticResource Card}" Margin="0,8,0,0" Padding="20,16">
+                    <StackPanel>
+                        <StackPanel Visibility="{Binding Ai.ShowSectionPicker, Converter={StaticResource BoolToVisibility}}" Margin="0,0,0,16">
+                            <TextBlock Text="Параграф" Style="{StaticResource FieldLabel}" />
+                            <ComboBox Width="Auto" HorizontalAlignment="Stretch" ItemsSource="{Binding Ai.Sections}" SelectedItem="{Binding Ai.SelectedSection}"
+                                      AutomationProperties.Name="Параграф" IsEnabled="{Binding Ai.HasSections}" />
+                        </StackPanel>
+                        <StackPanel Visibility="{Binding Ai.ShowLength, Converter={StaticResource BoolToVisibility}}" Margin="0,0,0,16">
+                            <TextBlock Text="Объём" Style="{StaticResource FieldLabel}" />
+                            <ListBox Style="{StaticResource Segmented}" ItemsSource="{x:Static vm:AiViewModel.Lengths}" SelectedValue="{Binding Ai.Length}"
+                                     AutomationProperties.Name="Объём" />
+                        </StackPanel>
+                        <StackPanel Visibility="{Binding Ai.ShowInput, Converter={StaticResource BoolToVisibility}}" Margin="0,0,0,16">
+                            <TextBlock Text="{Binding Ai.InputLabel}" Style="{StaticResource FieldLabel}" />
+                            <TextBox Style="{StaticResource MultilineBox}" Height="{Binding Ai.InputHeight}" VerticalScrollBarVisibility="Auto"
+                                     Text="{Binding Ai.Input, UpdateSourceTrigger=PropertyChanged}" c:Input.Placeholder="{Binding Ai.InputPlaceholder}"
+                                     AutomationProperties.Name="{Binding Ai.InputLabel}" />
+                        </StackPanel>
+                        <ContentControl Content="{Binding Ai.RunHint}" ContentTemplate="{StaticResource WarningLine}" Style="{StaticResource MessageHost}" Margin="0,0,0,12" />
+                        <StackPanel Orientation="Horizontal">
+                            <Button x:Name="RunButton" Style="{StaticResource Button.Primary}" Command="{Binding Ai.RunCommand}" ContentTemplate="{StaticResource IconText}"
+                                    Content="{Binding Ai.RunText}" Tag="&#xE768;" AutomationProperties.Name="{Binding Ai.RunText}" />
+                            <Button Content="Остановить" Command="{Binding Ai.StopCommand}" Margin="8,0,0,0"
+                                    Visibility="{Binding Ai.IsRunning, Converter={StaticResource BoolToVisibility}}" />
+                            <c:Spinner Margin="12,0,0,0" VerticalAlignment="Center" Visibility="{Binding Ai.IsRunning, Converter={StaticResource BoolToVisibility}}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- ============================================ Ошибка -->
+                <Border Margin="0,16,0,0" Padding="16" CornerRadius="8" Background="{DynamicResource Brush.Bg.Error}" BorderBrush="{DynamicResource Brush.Stroke.Infobar}" BorderThickness="1"
+                        Visibility="{Binding Ai.HasError, Converter={StaticResource BoolToVisibility}}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="&#xEA39;" Style="{StaticResource Icon}" Foreground="{DynamicResource Brush.Text.Error}" VerticalAlignment="Top" Margin="0,2,10,0" />
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="{Binding Ai.ErrorTitle}" Style="{StaticResource Text.BodyStrong}" />
+                            <TextBlock Text="{Binding Ai.ErrorText}" Style="{StaticResource Text.Body}" TextWrapping="Wrap" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- ============================================ Результат -->
+                <StackPanel x:Name="ResultPanel" Margin="0,24,0,0" Visibility="{Binding Ai.ShowResult, Converter={StaticResource BoolToVisibility}}">
+                    <Grid Margin="0,0,0,8">
+                        <TextBlock Text="{Binding Ai.ResultHeader}" Style="{StaticResource Text.Subtitle}" TextTrimming="CharacterEllipsis" Margin="0,0,200,0" />
+                        <TextBlock Text="{Binding Ai.ResultInfo}" Style="{StaticResource Text.Caption}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                    </Grid>
+                    <TextBox x:Name="ResultBox" Style="{StaticResource MultilineBox}" MinHeight="200" MaxHeight="560" VerticalScrollBarVisibility="Auto"
+                             Text="{Binding Ai.Result, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="{Binding Ai.IsResultReadOnly}"
+                             AutomationProperties.Name="{Binding Ai.ResultHeader}" />
+                    <WrapPanel Margin="0,12,0,0">
+                        <Button Style="{StaticResource Button.Primary}" Command="{Binding Ai.ApplyPlanCommand}" Margin="0,0,8,8" ContentTemplate="{StaticResource IconText}"
+                                Content="Применить к структуре" Tag="&#xE8FD;" AutomationProperties.Name="Применить план к структуре"
+                                ToolTip="Главы и параграфы заменят текущие в «Структуре работы». Можно отменить."
+                                Visibility="{Binding Ai.ShowApplyPlan, Converter={StaticResource BoolToVisibility}}" />
+                        <Button Style="{StaticResource Button.Primary}" Command="{Binding Ai.InsertCommand}" Margin="0,0,8,8" ContentTemplate="{StaticResource IconText}"
+                                Content="{Binding Ai.InsertText}" Tag="&#xE77F;" AutomationProperties.Name="{Binding Ai.InsertText}"
+                                ToolTip="При создании шаблона текст займёт место подсказки в этом разделе."
+                                Visibility="{Binding Ai.ShowInsert, Converter={StaticResource BoolToVisibility}}" />
+                        <Button Command="{Binding Ai.CopyCommand}" Margin="0,0,8,8" ContentTemplate="{StaticResource IconText}" Content="Копировать" Tag="&#xE8C8;" />
+                        <Button Command="{Binding Ai.RunCommand}" Margin="0,0,8,8" ContentTemplate="{StaticResource IconText}" Content="Написать заново" Tag="&#xE72C;"
+                                AutomationProperties.Name="Написать заново" />
+                        <Button Style="{StaticResource Button.Subtle}" Command="{Binding Ai.ClearResultCommand}" Margin="0,0,8,8" Content="Очистить" />
+                    </WrapPanel>
+                    <Border Background="{DynamicResource Brush.Bg.Warning}" CornerRadius="6" Padding="12,10" Margin="0,4,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="&#xE7BA;" Style="{StaticResource Icon}" Foreground="{DynamicResource Brush.Text.Warning}" VerticalAlignment="Top" Margin="0,2,10,0" />
+                            <TextBlock Grid.Column="1" Style="{StaticResource Text.Caption}" TextWrapping="Wrap"
+                                       Text="ИИ ошибается и может выдумывать. Проверьте факты, цифры и названия, замените пометки в [скобках] своими данными и перепишите текст своими словами. Уточните у преподавателя, можно ли пользоваться ИИ в этой работе." />
+                        </Grid>
+                    </Border>
+                </StackPanel>
+
+                <!-- ============================================ Черновики в шаблоне -->
+                <StackPanel Margin="0,24,0,0" Visibility="{Binding Ai.HasDrafts, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="Черновики в шаблоне" Style="{StaticResource Text.Subtitle}" />
+                    <TextBlock Text="При создании шаблона их текст займёт место подсказок в этих разделах." Style="{StaticResource Text.Caption}" Margin="0,4,0,12" />
+                    <ItemsControl ItemsSource="{Binding Ai.DraftItems}" Focusable="False">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:DraftItem}">
+                                <Border Style="{StaticResource Card}" Margin="0,0,0,8" Padding="16,10">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="&#xE8A5;" Style="{StaticResource Icon}" VerticalAlignment="Center" Margin="0,0,12,0" />
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Title}" Style="{StaticResource Text.Body}" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Text="{Binding Info}" TextWrapping="Wrap">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Caption}">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsOrphan}" Value="True">
+                                                                <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Warning}" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Button Style="{StaticResource Button.Subtle}" Content="Открыть" Margin="8,0,0,0"
+                                                    Command="{Binding DataContext.Ai.EditDraftCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
+                                                    AutomationProperties.Name="{Binding Title, StringFormat=Открыть черновик: {0}}" />
+                                            <Button Style="{StaticResource Button.Icon}" Margin="4,0,0,0" ToolTip="Удалить черновик"
+                                                    Command="{Binding DataContext.Ai.RemoveDraftCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
+                                                    AutomationProperties.Name="{Binding Title, StringFormat=Удалить черновик: {0}}">
+                                                <TextBlock Text="&#xE74D;" Style="{StaticResource Icon}" />
+                                            </Button>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

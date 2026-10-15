@@ -57,7 +57,7 @@ public partial class MainWindow : Window
         var width = ActualWidth;
         _compactLayout = width < 1180;
         NavColumn.Width = new GridLength(_compactLayout ? 48 : 240);
-        // Проверка работы и база знаний — без предпросмотра шаблона, на всю ширину
+        // Проверка работы, база знаний и ИИ-помощник — без предпросмотра шаблона, на всю ширину
         PreviewColumn.Width = !ViewModel.ShowPreview ? new GridLength(0) : new GridLength(width >= 1440 ? 480 : _compactLayout ? 360 : 400);
         if (!_compactLayout) _navExpanded = false;
         ApplyNavState();
@@ -136,14 +136,15 @@ public partial class MainWindow : Window
             e.Handled = true;
             return;
         }
-        // Ctrl+1…4 и Ctrl+, — раздел и фокус на его первый элемент
+        // Ctrl+1…7 и Ctrl+, — раздел и фокус на его первый элемент
         if (Keyboard.Modifiers == ModifierKeys.Control && ViewModel.Dialog == null)
         {
             string? target = e.Key switch
             {
                 Key.D1 or Key.NumPad1 => "Type", Key.D2 or Key.NumPad2 => "TitlePage",
                 Key.D3 or Key.NumPad3 => "Rules", Key.D4 or Key.NumPad4 => "Structure",
-                Key.D5 or Key.NumPad5 => "Check", Key.D6 or Key.NumPad6 => "Knowledge", Key.OemComma => "Settings", _ => null,
+                Key.D5 or Key.NumPad5 => "Check", Key.D6 or Key.NumPad6 => "Knowledge", Key.D7 or Key.NumPad7 => "Ai",
+                Key.OemComma => "Settings", _ => null,
             };
             if (target != null)
             {

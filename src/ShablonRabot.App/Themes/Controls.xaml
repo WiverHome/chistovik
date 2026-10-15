@@ -305,6 +305,53 @@
         </Setter>
     </Style>
 
+    <!-- Поле пароля (API-ключ): как текстовое поле -->
+    <Style TargetType="PasswordBox">
+        <Setter Property="FontFamily" Value="{StaticResource Font.UI}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="MinHeight" Value="32" />
+        <Setter Property="Padding" Value="11,5,11,6" />
+        <Setter Property="Background" Value="{DynamicResource Brush.Fill.Control}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Stroke.Control}" />
+        <Setter Property="CaretBrush" Value="{DynamicResource Brush.Text.Primary}" />
+        <Setter Property="SelectionBrush" Value="{DynamicResource Brush.Accent.Default}" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="PasswordBox">
+                    <Grid>
+                        <Border x:Name="Bd" CornerRadius="4" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" />
+                        <Border x:Name="Line" CornerRadius="0,0,4,4" Height="1" VerticalAlignment="Bottom" Margin="1,0"
+                                Background="{DynamicResource Brush.Stroke.ControlStrong}" />
+                        <TextBlock x:Name="Ph" Text="{TemplateBinding c:Input.Placeholder}" Margin="{TemplateBinding Padding}"
+                                   Foreground="{DynamicResource Brush.Text.Placeholder}" IsHitTestVisible="False" VerticalAlignment="Center"
+                                   Padding="2,0,0,0" TextTrimming="CharacterEllipsis" Visibility="{TemplateBinding Tag}" />
+                        <ScrollViewer x:Name="PART_ContentHost" Focusable="False" VerticalAlignment="Center"
+                                      HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Fill.ControlHover}" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Fill.InputFocus}" />
+                            <Setter TargetName="Line" Property="Height" Value="2" />
+                            <Setter TargetName="Line" Property="Background" Value="{DynamicResource Brush.Accent.Default}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Fill.ControlDisabled}" />
+                            <Setter TargetName="Line" Property="Visibility" Value="Collapsed" />
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Disabled}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- Поле без рамки в покое (названия в списке структуры) -->
     <Style x:Key="TextBox.Inline" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
         <Setter Property="c:Input.Inline" Value="True" />

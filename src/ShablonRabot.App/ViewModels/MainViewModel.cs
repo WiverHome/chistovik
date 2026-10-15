@@ -4,11 +4,12 @@ using System.Windows.Threading;
 using ShablonRabot.App.Infrastructure;
 using ShablonRabot.App.Services;
 using ShablonRabot.Core;
+using ShablonRabot.Core.Ai;
 using ShablonRabot.Core.Detection;
 
 namespace ShablonRabot.App.ViewModels;
 
-public enum AppPage { Type, TitlePage, Rules, Structure, Settings, Check, Knowledge }
+public enum AppPage { Type, TitlePage, Rules, Structure, Settings, Check, Knowledge, Ai }
 
 public interface IDialogService
 {
@@ -91,7 +92,10 @@ public sealed class MainViewModel : ObservableObject
 {
     const string DocxFilter = "Документ Word (*.docx)|*.docx";
     const string ProfileFilter = "Профиль оформления (*.json)|*.json";
-    public const string Version = "1.0.0";
+    /// <summary>Версия из сборки (Version в .csproj), без хеша коммита.</summary>
+    public static readonly string Version =
+        (typeof(MainViewModel).Assembly.GetCustomAttributes(typeof(System.Reflection.AssemblyInformationalVersionAttribute), false)
+            .FirstOrDefault() as System.Reflection.AssemblyInformationalVersionAttribute)?.InformationalVersion.Split('+')[0] ?? "";
 
     readonly AppSettings _settings;
     readonly IDialogService _dialogs;
@@ -126,12 +130,17 @@ public sealed class MainViewModel : ObservableObject
             new NavItemViewModel(AppPage.Structure, "Структура работы", "", "Ctrl+4"),
         ];
         SettingsNav = new NavItemViewModel(AppPage.Settings, "Параметры", "", "Ctrl+,");
-        // Вторая группа: работа с готовым текстом и справка
+        // Вторая группа: работа с текстом и справка
         ToolsNav =
         [
             new NavItemViewModel(AppPage.Check, "Проверка работы", "\uE9F9", "Ctrl+5") { Subtitle = "Готовый .docx по правилам" },
             new NavItemViewModel(AppPage.Knowledge, "База знаний", "\uE82D", "Ctrl+6") { Subtitle = "ГОСТы и советы" },
+            new NavItemViewModel(AppPage.Ai, "ИИ-помощник", "\uE99A", "Ctrl+7"),
         ];
+        Ai = new AiViewModel(settings, dialogs, WorkContextNow, () => _settings.For(_profile?.Key ?? "kursovaya"), ApplyPlan,
+            (kind, title, text) => ShowInfo(kind, title, text));
+        Ai.PropertyChanged += (_, e) => { if (e.PropertyName is "" or nameof(AiViewModel.IsConnected) or nameof(AiViewModel.HasDrafts)) UpdateAiNav(); };
+        UpdateAiNav();
         Check = new CheckViewModel(dialogs, () => (BuildProfile(withFields: false), ProfileTitle, _profile is { IsImported: false } card ? card.Gost : null),
             () => _settings.LastDirectory);
         // Итог последней проверки — под пунктом навигации
@@ -188,6 +197,7 @@ public sealed class MainViewModel : ObservableObject
         _page = !settings.FirstRunDone ? AppPage.Type
             : Enum.TryParse<AppPage>(settings.LastPage, out var last) && last != AppPage.Settings ? last : AppPage.TitlePage;
         Preview.Mode = AutoPreviewMode(_page);
+        Ai.Refresh();
     }
 
     // ------------------------------------------------------------ свойства
@@ -223,6 +233,7 @@ public sealed class MainViewModel : ObservableObject
     public PreviewViewModel Preview { get; } = new();
     public CheckViewModel Check { get; }
     public KnowledgeViewModel Knowledge { get; } = new();
+    public AiViewModel Ai { get; }
     public IReadOnlyList<NavItemViewModel> ToolsNav { get; }
 
     /// <summary>Выбор во второй группе навигации: проверка работы и база знаний.</summary>
@@ -232,8 +243,8 @@ public sealed class MainViewModel : ObservableObject
         set { if (value != null) CurrentPage = value.AppPage; }
     }
 
-    /// <summary>На страницах проверки и базы знаний предпросмотр шаблона не нужен — место отдаётся тексту.</summary>
-    public bool ShowPreview => _page is not (AppPage.Check or AppPage.Knowledge);
+    /// <summary>На страницах проверки, базы знаний и ИИ предпросмотр шаблона не нужен — место отдаётся тексту.</summary>
+    public bool ShowPreview => _page is not (AppPage.Check or AppPage.Knowledge or AppPage.Ai);
     public bool IsWordInstalled { get; }
 
     /// <summary>«Правила определены по примеру «…» · Похоже на ГОСТ …» (DESIGN.md 17.8).</summary>
@@ -264,6 +275,7 @@ public sealed class MainViewModel : ObservableObject
             OnPropertyChanged(nameof(ShowPreview));
             OnPropertyChanged(nameof(ShowWelcome));
             if (value == AppPage.Check) Check.RefreshRules();
+            if (value == AppPage.Ai) Ai.Refresh();
             ClearUndo();
             if (InfoBar is { IsUndo: false, IsValidation: false }) InfoBar = null;
             // Первый запуск завершён, когда пользователь ушёл со страницы «Вид работы»
@@ -470,14 +482,72 @@ public sealed class MainViewModel : ObservableObject
         Refresh();
     }
 
-    /// <summary>Профиль для сборки: исходный + правила + структура (+ данные титульного листа).</summary>
+    /// <summary>Профиль для сборки: исходный + правила + структура (+ данные титульного листа и черновики разделов от ИИ).</summary>
     public Profile BuildProfile(bool withFields = true)
     {
         var p = _original.Clone();
         Rules.ApplyTo(p);
         Structure.ApplyTo(p, _original);
-        if (withFields) Fields.ApplyTo(p);
+        if (withFields)
+        {
+            Fields.ApplyTo(p);
+            if (_profile != null) Drafts.ApplyTo(p, _settings.For(_profile.Key).Drafts);
+        }
         return p;
+    }
+
+    // ------------------------------------------------------------ ИИ-помощник
+
+    /// <summary>О чём работа — для подсказок ИИ. Данные студента (ФИО, вуз, группа) сюда не входят.</summary>
+    WorkContext WorkContextNow()
+    {
+        string? Value(string key) => Fields.Find(key) is { IsFilled: true } f ? f.Value.Trim() : null;
+        var plan = StructurePlan.From(BuildProfile(withFields: false));
+        return new WorkContext
+        {
+            WorkType = _profile?.Title ?? "Курсовая работа",
+            Level = _profile is { IsImported: false } c ? c.Level : _level,
+            Gost = _profile is { IsImported: false } card ? card.Gost : "методичке кафедры",
+            Topic = Value("topic"),
+            Discipline = Value("discipline"),
+            Specialty = Value("specialty"),
+            Chapters = plan.Chapters,
+        };
+    }
+
+    void UpdateAiNav()
+    {
+        if (Ai == null) return;
+        var nav = ToolsNav[2];
+        var drafts = _profile != null ? _settings.For(_profile.Key).Drafts?.Count ?? 0 : 0;
+        nav.Subtitle = !Ai.IsConnected ? "Подключить по API-ключу"
+            : drafts > 0 ? $"Черновиков в шаблоне: {drafts}" : "План и черновики";
+    }
+
+    /// <summary>План от ИИ → главы и параграфы в «Структуре работы» (с отменой).</summary>
+    void ApplyPlan(List<ChapterPlan> chapters)
+    {
+        var snapshot = BuildProfile(withFields: false);
+        var p = BuildProfile(withFields: false);
+        var plan = StructurePlan.From(p);
+        plan.Chapters = chapters.Take(StructurePlan.MaxChapters)
+            .Select((c, i) => new ChapterPlan(c.Title.Length > 0 ? c.Title : $"[Название главы {i + 1}]", c.Sections.Take(StructurePlan.MaxSections).ToList()))
+            .ToList();
+        plan.ApplyTo(p, _original);
+        _switching = true;
+        Structure.Load(p);
+        _switching = false;
+        Refresh();
+        _autosave.Start();
+        var sections = plan.Chapters.Sum(c => c.Sections.Count);
+        ShowUndo($"План применён: {StructureViewModel.Plural(plan.Chapters.Count, "глава", "главы", "глав")}, {StructureViewModel.Plural(sections, "параграф", "параграфа", "параграфов")} — см. «Структура работы».", () =>
+        {
+            _switching = true;
+            Structure.Load(snapshot);
+            _switching = false;
+            Refresh();
+            _autosave.Start();
+        });
     }
 
     void OnEdited(bool clearUndo)
@@ -510,6 +580,8 @@ public sealed class MainViewModel : ObservableObject
         Nav[3].ErrorCount = Structure.ErrorCount;
         Nav[3].IsModified = IsStructureModified && Structure.ErrorCount == 0;
         OnPropertyChanged(nameof(CanResetRules));
+        if (_page == AppPage.Ai) Ai.Refresh();
+        UpdateAiNav();
         UpdateValidationBar();
     }
 
@@ -995,7 +1067,7 @@ public sealed class MainViewModel : ObservableObject
     async Task ClearDataAsync()
     {
         var answer = await AskAsync("Очистить сохранённые данные?",
-            "Будут удалены поля титульного листа, изменённые правила и структура, а также импортированные профили. Отменить это действие нельзя.",
+            "Будут удалены поля титульного листа, изменённые правила и структура, импортированные профили, черновики и ключ ИИ. Отменить это действие нельзя.",
             [new DialogButton { Text = "_Очистить", Result = "ok" }, new DialogButton { Text = "Отмена", Result = "cancel", IsCancel = true, IsDefaultFocus = true }]);
         if (answer != "ok") return;
         _autosave.Stop();
@@ -1006,7 +1078,9 @@ public sealed class MainViewModel : ObservableObject
         _settings.LastFile = null;
         _settings.DefaultDirectory = null;
         _settings.LastDirectory = null;
+        _settings.Ai = new();
         _settings.Save();
+        Ai.Reset();
         BuildCards();
         _profile = null;
         SelectProfile(Cards[0]);

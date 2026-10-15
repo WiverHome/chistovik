@@ -139,6 +139,9 @@
                             <DataTrigger Binding="{Binding CurrentPage}" Value="Knowledge">
                                 <Setter Property="ContentTemplate"><Setter.Value><DataTemplate><v:KnowledgePage /></DataTemplate></Setter.Value></Setter>
                             </DataTrigger>
+                            <DataTrigger Binding="{Binding CurrentPage}" Value="Ai">
+                                <Setter Property="ContentTemplate"><Setter.Value><DataTemplate><v:AiPage /></DataTemplate></Setter.Value></Setter>
+                            </DataTrigger>
                             <DataTrigger Binding="{Binding CurrentPage}" Value="Settings">
                                 <Setter Property="ContentTemplate"><Setter.Value><DataTemplate><v:SettingsPage /></DataTemplate></Setter.Value></Setter>
                             </DataTrigger>
@@ -177,7 +180,7 @@
                         </ControlTemplate>
                     </ListBox.Template>
                 </ListBox>
-                <!-- Вторая группа: проверка готовой работы и база знаний -->
+                <!-- Вторая группа: проверка готовой работы, база знаний и ИИ-помощник -->
                 <Border Height="1" Margin="12,4,12,8" Background="{DynamicResource Brush.Stroke.Divider}" />
                 <ListBox x:Name="ToolsNavList" ItemsSource="{Binding ToolsNav}" SelectedItem="{Binding SelectedToolNav, Mode=TwoWay}"
                          ItemContainerStyle="{StaticResource NavItem}" Background="Transparent" BorderThickness="0"
