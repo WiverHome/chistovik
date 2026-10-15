@@ -79,7 +79,7 @@ public static class SampleAnalyzer
     }
 
     /// <summary>Word открывает файл и сохраняет копию .docx во временной папке; при отмене или тайм-ауте завершается только наш Word.</summary>
-    static string ConvertWithWord(string path, string name, CancellationToken ct)
+    internal static string ConvertWithWord(string path, string name, CancellationToken ct)
     {
         var target = Path.Combine(Path.GetTempPath(), $"shablon-sample-{Guid.NewGuid():N}.docx");
         var before = Process.GetProcessesByName("WINWORD").Select(p => p.Id).ToHashSet();

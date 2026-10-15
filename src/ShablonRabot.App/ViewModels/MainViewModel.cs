@@ -8,7 +8,7 @@ using ShablonRabot.Core.Detection;
 
 namespace ShablonRabot.App.ViewModels;
 
-public enum AppPage { Type, TitlePage, Rules, Structure, Settings }
+public enum AppPage { Type, TitlePage, Rules, Structure, Settings, Check, Knowledge }
 
 public interface IDialogService
 {
@@ -124,6 +124,24 @@ public sealed class MainViewModel : ObservableObject
             new NavItemViewModel(AppPage.Structure, "Структура работы", "", "Ctrl+4"),
         ];
         SettingsNav = new NavItemViewModel(AppPage.Settings, "Параметры", "", "Ctrl+,");
+        // Вторая группа: работа с готовым текстом и справка
+        ToolsNav =
+        [
+            new NavItemViewModel(AppPage.Check, "Проверка работы", "\uE9F9", "Ctrl+5") { Subtitle = "Готовый .docx по правилам" },
+            new NavItemViewModel(AppPage.Knowledge, "База знаний", "\uE82D", "Ctrl+6") { Subtitle = "ГОСТы и советы" },
+        ];
+        Check = new CheckViewModel(dialogs, () => (BuildProfile(withFields: false), ProfileTitle, _profile is { IsImported: false } card ? card.Gost : null),
+            () => _settings.LastDirectory);
+        // Итог последней проверки — под пунктом навигации
+        Check.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName is not ("" or nameof(CheckViewModel.State))) return;
+            ToolsNav[0].Subtitle = Check.IsResult
+                ? (Check.IsClean ? "Замечаний нет" : $"Ошибок: {Check.Errors} · замечаний: {Check.Warnings}")
+                : Check.IsChecking ? "Проверяем…" : "Готовый .docx по правилам";
+            ToolsNav[0].ErrorCount = Check.IsResult ? Check.Errors : 0;
+        };
+        Check.Saved = (text, path) => ShowInfo(InfoKind.Success, null, text, "Показать в папке", () => { if (path != null) _dialogs.ShowInFolder(path); });
 
         Fields.Changed += (_, _) => OnEdited(clearUndo: true);
         Rules.Changed += (_, _) => OnEdited(clearUndo: true);
@@ -153,6 +171,7 @@ public sealed class MainViewModel : ObservableObject
         DismissWelcomeCommand = new RelayCommand(() => { _settings.FirstRunDone = true; _settings.Save(); OnPropertyChanged(nameof(ShowWelcome)); });
         ChangeFolderCommand = new RelayCommand(ChangeDefaultFolder);
         ClearDataCommand = new RelayCommand(async () => await ClearDataAsync());
+        ShowOnboardingCommand = new RelayCommand(ShowOnboarding, () => Dialog == null);
         OpenProfilesFolderCommand = new RelayCommand(() => { Directory.CreateDirectory(AppSettings.ProfilesDir); _dialogs.OpenPath(AppSettings.ProfilesDir); });
         NextCommand = new RelayCommand(() => Navigate(_page + 1));
         DetectCommand = new RelayCommand(p => OpenDetect(p as string == "text" ? DetectSource.Text : DetectSource.File), _ => Dialog == null && !IsBusy);
@@ -180,6 +199,19 @@ public sealed class MainViewModel : ObservableObject
     public RulesViewModel Rules { get; } = new();
     public StructureViewModel Structure { get; } = new();
     public PreviewViewModel Preview { get; } = new();
+    public CheckViewModel Check { get; }
+    public KnowledgeViewModel Knowledge { get; } = new();
+    public IReadOnlyList<NavItemViewModel> ToolsNav { get; }
+
+    /// <summary>Выбор во второй группе навигации: проверка работы и база знаний.</summary>
+    public NavItemViewModel? SelectedToolNav
+    {
+        get => ToolsNav.FirstOrDefault(n => n.AppPage == _page);
+        set { if (value != null) CurrentPage = value.AppPage; }
+    }
+
+    /// <summary>На страницах проверки и базы знаний предпросмотр шаблона не нужен — место отдаётся тексту.</summary>
+    public bool ShowPreview => _page is not (AppPage.Check or AppPage.Knowledge);
     public bool IsWordInstalled { get; }
 
     /// <summary>«Правила определены по примеру «…» · Похоже на ГОСТ …» (DESIGN.md 17.8).</summary>
@@ -206,7 +238,10 @@ public sealed class MainViewModel : ObservableObject
             Preview.Mode = AutoPreviewMode(value);
             OnPropertyChanged(nameof(PreviewModeIndex));
             OnPropertyChanged(nameof(SelectedNav));
+            OnPropertyChanged(nameof(SelectedToolNav));
+            OnPropertyChanged(nameof(ShowPreview));
             OnPropertyChanged(nameof(ShowWelcome));
+            if (value == AppPage.Check) Check.RefreshRules();
             ClearUndo();
             if (InfoBar is { IsUndo: false, IsValidation: false }) InfoBar = null;
             // Первый запуск завершён, когда пользователь ушёл со страницы «Вид работы»
@@ -286,6 +321,7 @@ public sealed class MainViewModel : ObservableObject
     public RelayCommand ChangeFolderCommand { get; }
     public RelayCommand ClearDataCommand { get; }
     public RelayCommand OpenProfilesFolderCommand { get; }
+    public RelayCommand ShowOnboardingCommand { get; }
     public RelayCommand NextCommand { get; }
     public RelayCommand DetectCommand { get; }
     public RelayCommand DetectFromClipboardCommand { get; }
@@ -573,6 +609,28 @@ public sealed class MainViewModel : ObservableObject
     }
 
     // ------------------------------------------------------------ диалоги
+
+    /// <summary>
+    /// Ссылки из статей базы знаний: «article:id» — другая статья, «app:check» / «app:type» — раздел программы,
+    /// «app:onboarding» — обучение, http(s) — в браузере.
+    /// </summary>
+    public void OpenLink(string target)
+    {
+        if (target.StartsWith("article:")) { Knowledge.Open(target["article:".Length..]); CurrentPage = AppPage.Knowledge; }
+        else if (target == "app:onboarding") ShowOnboarding();
+        else if (target.StartsWith("app:") && Enum.TryParse<AppPage>(target[4..], ignoreCase: true, out var page)) CurrentPage = page;
+        else if (target.StartsWith("https://") || target.StartsWith("http://")) _dialogs.OpenPath(target);
+    }
+
+    /// <summary>Обучение: при первом запуске и по кнопке в «Параметрах» и «Базе знаний».</summary>
+    public void ShowOnboarding()
+    {
+        if (Dialog != null) return;
+        var dialog = new OnboardingDialogViewModel(
+            () => { _settings.OnboardingDone = true; _settings.Save(); },
+            () => CurrentPage = AppPage.Knowledge);
+        ShowDialog(dialog);
+    }
 
     public void ShowDialog(DialogViewModel dialog)
     {

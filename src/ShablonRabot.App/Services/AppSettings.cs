@@ -55,6 +55,8 @@ public sealed class AppSettings
     public bool SavePdf { get; set; }
     public bool OpenAfter { get; set; } = true;
     public bool FirstRunDone { get; set; }
+    /// <summary>Обучение показано (пройдено или пропущено).</summary>
+    public bool OnboardingDone { get; set; }
     public string Theme { get; set; } = "system";
     public WindowPlacement? Window { get; set; }
 

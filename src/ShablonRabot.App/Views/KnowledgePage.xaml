@@ -1,0 +1,77 @@
+<UserControl x:Class="ShablonRabot.App.Views.KnowledgePage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:ShablonRabot.App.Controls">
+    <!-- Раздел «База знаний» (DESIGN.md 19): статьи о ГОСТах и Word со ссылками на разделы программы -->
+    <Grid Margin="0">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="280" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Список статей -->
+        <Grid Margin="24,24,0,24">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <TextBlock Text="База знаний" Style="{StaticResource Text.Title}" />
+            <TextBox Grid.Row="1" x:Name="Search" Margin="0,16,0,12" Text="{Binding Knowledge.Query, UpdateSourceTrigger=PropertyChanged}"
+                     c:Input.Placeholder="Поиск: поля, список литературы…" AutomationProperties.Name="Поиск по базе знаний" />
+            <ListBox Grid.Row="2" x:Name="List" ItemsSource="{Binding Knowledge.Articles}" SelectedItem="{Binding Knowledge.Selected, Mode=TwoWay}"
+                     Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     AutomationProperties.Name="Статьи">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual}" />
+                        <Setter Property="Margin" Value="0,0,0,2" />
+                        <Setter Property="Cursor" Value="Hand" />
+                        <Setter Property="AutomationProperties.Name" Value="{Binding Title}" />
+                        <Setter Property="AutomationProperties.HelpText" Value="{Binding Summary}" />
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ListBoxItem">
+                                    <Grid>
+                                        <Border x:Name="Bd" CornerRadius="4" Background="Transparent" />
+                                        <Border x:Name="Bar" Width="3" Height="16" CornerRadius="1.5" HorizontalAlignment="Left"
+                                                Background="{DynamicResource Brush.Accent.Default}" Visibility="Collapsed" />
+                                        <Grid Margin="12,8,8,8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="{Binding Glyph}" Style="{StaticResource Icon}" VerticalAlignment="Top" Margin="0,2,12,0" />
+                                            <StackPanel Grid.Column="1">
+                                                <TextBlock Text="{Binding Title}" Style="{StaticResource Text.Body}" TextWrapping="Wrap" />
+                                                <TextBlock Text="{Binding Summary}" Style="{StaticResource Text.Caption}" TextWrapping="Wrap" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Grid>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Fill.SubtleHover}" />
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Fill.SubtleSelected}" />
+                                            <Setter TargetName="Bar" Property="Visibility" Value="Visible" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+            </ListBox>
+            <TextBlock Grid.Row="2" Text="Ничего не нашлось. Попробуйте другое слово: «поля», «литература», «Word»." Style="{StaticResource Text.BodySecondary}"
+                       Visibility="{Binding Knowledge.NothingFound, Converter={StaticResource BoolToVisibility}}" />
+        </Grid>
+
+        <!-- Статья -->
+        <Border Grid.Column="1" Margin="24,24,24,0" BorderThickness="1,0,0,0" BorderBrush="{DynamicResource Brush.Stroke.Divider}" Padding="32,0,8,0">
+            <FlowDocumentScrollViewer x:Name="Reader" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                                      IsToolBarVisible="False" Zoom="100" MaxWidth="780" HorizontalAlignment="Left"
+                                      AutomationProperties.Name="Текст статьи" />
+        </Border>
+    </Grid>
+</UserControl>

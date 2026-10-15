@@ -14,15 +14,17 @@
     <RootNamespace>ShablonRabot.App</RootNamespace>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>1.1.1</Version>
+    <Version>1.2.0</Version>
     <Product>Чистовик</Product>
     <Company>Чистовик</Company>
-    <Description>Шаблоны курсовых и выпускных работ по ГОСТ</Description>
+    <Description>Шаблоны студенческих работ по ГОСТ и проверка готовых работ</Description>
     <SatelliteResourceLanguages>ru</SatelliteResourceLanguages>
   </PropertyGroup>
 
   <ItemGroup>
     <Resource Include="Assets\app.ico" />
+    <!-- Статьи базы знаний (Markdown) -->
+    <EmbeddedResource Include="Knowledge\*.md" LogicalName="Knowledge.%(Filename)%(Extension)" />
   </ItemGroup>
 
 </Project>

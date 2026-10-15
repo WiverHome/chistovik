@@ -42,6 +42,9 @@ public partial class App : Application
         if (file != null) _ = window.ViewModel.ImportAsync(file);
         else if (e.Args.FirstOrDefault(Core.Detection.SampleAnalyzer.IsSupported) is { } sample)
             Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, () => window.ViewModel.OpenDetectFile(sample));
+        // Обучение — при первом запуске (и один раз после обновления, в котором оно появилось)
+        else if (!settings.OnboardingDone)
+            Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, () => window.ViewModel.ShowOnboarding());
     }
 
     void OnUnhandled(object sender, DispatcherUnhandledExceptionEventArgs e)

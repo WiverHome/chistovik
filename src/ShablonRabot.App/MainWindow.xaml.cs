@@ -57,7 +57,8 @@ public partial class MainWindow : Window
         var width = ActualWidth;
         _compactLayout = width < 1180;
         NavColumn.Width = new GridLength(_compactLayout ? 48 : 240);
-        PreviewColumn.Width = new GridLength(width >= 1440 ? 480 : _compactLayout ? 360 : 400);
+        // Проверка работы и база знаний — без предпросмотра шаблона, на всю ширину
+        PreviewColumn.Width = !ViewModel.ShowPreview ? new GridLength(0) : new GridLength(width >= 1440 ? 480 : _compactLayout ? 360 : 400);
         if (!_compactLayout) _navExpanded = false;
         ApplyNavState();
     }
@@ -114,6 +115,7 @@ public partial class MainWindow : Window
     void FocusNavigation()
     {
         if (NavList.ItemContainerGenerator.ContainerFromItem(NavList.SelectedItem) is ListBoxItem item) item.Focus();
+        else if (ToolsNavList.ItemContainerGenerator.ContainerFromItem(ToolsNavList.SelectedItem) is ListBoxItem tool) tool.Focus();
     }
 
     // ------------------------------------------------------------ клавиатура
@@ -140,7 +142,8 @@ public partial class MainWindow : Window
             string? target = e.Key switch
             {
                 Key.D1 or Key.NumPad1 => "Type", Key.D2 or Key.NumPad2 => "TitlePage",
-                Key.D3 or Key.NumPad3 => "Rules", Key.D4 or Key.NumPad4 => "Structure", Key.OemComma => "Settings", _ => null,
+                Key.D3 or Key.NumPad3 => "Rules", Key.D4 or Key.NumPad4 => "Structure",
+                Key.D5 or Key.NumPad5 => "Check", Key.D6 or Key.NumPad6 => "Knowledge", Key.OemComma => "Settings", _ => null,
             };
             if (target != null)
             {
@@ -150,6 +153,14 @@ public partial class MainWindow : Window
                 e.Handled = true;
                 return;
             }
+        }
+        // F1 — база знаний
+        if (e.Key == Key.F1 && Keyboard.Modifiers == ModifierKeys.None && ViewModel.Dialog == null)
+        {
+            ViewModel.NavigateCommand.Execute("Knowledge");
+            CollapseNav();
+            e.Handled = true;
+            return;
         }
         // F6 / Shift+F6 — переход между областями окна
         if (e.Key == Key.F6 && ViewModel.Dialog == null)
@@ -161,7 +172,7 @@ public partial class MainWindow : Window
 
     void MoveBetweenRegions(int direction)
     {
-        FrameworkElement[] regions = [NavHost, Editor, (FrameworkElement)LayoutRoot.Children.OfType<Views.PreviewPane>().First()];
+        FrameworkElement[] regions = ViewModel.ShowPreview ? [NavHost, Editor, PreviewHost] : [NavHost, Editor];
         var focused = Keyboard.FocusedElement as DependencyObject;
         var current = Array.FindIndex(regions, r => focused != null && (r == focused || (focused is System.Windows.Media.Visual v && r.IsAncestorOf(v))));
         var next = regions[((current < 0 ? 0 : current + direction) + regions.Length) % regions.Length];
@@ -173,7 +184,7 @@ public partial class MainWindow : Window
 
     void OnViewModelChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(MainViewModel.CurrentPage)) { AnimatePage(); return; }
+        if (e.PropertyName == nameof(MainViewModel.CurrentPage)) { UpdateLayoutMode(); AnimatePage(); return; }
         if (e.PropertyName != nameof(MainViewModel.Dialog)) return;
         if (ViewModel.Dialog != null) AnimateDialog();
         if (ViewModel.Dialog is GenerationDialogViewModel g)
@@ -275,7 +286,8 @@ public partial class MainWindow : Window
         if (ok)
         {
             DropIcon.Text = drop!.Value.IsProfile ? "\uE8B5" : "\uE721";
-            DropText.Text = drop.Value.IsProfile ? "Отпустите, чтобы импортировать профиль" : "Отпустите, чтобы определить правила по примеру";
+            DropText.Text = drop.Value.IsProfile ? "Отпустите, чтобы импортировать профиль"
+                : IsCheckDrop(drop.Value.Path) ? "Отпустите, чтобы проверить работу" : "Отпустите, чтобы определить правила по примеру";
         }
         e.Handled = true;
     }
@@ -286,8 +298,12 @@ public partial class MainWindow : Window
         var drop = Dropped(e);
         if (!CanAccept(drop)) return;
         if (drop!.Value.IsProfile) _ = ViewModel.ImportAsync(drop.Value.Path);
+        else if (IsCheckDrop(drop.Value.Path)) _ = ViewModel.Check.CheckAsync(drop.Value.Path);
         else ViewModel.OpenDetectFile(drop.Value.Path);
     }
+
+    /// <summary>На странице «Проверка работы» документ перетаскивают для проверки, а не для определения правил.</summary>
+    bool IsCheckDrop(string path) => ViewModel.CurrentPage == AppPage.Check && ViewModel.Dialog == null && !ViewModel.Check.IsChecking;
 
     // ------------------------------------------------------------ размер окна и закрытие
 

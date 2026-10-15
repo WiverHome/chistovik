@@ -1,0 +1,272 @@
+<UserControl x:Class="ShablonRabot.App.Views.CheckPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:ShablonRabot.App.Controls"
+             xmlns:vm="clr-namespace:ShablonRabot.App.ViewModels">
+    <!-- Раздел «Проверка работы» (DESIGN.md 18): готовая работа сверяется с правилами вида работы -->
+    <UserControl.Resources>
+        <!-- Значок и цвет серьёзности -->
+        <Style x:Key="SeverityIcon" TargetType="TextBlock" BasedOn="{StaticResource Icon}">
+            <Setter Property="Text" Value="&#xE82F;" />
+            <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Severity}" Value="Error">
+                    <Setter Property="Text" Value="&#xEA39;" />
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Error}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Severity}" Value="Warning">
+                    <Setter Property="Text" Value="&#xE7BA;" />
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Warning}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="CountChip" TargetType="Border">
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Padding" Value="10,3" />
+            <Setter Property="Margin" Value="0,0,8,0" />
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer x:Name="Scroll" Style="{StaticResource PageScroll}">
+        <StackPanel Style="{StaticResource PageContent}" MaxWidth="820">
+            <TextBlock Text="Проверка работы" Style="{StaticResource Text.Title}" />
+            <TextBlock Style="{StaticResource PageSubtitle}"
+                       Text="Загрузите готовую работу — проверим поля, шрифт, интервалы, заголовки, подписи рисунков и таблиц, список литературы и покажем, что исправить." />
+            <c:InfoBar Margin="0,16,0,0" DataContext="{Binding DataContext.InfoBar, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+
+            <!-- По каким правилам -->
+            <Border Style="{StaticResource Card}" Margin="0,20,0,0" Padding="16,12">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="&#xE8FD;" Style="{StaticResource Icon}" VerticalAlignment="Top" Margin="0,2,12,0" Foreground="{DynamicResource Brush.Accent.Text}" />
+                    <TextBlock Grid.Column="1" Text="{Binding Check.RulesText}" Style="{StaticResource Text.Body}" VerticalAlignment="Center" />
+                    <Button Grid.Column="2" Style="{StaticResource Button.Link}" Content="Сменить вид работы" Margin="16,0,0,0" VerticalAlignment="Center"
+                            Command="{Binding NavigateCommand}" CommandParameter="Type" />
+                </Grid>
+            </Border>
+
+            <!-- Выбор файла -->
+            <Button x:Name="DropZone" Height="188" Margin="0,16,0,0" Command="{Binding Check.ChooseFileCommand}" FocusVisualStyle="{StaticResource FocusVisual.Card}"
+                    Cursor="Hand" AutomationProperties.Name="Выбрать файл работы для проверки"
+                    AutomationProperties.HelpText=".docx — лучше всего. .doc, .rtf и .odt — если установлен Microsoft Word. PDF проверить нельзя."
+                    Visibility="{Binding Check.IsEmpty, Converter={StaticResource BoolToVisibility}}">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Grid x:Name="G" Background="Transparent">
+                            <Rectangle RadiusX="8" RadiusY="8" StrokeDashArray="4 3" Stroke="{DynamicResource Brush.Stroke.ControlStrong}" StrokeThickness="1" />
+                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                <TextBlock Text="&#xE9D5;" Style="{StaticResource Icon}" FontSize="32" Foreground="{DynamicResource Brush.Text.Secondary}" HorizontalAlignment="Center" />
+                                <TextBlock Text="Перетащите сюда готовую работу или выберите файл" Style="{StaticResource Text.Body}" Margin="0,12,0,0" HorizontalAlignment="Center" />
+                                <Border Background="{DynamicResource Brush.Accent.Default}" CornerRadius="4" Padding="14,6" Margin="0,12,0,0" HorizontalAlignment="Center">
+                                    <TextBlock Text="Выбрать файл…" Style="{StaticResource Text.Body}" Foreground="{DynamicResource Brush.Text.OnAccent}" />
+                                </Border>
+                                <TextBlock Style="{StaticResource Text.Caption}" Margin="0,12,0,0" HorizontalAlignment="Center" TextAlignment="Center"
+                                           Text=".docx — лучше всего · .doc, .rtf и .odt — если установлен Word · файл не изменяется" />
+                            </StackPanel>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="G" Property="Background" Value="{DynamicResource Brush.Fill.SubtleHover}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+
+            <!-- Идёт проверка -->
+            <Border Style="{StaticResource Card}" Margin="0,16,0,0" Padding="16"
+                    Visibility="{Binding Check.IsChecking, Converter={StaticResource BoolToVisibility}}">
+                <Grid>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <c:Spinner Margin="0,0,12,0" />
+                        <TextBlock Style="{StaticResource Text.Body}" VerticalAlignment="Center">
+                            <Run Text="Проверяем «" /><Run Text="{Binding Check.FileName, Mode=OneWay}" /><Run Text="»…" />
+                        </TextBlock>
+                    </StackPanel>
+                    <Button HorizontalAlignment="Right" Content="Отмена" Command="{Binding Check.CancelCommand}" />
+                </Grid>
+            </Border>
+
+            <!-- Ошибка -->
+            <Border Margin="0,16,0,0" Padding="16" CornerRadius="8" Background="{DynamicResource Brush.Bg.Error}" BorderBrush="{DynamicResource Brush.Stroke.Infobar}" BorderThickness="1"
+                    Visibility="{Binding Check.IsError, Converter={StaticResource BoolToVisibility}}">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xEA39;" Style="{StaticResource Icon}" Foreground="{DynamicResource Brush.Text.Error}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding Check.ErrorTitle}" Style="{StaticResource Text.BodyStrong}" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding Check.ErrorText}" Style="{StaticResource Text.Body}" Margin="28,4,0,0" />
+                    <StackPanel Orientation="Horizontal" Margin="28,12,0,0">
+                        <Button Content="Выбрать другой файл…" Command="{Binding Check.ChooseFileCommand}" Margin="0,0,8,0" />
+                        <Button Content="Проверить заново" Command="{Binding Check.CheckAgainCommand}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Результат -->
+            <StackPanel Visibility="{Binding Check.IsResult, Converter={StaticResource BoolToVisibility}}" Margin="0,16,0,0">
+                <Border x:Name="SummaryCard" Style="{StaticResource Card}" Padding="20,16" Focusable="True" FocusVisualStyle="{StaticResource FocusVisual.Card}"
+                        AutomationProperties.Name="{Binding Check.AnnounceText}">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border Width="40" Height="40" CornerRadius="6" VerticalAlignment="Top">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="{DynamicResource Brush.Bg.Warning}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Check.IsClean}" Value="True">
+                                                <Setter Property="Background" Value="{DynamicResource Brush.Bg.Success}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="20">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock" BasedOn="{StaticResource Icon}">
+                                            <Setter Property="Text" Value="&#xE7BA;" />
+                                            <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Warning}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Check.IsClean}" Value="True">
+                                                    <Setter Property="Text" Value="&#xE73E;" />
+                                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Success}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Border>
+                            <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                                <TextBlock Text="{Binding Check.FileName}" Style="{StaticResource Text.BodyStrong}" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{Binding Check.Summary}" Style="{StaticResource Text.Body}" Margin="0,2,0,0" />
+                                <WrapPanel Margin="0,10,0,0" Visibility="{Binding Check.IsClean, Converter={StaticResource BoolToCollapsedInverse}}">
+                                    <Border Style="{StaticResource CountChip}" Background="{DynamicResource Brush.Bg.Error}">
+                                        <TextBlock Style="{StaticResource Text.CaptionStrong}" Foreground="{DynamicResource Brush.Text.Error}">
+                                            <Run Text="Ошибки: " /><Run Text="{Binding Check.Errors, Mode=OneWay}" />
+                                        </TextBlock>
+                                    </Border>
+                                    <Border Style="{StaticResource CountChip}" Background="{DynamicResource Brush.Bg.Warning}">
+                                        <TextBlock Style="{StaticResource Text.CaptionStrong}" Foreground="{DynamicResource Brush.Text.Warning}">
+                                            <Run Text="Замечания: " /><Run Text="{Binding Check.Warnings, Mode=OneWay}" />
+                                        </TextBlock>
+                                    </Border>
+                                    <Border Style="{StaticResource CountChip}" Background="{DynamicResource Brush.Fill.Subtle}">
+                                        <TextBlock Style="{StaticResource Text.CaptionStrong}" Foreground="{DynamicResource Brush.Text.Secondary}">
+                                            <Run Text="Советы: " /><Run Text="{Binding Check.Advices, Mode=OneWay}" />
+                                        </TextBlock>
+                                    </Border>
+                                </WrapPanel>
+                                <TextBlock Text="{Binding Check.Verdict}" Style="{StaticResource Text.Caption}" Margin="0,10,0,0"
+                                           Visibility="{Binding Check.Verdict, Converter={StaticResource NullToCollapsed}}" />
+                                <TextBlock Text="{Binding Check.RulesUsed}" Style="{StaticResource Text.Caption}" Margin="0,4,0,0" />
+                            </StackPanel>
+                        </Grid>
+                        <!-- Действия -->
+                        <WrapPanel Margin="52,16,0,0">
+                            <Button Style="{StaticResource Button.Primary}" Command="{Binding Check.SaveAnnotatedCommand}" Margin="0,0,8,8"
+                                    Visibility="{Binding Check.IsClean, Converter={StaticResource BoolToCollapsedInverse}}"
+                                    AutomationProperties.Name="Сохранить копию с примечаниями"
+                                    ToolTip="Копия работы с примечаниями Word у каждого замечания. Исходный файл не изменится." ContentTemplate="{StaticResource IconText}" Content="Сохранить копию с примечаниями…" Tag="&#xE90A;" />
+                            <Button Command="{Binding Check.CheckAgainCommand}" Margin="0,0,8,8" AutomationProperties.Name="Проверить заново" ContentTemplate="{StaticResource IconText}" Content="Проверить заново" Tag="&#xE72C;" />
+                            <Button Command="{Binding Check.ChooseFileCommand}" Margin="0,0,8,8" AutomationProperties.Name="Проверить другой файл" ContentTemplate="{StaticResource IconText}" Content="Другой файл…" Tag="&#xE8E5;" />
+                        </WrapPanel>
+                        <StackPanel Orientation="Horizontal" Margin="52,0,0,0" Visibility="{Binding Check.SavedText, Converter={StaticResource NullToCollapsed}}">
+                            <TextBlock Text="{Binding Check.SavedText}" Style="{StaticResource Text.Caption}" VerticalAlignment="Center" MaxWidth="360" TextTrimming="CharacterEllipsis" />
+                            <Button Style="{StaticResource Button.Link}" Content="Открыть" Command="{Binding Check.OpenSavedCommand}" Margin="12,0,0,0" FontSize="12" />
+                            <Button Style="{StaticResource Button.Link}" Content="Показать в папке" Command="{Binding Check.ShowSavedCommand}" Margin="12,0,0,0" FontSize="12" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Фильтр -->
+                <Grid Margin="0,24,0,8" Visibility="{Binding Check.IsClean, Converter={StaticResource BoolToCollapsedInverse}}">
+                    <TextBlock Text="Что исправить" Style="{StaticResource Text.Subtitle}" VerticalAlignment="Center" />
+                    <ListBox Style="{StaticResource Segmented}" HorizontalAlignment="Right" ItemsSource="{x:Static vm:CheckViewModel.Filters}"
+                             SelectedValue="{Binding Check.Filter}" SelectedValuePath="Value" AutomationProperties.Name="Показать" />
+                </Grid>
+
+                <TextBlock Text="{Binding Check.FilterEmptyText}" Style="{StaticResource Text.BodySecondary}" Margin="0,8,0,0"
+                           Visibility="{Binding Check.IsFilterEmpty, Converter={StaticResource BoolToVisibility}}" />
+
+                <!-- Замечания -->
+                <ItemsControl ItemsSource="{Binding Check.Issues}" Focusable="False">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:IssueViewModel}">
+                            <Border Style="{StaticResource Card}" Margin="0,0,0,8">
+                                <StackPanel>
+                                    <Button Command="{Binding DataContext.Check.ToggleCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
+                                            Style="{StaticResource Button.Subtle}" HorizontalContentAlignment="Stretch" Padding="16,12" MinHeight="52"
+                                            AutomationProperties.Name="{Binding AutomationName}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Style="{StaticResource SeverityIcon}" VerticalAlignment="Center" Margin="0,0,12,0" />
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Title}" Style="{StaticResource Text.BodyStrong}" TextWrapping="Wrap" />
+                                                <TextBlock Style="{StaticResource Text.Caption}">
+                                                    <Run Text="{Binding SeverityText, Mode=OneWay}" /><Run Text=" · " /><Run Text="{Binding Category, Mode=OneWay}" />
+                                                </TextBlock>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="2" Text="{Binding CountText}" Style="{StaticResource Text.Caption}" VerticalAlignment="Center" Margin="12,0" />
+                                            <TextBlock Grid.Column="3" VerticalAlignment="Center" FontSize="12">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock" BasedOn="{StaticResource Icon}">
+                                                        <Setter Property="Text" Value="&#xE70D;" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsExpanded}" Value="True">
+                                                                <Setter Property="Text" Value="&#xE70E;" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </Grid>
+                                    </Button>
+                                    <StackPanel Margin="48,0,16,16" Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVisibility}}">
+                                        <TextBlock Text="{Binding Detail}" Style="{StaticResource Text.Body}" />
+                                        <Border Background="{DynamicResource Brush.Bg.CardSecondary}" CornerRadius="4" Padding="12,8" Margin="0,8,0,0"
+                                                Visibility="{Binding Fix, Converter={StaticResource NullToCollapsed}}">
+                                            <TextBlock Style="{StaticResource Text.Body}">
+                                                <Run Text="Как исправить в Word: " FontWeight="SemiBold" /><Run Text="{Binding Fix, Mode=OneWay}" />
+                                            </TextBlock>
+                                        </Border>
+                                        <TextBlock Text="{Binding Source}" Style="{StaticResource Text.Caption}" Margin="0,8,0,0"
+                                                   Visibility="{Binding Source, Converter={StaticResource NullToCollapsed}}" />
+                                        <TextBlock Text="Где найдено" Style="{StaticResource Text.CaptionStrong}" Margin="0,12,0,4"
+                                                   Visibility="{Binding HasLocations, Converter={StaticResource BoolToVisibility}}" />
+                                        <ItemsControl ItemsSource="{Binding Locations}" Focusable="False">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Style="{StaticResource Text.Caption}" Margin="0,2,0,0" TextTrimming="CharacterEllipsis">
+                                                        <Run Text="{Binding Section, Mode=OneWay}" FontWeight="SemiBold" /><Run Text="  «" /><Run Text="{Binding Snippet, Mode=OneWay}" /><Run Text="»" />
+                                                    </TextBlock>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <TextBlock Text="{Binding MoreText}" Style="{StaticResource Text.Caption}" Margin="0,4,0,0"
+                                                   Visibility="{Binding MoreText, Converter={StaticResource NullToCollapsed}}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <TextBlock Text="{Binding Check.PassedText}" Style="{StaticResource Text.Caption}" Margin="0,16,0,0" />
+                <TextBlock Style="{StaticResource Text.Caption}" Margin="0,8,0,0"
+                           Text="Проверка сравнивает оформление с правилами выбранного вида работы. Она не заменяет нормоконтроль: содержание, правила кафедры и оформление формул проверьте сами." />
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

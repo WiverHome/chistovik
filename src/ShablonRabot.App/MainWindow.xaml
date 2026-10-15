@@ -96,6 +96,9 @@
         <DataTemplate DataType="{x:Type vm:DetectDialogViewModel}">
             <v:DetectDialogView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:OnboardingDialogViewModel}">
+            <v:OnboardingDialogView />
+        </DataTemplate>
         <DataTemplate DataType="{x:Type vm:ZoomDialogViewModel}">
             <v:ZoomDialogView />
         </DataTemplate>
@@ -130,6 +133,12 @@
                             <DataTrigger Binding="{Binding CurrentPage}" Value="Structure">
                                 <Setter Property="ContentTemplate"><Setter.Value><DataTemplate><v:StructurePage /></DataTemplate></Setter.Value></Setter>
                             </DataTrigger>
+                            <DataTrigger Binding="{Binding CurrentPage}" Value="Check">
+                                <Setter Property="ContentTemplate"><Setter.Value><DataTemplate><v:CheckPage /></DataTemplate></Setter.Value></Setter>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding CurrentPage}" Value="Knowledge">
+                                <Setter Property="ContentTemplate"><Setter.Value><DataTemplate><v:KnowledgePage /></DataTemplate></Setter.Value></Setter>
+                            </DataTrigger>
                             <DataTrigger Binding="{Binding CurrentPage}" Value="Settings">
                                 <Setter Property="ContentTemplate"><Setter.Value><DataTemplate><v:SettingsPage /></DataTemplate></Setter.Value></Setter>
                             </DataTrigger>
@@ -140,7 +149,8 @@
         </Border>
 
         <!-- ================================================= Предпросмотр и создание -->
-        <v:PreviewPane Grid.Column="2" KeyboardNavigation.TabIndex="2" />
+        <v:PreviewPane x:Name="PreviewHost" Grid.Column="2" KeyboardNavigation.TabIndex="2"
+                       Visibility="{Binding ShowPreview, Converter={StaticResource BoolToVisibility}}" />
 
         <!-- ================================================= Навигация (поверх колонки, чтобы раскрываться в компактном режиме) -->
         <Border x:Name="NavHost" Grid.Column="0" Grid.ColumnSpan="2" HorizontalAlignment="Left" Width="240"
@@ -156,7 +166,8 @@
                         Visibility="Collapsed" Click="OnBurger" AutomationProperties.Name="Развернуть навигацию" ToolTip="Развернуть навигацию">
                     <TextBlock Text="&#xE700;" Style="{StaticResource Icon}" Foreground="{DynamicResource Brush.Text.Primary}" />
                 </Button>
-                <ListBox x:Name="NavList" Grid.Row="1" ItemsSource="{Binding Nav}" SelectedItem="{Binding SelectedNav, Mode=TwoWay}"
+                <StackPanel Grid.Row="1">
+                <ListBox x:Name="NavList" ItemsSource="{Binding Nav}" SelectedItem="{Binding SelectedNav, Mode=TwoWay}"
                          ItemContainerStyle="{StaticResource NavItem}" Background="Transparent" BorderThickness="0"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled" KeyboardNavigation.TabNavigation="Once"
                          AutomationProperties.Name="Разделы" SelectionChanged="OnNavSelected">
@@ -166,6 +177,19 @@
                         </ControlTemplate>
                     </ListBox.Template>
                 </ListBox>
+                <!-- Вторая группа: проверка готовой работы и база знаний -->
+                <Border Height="1" Margin="12,4,12,8" Background="{DynamicResource Brush.Stroke.Divider}" />
+                <ListBox x:Name="ToolsNavList" ItemsSource="{Binding ToolsNav}" SelectedItem="{Binding SelectedToolNav, Mode=TwoWay}"
+                         ItemContainerStyle="{StaticResource NavItem}" Background="Transparent" BorderThickness="0"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled" KeyboardNavigation.TabNavigation="Once"
+                         AutomationProperties.Name="Проверка и справка" SelectionChanged="OnNavSelected">
+                    <ListBox.Template>
+                        <ControlTemplate TargetType="ListBox">
+                            <ItemsPresenter />
+                        </ControlTemplate>
+                    </ListBox.Template>
+                </ListBox>
+                </StackPanel>
                 <StackPanel Grid.Row="2">
                     <Border Height="1" Margin="12,0,12,4" Background="{DynamicResource Brush.Stroke.Divider}" />
                     <Button x:Name="SettingsButton" Margin="4,0" Height="36" Style="{StaticResource Button.Subtle}"

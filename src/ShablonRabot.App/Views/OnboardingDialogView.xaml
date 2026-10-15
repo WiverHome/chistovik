@@ -1,0 +1,59 @@
+<UserControl x:Class="ShablonRabot.App.Views.OnboardingDialogView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:ShablonRabot.App.Controls">
+    <!-- Обучение при первом запуске (DESIGN.md 20) -->
+    <Border Style="{StaticResource DialogCard}" Width="560" AutomationProperties.Name="Обучение: как пользоваться «Чистовиком»">
+        <StackPanel>
+            <!-- Иллюстрация шага -->
+            <Border Height="148" CornerRadius="8,8,0,0" Background="{DynamicResource Brush.Fill.AccentSubtle}">
+                <Grid>
+                    <Border Width="88" Height="88" CornerRadius="20" Background="{DynamicResource Brush.Bg.Card}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Step.Glyph}" Style="{StaticResource Icon}" FontSize="40" Foreground="{DynamicResource Brush.Accent.Default}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <Button Style="{StaticResource Button.Link}" Content="Пропустить" Command="{Binding SkipCommand}" HorizontalAlignment="Right" VerticalAlignment="Top"
+                            Margin="0,12,16,0" AutomationProperties.Name="Пропустить обучение" />
+                </Grid>
+            </Border>
+            <StackPanel x:Name="Body" Margin="28,20,28,20" Focusable="True" FocusVisualStyle="{x:Null}" AutomationProperties.Name="{Binding AutomationText}">
+                <TextBlock Text="{Binding Counter}" Style="{StaticResource Text.Caption}" />
+                <TextBlock Text="{Binding Step.Title}" Style="{StaticResource DialogTitle}" Margin="0,4,0,0" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding Step.Text}" Style="{StaticResource Text.Body}" Margin="0,12,0,0" />
+                <Border Background="{DynamicResource Brush.Bg.CardSecondary}" CornerRadius="4" Padding="12,8" Margin="0,16,0,0"
+                        Visibility="{Binding Step.Hint, Converter={StaticResource NullToCollapsed}}">
+                    <TextBlock Text="{Binding Step.Hint}" Style="{StaticResource Text.Caption}" />
+                </Border>
+                <Button Style="{StaticResource Button.Link}" Content="Открыть базу знаний" Command="{Binding KnowledgeCommand}" HorizontalAlignment="Left" Margin="0,12,0,0"
+                        Visibility="{Binding IsLast, Converter={StaticResource BoolToVisibility}}" />
+            </StackPanel>
+            <Border Style="{StaticResource DialogFooter}">
+                <Grid>
+                    <!-- Точки шагов -->
+                    <ItemsControl ItemsSource="{Binding Dots}" VerticalAlignment="Center" Focusable="False" AutomationProperties.Name="{Binding Counter}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Ellipse x:Name="Dot" Width="8" Height="8" Margin="0,0,8,0" Fill="{DynamicResource Brush.Stroke.ControlStrong}" />
+                                <DataTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding}" Value="True">
+                                        <Setter TargetName="Dot" Property="Fill" Value="{DynamicResource Brush.Accent.Default}" />
+                                        <Setter TargetName="Dot" Property="Width" Value="20" />
+                                    </DataTrigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Style="{StaticResource DialogButton}" Content="Назад" Command="{Binding BackCommand}" Margin="0,0,8,0"
+                                Visibility="{Binding IsFirst, Converter={StaticResource BoolToCollapsedInverse}}" />
+                        <Button x:Name="Next" Style="{StaticResource DialogPrimary}" Content="{Binding NextText}" Command="{Binding NextCommand}" IsDefault="True"
+                                c:Input.DefaultFocus="True" AutomationProperties.Name="{Binding NextText}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </StackPanel>
+    </Border>
+</UserControl>

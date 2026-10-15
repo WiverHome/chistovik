@@ -3,7 +3,12 @@
 /// <summary>Правило эталона: подходит ли найденное значение и как назвать требование ГОСТ.</summary>
 public sealed record StandardRule(string Key, Func<object, bool> Matches, string Requirement);
 
-public sealed record Standard(string Id, string Name, string Scope, IReadOnlyList<StandardRule> Rules);
+public sealed record Standard(string Id, string Name, string Scope, IReadOnlyList<StandardRule> Rules)
+{
+    /// <summary>Чем заменён отменённый стандарт («ГОСТ 7.32-2017 с 01.07.2018»); null — действует.</summary>
+    public string? ReplacedBy { get; init; }
+    public bool IsOutdated => ReplacedBy != null;
+}
 
 public sealed record RuleDifference(string Key, string Name, string Found, string Required);
 
@@ -17,7 +22,7 @@ public sealed record StandardVerdict(VerdictKind Kind, Standard? Standard, int M
 
     public string Title => Kind switch
     {
-        VerdictKind.Matches => $"Похоже на {Standard!.Name}",
+        VerdictKind.Matches => Standard!.IsOutdated ? $"Похоже на {Standard.Name} — он устарел" : $"Похоже на {Standard.Name}",
         VerdictKind.CustomRules => "Своя методичка",
         _ => "Мало данных, чтобы определить ГОСТ",
     };
@@ -25,6 +30,7 @@ public sealed record StandardVerdict(VerdictKind Kind, Standard? Standard, int M
     public string Summary(int found) => Kind switch
     {
         VerdictKind.Matches => $"Совпадает {Matched} из {Compared} найденных правил. {Standard!.Scope}"
+            + (Standard.IsOutdated ? $" Стандарт заменён: {Standard.ReplacedBy}. Уточните на кафедре, по какой редакции оформлять." : "")
             + (AlsoMatches.Count > 0 ? $" Эти правила подходят и под {string.Join(", ", AlsoMatches.Select(s => s.Name))}." : ""),
         VerdictKind.CustomRules => $"Правила заметно отличаются от ГОСТ: с ближайшим ({Standard!.Name}) совпадает {Matched} из {Compared}. Это нормально — многие вузы пишут свои требования.",
         _ => $"Найдено правил: {found}. Для вывода о ГОСТ нужно хотя бы 6. Найденные правила можно применить.",
@@ -89,7 +95,43 @@ public static class Standards
         new("tableCaptionAlign", v => Equals(v, "left"), "слева"),
     ]);
 
-    public static readonly IReadOnlyList<Standard> All = [Gost732, Gost7011, Gost2105];
+    /// <summary>
+    /// ГОСТ 7.32-2001 (ред. 2005), 6.1–6.6 — отменён, но по нему до сих пор написаны многие методички.
+    /// От редакции 2017 года отличается правым полем 10 мм и отказом от полужирного шрифта.
+    /// </summary>
+    public static readonly Standard Gost732_2001 = new("gost-7.32-2001", "ГОСТ 7.32-2001",
+        "По этой редакции написаны многие старые методички к курсовым и ВКР.",
+    [
+        new("margins", v => v is MarginsValue m
+            && (m.Left is not { } l || l is >= 29 and <= 31) && (m.Right is not { } r || r is >= 9 and <= 11)
+            && (m.Top is not { } t || t is >= 15 and <= 21) && (m.Bottom is not { } b || b is >= 19 and <= 21), "30 / 10 / 20 / 20 мм"),
+        new("fontSize", v => v is double d && d >= 12, "не меньше 12 пт"),
+        new("lineSpacing", v => Near(v, 1.5), "1,5"),
+        new("align", v => Equals(v, "justify"), "по ширине"),
+        new("pageNumber", v => Equals(v, "center"), "внизу по центру"),
+        new("headingAlign", v => Equals(v, "indent"), "с абзацного отступа"),
+        new("structuralUpper", v => Equals(v, true), "прописными"),
+        new("figurePrefix", v => Equals(v, "Рисунок"), "«Рисунок»"),
+        new("separator", v => Equals(v, " – "), "тире"),
+        new("tableCaptionAlign", v => Equals(v, "left"), "слева"),
+    ]) { ReplacedBy = "ГОСТ 7.32-2017 с 1 июля 2018 г." };
+
+    /// <summary>
+    /// ГОСТ Р 7.0.97-2025 «Организационно-распорядительная документация. Требования к оформлению документов»,
+    /// разд. 3 (с 18.08.2025, взамен ГОСТ Р 7.0.97-2016): заявления, служебные записки, письма, приказы.
+    /// </summary>
+    public static readonly Standard Gost7097 = new("gost-r-7.0.97-2025", "ГОСТ Р 7.0.97-2025",
+        "Этот стандарт задаёт оформление деловых документов: заявлений, служебных записок, писем.",
+    [
+        new("margins", Margins(20, 10, 20, 20), "не меньше 20 / 10 / 20 / 20 мм"),
+        new("fontSize", v => v is double d && d is >= 12 and <= 14, "12–14 пт"),
+        new("lineSpacing", v => v is double d && d is >= 0.99 and <= 1.51, "1–1,5"),
+        new("indent", v => Near(v, 1.25), "1,25 см"),
+        new("align", v => Equals(v, "justify"), "по ширине"),
+        new("pageNumber", v => Equals(v, "top-center"), "вверху по центру, со второй страницы"),
+    ]);
+
+    public static readonly IReadOnlyList<Standard> All = [Gost732, Gost7011, Gost2105, Gost732_2001, Gost7097];
 
     /// <summary>Сравнивает найденные правила со всеми эталонами и выбирает ближайший.</summary>
     public static StandardVerdict Match(RulesDetection detection)

@@ -7,6 +7,41 @@ if (args.Length == 0)
     return 1;
 }
 
+// shablon check <работа.docx> [--profile kursovaya|профиль.json] [--annotate копия.docx]
+if (args[0] == "check")
+{
+    Console.OutputEncoding = System.Text.Encoding.UTF8;
+    var pi = Array.IndexOf(args, "--profile");
+    var profileId = pi >= 0 ? args[pi + 1] : "kursovaya";
+    var rules = BuiltInProfiles.All.Any(p => p.Id == profileId) ? BuiltInProfiles.Load(profileId) : ProfileJson.LoadForImport(profileId);
+    var report = ShablonRabot.Core.Checking.DocumentChecker.CheckFile(args[1], rules, rules.Name);
+    Console.WriteLine($"{report.FileName} — по правилам «{report.RulesName}»: {report.Summary}");
+    foreach (var i in report.Issues)
+    {
+        Console.WriteLine($"[{i.Severity}] {i.Category}: {i.Title} ({i.Count}) — {i.Detail}");
+        foreach (var l in i.Locations.Take(3)) Console.WriteLine($"     • {l.Section} | «{l.Snippet}»");
+    }
+    Console.WriteLine("Без замечаний: " + string.Join(", ", report.Passed));
+    var ai = Array.IndexOf(args, "--annotate");
+    if (ai >= 0)
+    {
+        var n = ShablonRabot.Core.Checking.ReportAnnotator.SaveAnnotated(args[1], report, Path.GetFullPath(args[ai + 1]));
+        Console.WriteLine($"Примечаний: {n} → {args[ai + 1]}");
+    }
+    return 0;
+}
+
+// shablon validate <файл.docx> — проверка схемы OpenXML (например, копии с примечаниями)
+if (args[0] == "validate")
+{
+    Console.OutputEncoding = System.Text.Encoding.UTF8;
+    using var vdoc = DocumentFormat.OpenXml.Packaging.WordprocessingDocument.Open(args[1], false);
+    var verrors = new DocumentFormat.OpenXml.Validation.OpenXmlValidator().Validate(vdoc).ToList();
+    foreach (var e in verrors.Take(20)) Console.WriteLine($"XML: {e.Description} @ {e.Path?.XPath}");
+    Console.WriteLine($"Ошибок схемы: {verrors.Count}; примечаний: {vdoc.MainDocumentPart?.WordprocessingCommentsPart?.Comments?.ChildElements.Count ?? 0}");
+    return 0;
+}
+
 // shablon detect <файл> | shablon detect --text "требования"
 if (args[0] == "detect")
 {

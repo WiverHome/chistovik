@@ -40,7 +40,7 @@
       </Component>
       <Component Id="StartMenuShortcut" Guid="F0A5427C-97B0-4733-828C-50DAEF361DF2">
         <Shortcut Id="StartMenuLink" Directory="ProgramMenuFolder" Name="Чистовик"
-                  Description="Шаблоны студенческих работ по ГОСТ" Target="[INSTALLFOLDER]Chistovik.exe"
+                  Description="Шаблоны студенческих работ по ГОСТ и проверка готовых работ" Target="[INSTALLFOLDER]Chistovik.exe"
                   WorkingDirectory="INSTALLFOLDER" Icon="AppIcon" />
         <RegistryValue Root="HKCU" Key="Software\Chistovik" Name="StartMenu" Type="integer" Value="1" KeyPath="yes" />
       </Component>

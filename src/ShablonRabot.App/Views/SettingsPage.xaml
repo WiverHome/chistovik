@@ -30,6 +30,10 @@
                         <Button Content="Открыть папку" Style="{StaticResource Button.Link}" Command="{Binding OpenProfilesFolderCommand}" />
                     </c:SettingRow>
                     <Border Style="{StaticResource Divider}" />
+                    <c:SettingRow Header="Обучение" Description="Короткий обзор: как сделать шаблон и проверить готовую работу.">
+                        <Button Content="Показать" Command="{Binding ShowOnboardingCommand}" MinWidth="0" AutomationProperties.Name="Показать обучение" />
+                    </c:SettingRow>
+                    <Border Style="{StaticResource Divider}" />
                     <c:SettingRow Header="О программе" Description="{Binding AboutText}" />
                 </StackPanel>
             </Border>
