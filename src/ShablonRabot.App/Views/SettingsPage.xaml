@@ -38,7 +38,10 @@
                         <Button Content="Показать" Command="{Binding ShowOnboardingCommand}" MinWidth="0" AutomationProperties.Name="Показать обучение" />
                     </c:SettingRow>
                     <Border Style="{StaticResource Divider}" />
-                    <c:SettingRow Header="О программе" Description="{Binding AboutText}" />
+                    <c:SettingRow Header="О программе" Description="{Binding AboutText}">
+                        <Button Content="Лицензия" Style="{StaticResource Button.Link}" Command="{Binding ShowLicenseCommand}"
+                                AutomationProperties.Name="Лицензионное соглашение" />
+                    </c:SettingRow>
                 </StackPanel>
             </Border>
         </StackPanel>

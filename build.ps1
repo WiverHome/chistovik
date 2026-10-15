@@ -2,7 +2,7 @@
 # Требуется: .NET 8 SDK и WiX как dotnet-инструмент:
 #   dotnet tool install --global wix --version 5.0.2
 #   wix extension add -g WixToolset.UI.wixext/5.0.2
-param([string]$Version = "1.4.0")
+param([string]$Version = "1.4.1")
 $ErrorActionPreference = "Stop"
 $root = $PSScriptRoot
 $publish = Join-Path $root "artifacts\publish"
@@ -22,6 +22,9 @@ Copy-Item "$publish\Chistovik.exe" "$dist\Chistovik.exe" -Force
 if (-not (Test-Path "$root\installer\Dialog.bmp") -or -not (Test-Path "$root\installer\Banner.bmp")) {
     & "$root\installer\make-bitmaps.ps1" | Out-Null
 }
+
+# Окно лицензии в установщике — из LICENSE.md
+& "$root\installer\make-license.ps1" | Out-Null
 
 wix build "$root\installer\Package.wxs" -ext WixToolset.UI.wixext -culture ru-RU -loc "$root\installer\Package.ru-RU.wxl" -arch x64 `
     -d "AppDir=$publish" -d "Version=$Version" -d "IconPath=$root\src\ShablonRabot.App\Assets\app.ico" `

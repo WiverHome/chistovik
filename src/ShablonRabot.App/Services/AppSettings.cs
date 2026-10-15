@@ -52,7 +52,9 @@ public sealed class WindowPlacement
 /// <summary>Настройки и данные пользователя между запусками (%APPDATA%\Chistovik\settings.json).</summary>
 public sealed class AppSettings
 {
-    public static readonly string Dir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Chistovik");
+    /// <summary>Своя папка данных из CHISTOVIK_DATA_DIR — для проверок, чтобы не трогать настройки и ключ пользователя.</summary>
+    static readonly string? CustomDir = Environment.GetEnvironmentVariable("CHISTOVIK_DATA_DIR") is { Length: > 0 } d ? System.IO.Path.GetFullPath(d) : null;
+    public static readonly string Dir = CustomDir ?? System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Chistovik");
     /// <summary>Папка версии 1.0, когда программа называлась «Конструктор шаблонов работ».</summary>
     static readonly string LegacyDir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "KonstruktorShablonov");
     public static readonly string ProfilesDir = System.IO.Path.Combine(Dir, "profiles");
@@ -90,7 +92,8 @@ public sealed class AppSettings
     {
         // Данные версии 1.0 переносим, только если своих настроек ещё нет — решает файл, а не папка:
         // папка Chistovik может появиться раньше (журнал ошибок, временные файлы)
-        var fromLegacy = !File.Exists(FilePath) && File.Exists(LegacyFilePath);
+        // Со своей папкой данных старую версию не переносим — иначе её папка переедет в чужое место
+        var fromLegacy = CustomDir == null && !File.Exists(FilePath) && File.Exists(LegacyFilePath);
         if (fromLegacy) MigrateLegacyFiles();
         try
         {

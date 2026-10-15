@@ -183,6 +183,7 @@ public sealed class MainViewModel : ObservableObject
         ChangeFolderCommand = new RelayCommand(ChangeDefaultFolder);
         ClearDataCommand = new RelayCommand(async () => await ClearDataAsync());
         ShowOnboardingCommand = new RelayCommand(ShowOnboarding, () => Dialog == null);
+        ShowLicenseCommand = new RelayCommand(() => OpenLink("article:license"));
         OpenProfilesFolderCommand = new RelayCommand(() => { Directory.CreateDirectory(AppSettings.ProfilesDir); _dialogs.OpenPath(AppSettings.ProfilesDir); });
         NextCommand = new RelayCommand(() => Navigate(_page + 1));
         DetectCommand = new RelayCommand(p => OpenDetect(p as string == "text" ? DetectSource.Text : DetectSource.File), _ => Dialog == null && !IsBusy);
@@ -331,7 +332,7 @@ public sealed class MainViewModel : ObservableObject
         }
     }
     public string DefaultFolder => _settings.DefaultDirectory ?? Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-    public string AboutText => $"«Чистовик» — шаблоны студенческих работ по ГОСТ. Версия {Version} · ГОСТ 7.32-2017, ГОСТ Р 2.105-2019, ГОСТ Р 7.0.11-2011";
+    public string AboutText => $"«Чистовик» — шаблоны студенческих работ по ГОСТ. Версия {Version}. © 2026 WiverHome. Все права защищены.";
 
     /// <summary>Запрос фокуса в представлении: ключ поля титула, имя правила или «error».</summary>
     public event Action<AppPage, string>? FocusRequested;
@@ -356,6 +357,7 @@ public sealed class MainViewModel : ObservableObject
     public RelayCommand ClearDataCommand { get; }
     public RelayCommand OpenProfilesFolderCommand { get; }
     public RelayCommand ShowOnboardingCommand { get; }
+    public RelayCommand ShowLicenseCommand { get; }
     public RelayCommand NextCommand { get; }
     public RelayCommand DetectCommand { get; }
     public RelayCommand DetectFromClipboardCommand { get; }

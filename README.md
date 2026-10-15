@@ -8,6 +8,7 @@
   <img src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4?logo=windows" alt="Windows 10 и 11">
   <img src="https://img.shields.io/badge/Word-.docx-2B579A?logo=microsoftword&logoColor=white" alt="Word">
   <img src="https://img.shields.io/badge/%D1%86%D0%B5%D0%BD%D0%B0-%D0%B1%D0%B5%D1%81%D0%BF%D0%BB%D0%B0%D1%82%D0%BD%D0%BE-2E7D32" alt="Бесплатно">
+  <a href="LICENSE.md"><img src="https://img.shields.io/badge/%D0%BB%D0%B8%D1%86%D0%B5%D0%BD%D0%B7%D0%B8%D1%8F-%C2%A9%20WiverHome-5A6B7D" alt="Лицензия: © WiverHome, все права защищены"></a>
 </p>
 
 <h3 align="center">
@@ -200,7 +201,7 @@
 <details>
 <summary><b>Это бесплатно?</b></summary>
 
-Да. Программа бесплатная, без рекламы и регистрации.
+Да. Программа бесплатная, без рекламы и регистрации. Её можно ставить на любые свои компьютеры и в компьютерных классах — подробности в [лицензионном соглашении](LICENSE.md).
 </details>
 
 <details>
@@ -266,7 +267,7 @@
 ```powershell
 dotnet tool install --global wix --version 5.0.2
 wix extension add -g WixToolset.UI.wixext/5.0.2
-.\build.ps1 -Version 1.4.0
+.\build.ps1 -Version 1.4.1
 ```
 
 Результат — в `dist`: самодостаточный `Chistovik.exe` и MSI-установщик.
@@ -285,4 +286,26 @@ dotnet run --project src/ShablonRabot.Cli -- check работа.docx --profile k
 
 Профили — `src/ShablonRabot.Core/Profiles/*.json`; ключ `extends` наследует базовый профиль, `field_hints` меняет подписи полей титула.
 
+### Проверка без риска для своих данных
+
+Переменная окружения `CHISTOVIK_DATA_DIR` задаёт программе отдельную папку настроек вместо `%APPDATA%\Chistovik` — удобно для тестов: ваши настройки и ключ ИИ не затрагиваются, перенос данных старой версии отключён.
+
+```powershell
+$env:CHISTOVIK_DATA_DIR = "$env:TEMP\chistovik-test"; .\dist\Chistovik.exe
+```
+
+### Лицензия в установщике
+
+Окно лицензии в MSI собирается из `LICENSE.md` скриптом `installer/make-license.ps1` при каждом запуске `build.ps1`. Меняйте текст только в `LICENSE.md`.
+
 </details>
+
+---
+
+## 📄 Лицензия
+
+© 2026 WiverHome. Все права защищены.
+
+«Чистовик» бесплатен: его можно скачивать, устанавливать на любые свои компьютеры и в компьютерных классах. Документы, которые вы создали в программе, принадлежат вам. Продавать программу, распространять изменённые версии и копировать код, тексты и изображения в другие проекты нельзя без письменного разрешения. Исходный код открыт для просмотра, но это не открытая лицензия.
+
+Полный текст — [LICENSE.md](LICENSE.md). Лицензии сторонних компонентов (.NET, Open XML SDK, PdfPig) — [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).

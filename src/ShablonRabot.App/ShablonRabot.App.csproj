@@ -15,7 +15,7 @@
     <RootNamespace>ShablonRabot.App</RootNamespace>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>1.4.0</Version>
+    <Version>1.4.1</Version>
     <Product>Чистовик</Product>
     <Company>Чистовик</Company>
     <Description>Шаблоны студенческих работ по ГОСТ и проверка готовых работ</Description>
@@ -26,6 +26,9 @@
     <Resource Include="Assets\app.ico" />
     <!-- Статьи базы знаний (Markdown) -->
     <EmbeddedResource Include="Knowledge\*.md" LogicalName="Knowledge.%(Filename)%(Extension)" />
+    <!-- Лицензионное соглашение — последней статьёй базы знаний, с текстами лицензий сторонних компонентов -->
+    <EmbeddedResource Include="..\..\LICENSE.md" LogicalName="Knowledge.99-license.md" />
+    <EmbeddedResource Include="..\..\THIRD-PARTY-NOTICES.md" LogicalName="Notices.md" />
   </ItemGroup>
 
 </Project>

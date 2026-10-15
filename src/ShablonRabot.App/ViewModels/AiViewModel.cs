@@ -396,7 +396,14 @@ public sealed class AiViewModel : ObservableObject
 
     async Task RunAsync()
     {
-        if (!CanRun || SavedConnection() is not { } connection) return;
+        if (!CanRun) return;
+        if (SavedConnection() is not { } connection)
+        {
+            // Ключ зашифрован для другого пользователя Windows (настройки перенесли с другого компьютера)
+            ErrorTitle = "Ключ не удалось прочитать";
+            ErrorText = "Сохранённый ключ недоступен на этом компьютере. Нажмите «Изменить подключение» и вставьте ключ заново.";
+            return;
+        }
         _work = _context();
         var task = _task;
         var target = task == WritingTask.Section && SelectedSection is { } s ? (s.Chapter, s.Section) : ((int, int)?)null;

@@ -60,7 +60,14 @@ public sealed class KnowledgeViewModel : ObservableObject
         {
             using var stream = asm.GetManifestResourceStream(name)!;
             using var reader = new StreamReader(stream);
-            var lines = reader.ReadToEnd().Replace("\r\n", "\n").Split('\n').ToList();
+            var text = reader.ReadToEnd();
+            // Лицензия: в конце — тексты лицензий сторонних компонентов, заголовки на уровень ниже
+            if (name == "Knowledge.99-license.md" && asm.GetManifestResourceStream("Notices.md") is { } notices)
+                using (var n = new StreamReader(notices))
+                    text += "\n" + string.Join("\n", n.ReadToEnd().Replace("\r\n", "\n").Split('\n').Select(l => l.StartsWith('#') ? "#" + l : l));
+            // Метаданные можно писать и в HTML-комментариях («<!-- @summary … -->») — так их не видно на GitHub
+            var lines = text.Replace("\r\n", "\n").Split('\n')
+                .Select(l => l.StartsWith("<!-- @") && l.TrimEnd().EndsWith("-->") ? l.TrimEnd()[5..^3].Trim() : l).ToList();
             string Meta(string key) => lines.FirstOrDefault(l => l.StartsWith($"@{key} "))?[(key.Length + 2)..].Trim() ?? "";
             var title = lines.FirstOrDefault(l => l.StartsWith("# "))?[2..].Trim() ?? name;
             var glyph = Meta("glyph");

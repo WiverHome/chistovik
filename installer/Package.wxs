@@ -1,6 +1,6 @@
 <!-- Установщик для текущего пользователя: права администратора не нужны (важно для компьютеров в вузе). -->
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
-  <Package Name="Чистовик" Manufacturer="Чистовик" Version="$(Version)"
+  <Package Name="Чистовик" Manufacturer="WiverHome" Version="$(Version)"
            UpgradeCode="6C1D2E4A-7B3F-4F0E-9A51-2D8C3B7E5F10" Scope="perUser" Language="1049" Codepage="65001">
     <SummaryInformation Description="Чистовик — шаблоны студенческих работ по ГОСТ" Codepage="1251" />
     <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage="Уже установлена более новая версия «Чистовика»." />
@@ -34,6 +34,9 @@
     <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
       <Component Id="MainExe" Guid="E153C0FB-95BB-4F69-81C5-D9F4FC20D95B">
         <File Id="AppExe" Source="$(AppDir)\Chistovik.exe" />
+        <!-- Лицензионное соглашение и лицензии сторонних компонентов — рядом с программой -->
+        <File Id="LicenseFile" Source="$(sys.SOURCEFILEDIR)..\LICENSE.md" Name="LICENSE.md" />
+        <File Id="NoticesFile" Source="$(sys.SOURCEFILEDIR)..\THIRD-PARTY-NOTICES.md" Name="THIRD-PARTY-NOTICES.md" />
         <RegistryValue Root="HKCU" Key="Software\Chistovik" Name="Installed" Type="integer" Value="1" KeyPath="yes" />
         <RemoveFolder Id="RemoveProgramsDir" Directory="ProgramsDir" On="uninstall" />
         <RemoveFolder Id="RemoveInstallFolder" On="uninstall" />
