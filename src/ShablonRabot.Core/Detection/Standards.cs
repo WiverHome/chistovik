@@ -8,6 +8,11 @@ public sealed record Standard(string Id, string Name, string Scope, IReadOnlyLis
     /// <summary>Чем заменён отменённый стандарт («ГОСТ 7.32-2017 с 01.07.2018»); null — действует.</summary>
     public string? ReplacedBy { get; init; }
     public bool IsOutdated => ReplacedBy != null;
+    /// <summary>
+    /// Отличительные правила: чем стандарт отличается от ГОСТ 7.32-2017. Эталон может стать ближайшим, только если
+    /// совпало хотя бы одно из них — иначе он «выигрывает» на общих для всех ГОСТов правилах (шрифт, интервал).
+    /// </summary>
+    public IReadOnlySet<string> Distinctive { get; init; } = new HashSet<string>();
 }
 
 public sealed record RuleDifference(string Key, string Name, string Found, string Required);
@@ -76,7 +81,7 @@ public static class Standards
         new("pageNumber", v => Equals(v, "top-center"), "вверху по центру"),
         new("headingAlign", v => Equals(v, "center"), "по центру"),
         new("chapterNewPage", v => Equals(v, true), "с новой страницы"),
-    ]);
+    ]) { Distinctive = new HashSet<string> { "margins", "pageNumber", "headingAlign" } };
 
     /// <summary>
     /// ГОСТ Р 2.105-2019 «ЕСКД. Общие требования к текстовым документам» с Изменением № 1 (с 01.02.2021).
@@ -93,7 +98,7 @@ public static class Standards
         new("figurePrefix", v => Equals(v, "Рисунок"), "«Рисунок»"),
         new("separator", v => Equals(v, " – "), "тире"),
         new("tableCaptionAlign", v => Equals(v, "left"), "слева"),
-    ]);
+    ]) { Distinctive = new HashSet<string> { "structuralUpper" } };
 
     /// <summary>
     /// ГОСТ 7.32-2001 (ред. 2005), 6.1–6.6 — отменён, но по нему до сих пор написаны многие методички.
@@ -114,7 +119,7 @@ public static class Standards
         new("figurePrefix", v => Equals(v, "Рисунок"), "«Рисунок»"),
         new("separator", v => Equals(v, " – "), "тире"),
         new("tableCaptionAlign", v => Equals(v, "left"), "слева"),
-    ]) { ReplacedBy = "ГОСТ 7.32-2017 с 1 июля 2018 г." };
+    ]) { ReplacedBy = "ГОСТ 7.32-2017 с 1 июля 2018 г.", Distinctive = new HashSet<string> { "margins" } };
 
     /// <summary>
     /// ГОСТ Р 7.0.97-2025 «Организационно-распорядительная документация. Требования к оформлению документов»,
@@ -129,7 +134,7 @@ public static class Standards
         new("indent", v => Near(v, 1.25), "1,25 см"),
         new("align", v => Equals(v, "justify"), "по ширине"),
         new("pageNumber", v => Equals(v, "top-center"), "вверху по центру, со второй страницы"),
-    ]);
+    ]) { Distinctive = new HashSet<string> { "margins", "pageNumber" } };
 
     public static readonly IReadOnlyList<Standard> All = [Gost732, Gost7011, Gost2105, Gost732_2001, Gost7097];
 
@@ -137,32 +142,35 @@ public static class Standards
     public static StandardVerdict Match(RulesDetection detection)
     {
         var usable = detection.Rules.Where(r => r.Confidence >= Confidence.Medium).ToList();
-        var candidates = new List<(Standard Standard, int Matched, int Compared, List<RuleDifference> Diffs, double Score)>();
+        var candidates = new List<(Standard Standard, int Matched, int Compared, List<RuleDifference> Diffs, double Score, bool Eligible)>();
         foreach (var standard in All)
         {
             var compared = 0;
             var matched = 0;
             var diffs = new List<RuleDifference>();
+            var distinctiveMatched = false;
             foreach (var rule in standard.Rules)
             {
                 var found = usable.FirstOrDefault(r => r.Key == rule.Key);
                 if (found == null) continue;
                 compared++;
-                if (rule.Matches(found.Value)) matched++;
+                if (rule.Matches(found.Value)) { matched++; distinctiveMatched |= standard.Distinctive.Contains(rule.Key); }
                 else diffs.Add(new RuleDifference(rule.Key, found.Name, found.Display, rule.Requirement));
             }
-            candidates.Add((standard, matched, compared, diffs, compared == 0 ? 0 : (double)matched / compared));
+            var eligible = standard.Distinctive.Count == 0 || distinctiveMatched;
+            candidates.Add((standard, matched, compared, diffs, compared == 0 ? 0 : (double)matched / compared, eligible));
         }
         // Ближайший — по сглаженной доле совпадений (m+1)/(n+2): «3 из 4» не должно обгонять «5 из 7» только потому,
         // что у эталона меньше правил. При равенстве — тот, с которым совпало больше; затем первый эталон (ГОСТ 7.32-2017)
-        var best = candidates.OrderByDescending(c => (c.Matched + 1.0) / (c.Compared + 2.0)).ThenByDescending(c => c.Matched).FirstOrDefault();
+        // Эталон без совпавших отличительных правил в выборе ближайшего не участвует
+        var best = candidates.Where(c => c.Eligible).OrderByDescending(c => (c.Matched + 1.0) / (c.Compared + 2.0)).ThenByDescending(c => c.Matched).FirstOrDefault();
         if (best.Standard == null) return new StandardVerdict(VerdictKind.NotEnoughData, null, 0, 0, []);
         // DESIGN.md 17.4.4: вывод о ГОСТ — от 6 найденных правил, «похоже» — от 80 % совпадений
         var kind = usable.Count < 6 || best.Compared < 3 ? VerdictKind.NotEnoughData
             : best.Score >= 0.8 ? VerdictKind.Matches
             : VerdictKind.CustomRules;
         var also = kind == VerdictKind.Matches
-            ? candidates.Where(c => c.Standard != best.Standard && c.Compared >= 3 && c.Matched == c.Compared).Select(c => c.Standard).ToList()
+            ? candidates.Where(c => c.Standard != best.Standard && c.Eligible && c.Compared >= 3 && c.Matched == c.Compared).Select(c => c.Standard).ToList()
             : [];
         return new StandardVerdict(kind, best.Standard, best.Matched, best.Compared, best.Diffs) { AlsoMatches = also };
     }
