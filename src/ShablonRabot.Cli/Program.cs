@@ -1,9 +1,9 @@
 using ShablonRabot.Core;
 
-// shablon <профиль.json | kursovaya | vkr | eskd | referat | practice | kontrolnaya | dissertation> -o файл.docx [--pdf] [--no-word]
+// shablon <профиль.json | kursovaya | vkr | eskd | referat | practice | kontrolnaya | dissertation | spo-kursovaya | spo-diplom | spo-practice | spo-project | spo-referat> -o файл.docx [--pdf] [--no-word]
 if (args.Length == 0)
 {
-    Console.WriteLine("Использование: shablon <профиль.json | kursovaya | vkr | eskd | referat | practice | kontrolnaya | dissertation> -o файл.docx [--pdf] [--no-word]");
+    Console.WriteLine("Использование: shablon <профиль.json | kursovaya | vkr | eskd | referat | practice | kontrolnaya | dissertation | spo-kursovaya | spo-diplom | spo-practice | spo-project | spo-referat> -o файл.docx [--pdf] [--no-word]");
     return 1;
 }
 

@@ -58,6 +58,8 @@ public sealed class ProfileCard : ObservableObject
     public required string Glyph { get; init; }
     public bool IsSoon { get; init; }
     public bool IsImported { get; init; }
+    /// <summary>vo — вуз, spo — колледж или техникум.</summary>
+    public string Level { get; init; } = "vo";
     public bool IsBroken { get; init; }
     public ImportedProfile? Imported { get; init; }
     public string NavTitle { get; init; } = "";
@@ -180,6 +182,8 @@ public sealed class MainViewModel : ObservableObject
 
         BuildCards();
         var start = Cards.FirstOrDefault(c => c.Key == settings.LastProfile && c.IsSelectable) ?? Cards[0];
+        _level = settings.EducationLevel ?? (start.Level == "spo" ? "spo" : "vo");
+        if (!start.IsImported && start.Level != _level) start = Cards.First(c => !c.IsImported && c.Level == _level);
         SelectProfile(start, initial: true);
         _page = !settings.FirstRunDone ? AppPage.Type
             : Enum.TryParse<AppPage>(settings.LastPage, out var last) && last != AppPage.Settings ? last : AppPage.TitlePage;
@@ -191,7 +195,25 @@ public sealed class MainViewModel : ObservableObject
     public IReadOnlyList<NavItemViewModel> Nav { get; }
     public NavItemViewModel SettingsNav { get; }
     public ObservableCollection<ProfileCard> Cards { get; } = new();
-    public IEnumerable<ProfileCard> BuiltInCards => Cards.Where(c => !c.IsImported);
+    public IEnumerable<ProfileCard> BuiltInCards => Cards.Where(c => !c.IsImported && c.Level == _level);
+
+    /// <summary>Где учится студент: вуз или колледж/техникум (СПО) — от этого зависят виды работ и титульные листы.</summary>
+    public static Choice[] Levels { get; } = [new("vo", "Вуз"), new("spo", "Колледж, техникум (СПО)")];
+    string _level = "vo";
+    public string EducationLevel
+    {
+        get => _level;
+        set
+        {
+            if (value is not ("vo" or "spo") || !Set(ref _level, value)) return;
+            _settings.EducationLevel = value;
+            _settings.Save();
+            OnPropertyChanged(nameof(BuiltInCards));
+            // Выбранный вид работы — другого уровня: переходим на первый вид работы нового уровня
+            if (_profile is { IsImported: false } current && current.Level != value && BuiltInCards.FirstOrDefault() is { } first)
+                SelectProfile(first);
+        }
+    }
     public IEnumerable<ProfileCard> ImportedCards => Cards.Where(c => c.IsImported);
     /// <summary>Профили кафедр + карточка «Импортировать профиль…» в одной сетке.</summary>
     public IEnumerable<object> ImportedTiles => ImportedCards.Cast<object>().Append(ImportTile.Instance);
@@ -374,6 +396,17 @@ public sealed class MainViewModel : ObservableObject
             Description = "По ГОСТ 7.32-2017. Вариант, теория и задача с решением." });
         Cards.Add(new ProfileCard { Key = "dissertation", Title = "Диссертация", NavTitle = "Диссертация", Glyph = "\uE8F1",
             Gost = "ГОСТ Р 7.0.11-2011", Description = "По ГОСТ Р 7.0.11-2011. «На правах рукописи», номер страницы вверху." });
+        // Колледжи и техникумы (СПО): титул колледжа, специальность, МДК и профессиональные модули
+        Cards.Add(new ProfileCard { Key = "spo-kursovaya", Level = "spo", Title = "Курсовая работа (проект)", NavTitle = "Курсовая работа", Glyph = "\uE7BE",
+            Description = "По ГОСТ 7.32-2017. Титул колледжа, МДК, специальность." });
+        Cards.Add(new ProfileCard { Key = "spo-diplom", Level = "spo", Title = "Дипломная работа (проект)", NavTitle = "Дипломная работа", Glyph = "\uEB95",
+            Description = "ВКР: «Согласовано» и «К защите допустить» на титуле." });
+        Cards.Add(new ProfileCard { Key = "spo-practice", Level = "spo", Title = "Отчёт по практике", NavTitle = "Отчёт по практике", Glyph = "\uE821",
+            Description = "Учебная, производственная, преддипломная — по модулю." });
+        Cards.Add(new ProfileCard { Key = "spo-project", Level = "spo", Title = "Индивидуальный проект", NavTitle = "Индивидуальный проект", Glyph = "\uE734",
+            Description = "1 курс: проект по учебному предмету и его продукт." });
+        Cards.Add(new ProfileCard { Key = "spo-referat", Level = "spo", Title = "Реферат", NavTitle = "Реферат", Glyph = "\uE8A5",
+            Description = "По ГОСТ 7.32-2017. Титул колледжа, специальность." });
         foreach (var imp in _settings.Imported)
         {
             var broken = !File.Exists(imp.Path) || !TryLoad(imp.Path, out _);
@@ -844,7 +877,8 @@ public sealed class MainViewModel : ObservableObject
         if (verdict?.Standard is not { } standard || _profile is not { IsImported: false } current) return null;
         if (current.Gost == standard.Name) return null;
         if (!ProfileForStandard.TryGetValue(standard.Id, out var key)) return null;
-        return Cards.FirstOrDefault(c => c.Key == key) is { } card ? (card.Key, card.Title) : null;
+        if (_level == "spo" && key == "kursovaya") key = "spo-kursovaya";
+        return BuiltInCards.FirstOrDefault(c => c.Key == key) is { } card ? (card.Key, card.Title) : null;
     }
 
     public void OpenDetect(DetectSource source)

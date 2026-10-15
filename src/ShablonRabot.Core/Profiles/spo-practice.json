@@ -1,0 +1,46 @@
+{
+  "_comment": "СПО: «Отчёт по практике» — учебная, производственная (по профилю специальности), преддипломная; практика проходит в рамках профессионального модуля. Структура — как у отчёта по практике вуза.",
+  "extends": "practice.json",
+  "name": "Отчёт по практике (СПО)",
+
+  "fields": {
+    "ministry": "[Министерство (департамент) образования региона]",
+    "org_form": "Государственное бюджетное профессиональное образовательное учреждение",
+    "university": "[Полное наименование колледжа или техникума]",
+    "work_type": "ОТЧЁТ",
+    "practice_spo": "о выполнении программы производственной практики (по профилю специальности)",
+    "module": "[ПМ.00 Наименование профессионального модуля]",
+    "specialty": "[00.00.00 Наименование специальности]",
+    "supervisor_position": "[должность]"
+  },
+
+  "field_hints": {
+    "ministry": { "label": "Учредитель", "placeholder": "Например: Департамент образования Томской области" },
+    "org_form": { "placeholder": "Например: Областное государственное бюджетное профессиональное образовательное учреждение" },
+    "university": { "label": "Колледж или техникум", "placeholder": "Например: Томский индустриальный техникум", "help": "Без кавычек — «ёлочки» добавятся сами." },
+    "specialty": { "label": "Специальность", "placeholder": "Например: 09.02.07 Информационные системы и программирование", "help": "Код и название по ФГОС СПО." },
+    "supervisor": { "label": "Руководитель от колледжа" },
+    "supervisor_position": { "label": "Должность", "placeholder": "Например: преподаватель" },
+    "org_supervisor": { "label": "Руководитель от организации" }
+  },
+
+  "title_page": {
+    "blocks": [
+      { "type": "lines", "align": "center", "lines": ["{ministry}", "{org_form}", "«{university}»"] },
+      { "type": "lines", "align": "center", "space_before_pt": 84, "bold": true, "lines": ["{module}"] },
+      { "type": "lines", "align": "center", "space_before_pt": 12, "bold": true, "size_pt": 16, "lines": ["{work_type}"] },
+      { "type": "lines", "align": "center", "italic": true, "lines": ["{practice_spo}"] },
+      { "type": "lines", "align": "center", "space_before_pt": 6, "lines": ["Специальность {specialty}"] },
+      { "type": "lines", "align": "left", "space_before_pt": 24, "lines": [
+        "Место прохождения практики: {organization}",
+        "Сроки прохождения практики: {period}"
+      ] },
+      { "type": "signatures", "space_before_pt": 30, "col_widths_cm": [7, 8.5], "rows": [
+        ["Выполнил(а)\nстудент(ка) группы {group}", "________________ {student}"],
+        ["Руководитель практики\nот колледжа\n{supervisor_position}", "________________ {supervisor}"],
+        ["Руководитель практики\nот профильной организации\n{org_supervisor_position}", "________________ {org_supervisor}\nМ. П."],
+        ["Оценка", "________________"]
+      ] }
+    ]
+  }
+}

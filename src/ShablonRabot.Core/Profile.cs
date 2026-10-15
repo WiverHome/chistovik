@@ -131,6 +131,8 @@ public sealed class TitleBlock
     public string Align { get; set; } = "center";
     public List<string> Lines { get; set; } = new();
     public bool Bold { get; set; }
+    /// <summary>Курсив — например, «ДИПЛОМНАЯ РАБОТА» на титуле колледжа.</summary>
+    public bool Italic { get; set; }
     public double? SizePt { get; set; }
     public double SpaceBeforePt { get; set; }
     public double IndentLeftCm { get; set; }
@@ -335,6 +337,12 @@ public static class BuiltInProfiles
         ("practice", "Отчёт по практике"),
         ("kontrolnaya", "Контрольная работа"),
         ("dissertation", "Диссертация"),
+        // Колледжи и техникумы (СПО)
+        ("spo-kursovaya", "Курсовая работа (СПО)"),
+        ("spo-diplom", "Дипломная работа (СПО)"),
+        ("spo-practice", "Отчёт по практике (СПО)"),
+        ("spo-project", "Индивидуальный проект (СПО)"),
+        ("spo-referat", "Реферат (СПО)"),
     ];
 
     public static Profile Load(string id) => ProfileJson.Parse(ReadResource($"{id}.json"), ReadResource);

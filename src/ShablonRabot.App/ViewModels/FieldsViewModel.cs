@@ -15,7 +15,7 @@ public sealed partial class FieldViewModel : ObservableObject, INotifyDataErrorI
     [GeneratedRegex(@"^\s*([А-ЯЁA-Z][а-яёa-z\-]+)\s+([А-ЯЁA-Z])[а-яёa-z]+\s+([А-ЯЁA-Z])[а-яёa-z]+\s*$")]
     private static partial Regex FullName();
 
-    static readonly HashSet<string> NameKeys = ["student", "supervisor", "head", "normcontrol", "org_supervisor"];
+    static readonly HashSet<string> NameKeys = ["student", "supervisor", "head", "normcontrol", "org_supervisor", "pck_head", "deputy"];
     static readonly HashSet<string> QuoteKeys = ["topic", "university", "discipline"];
 
     string _value = "";
@@ -176,6 +176,8 @@ public sealed partial class FieldsViewModel : ObservableObject
         ["profile"] = new("Работа", "Направленность (профиль)", "Например: Разработка программного обеспечения", null),
         ["designation"] = new("Работа", "Обозначение документа", "Например: КП.09.03.01.07.000 ПЗ", "Код по правилам кафедры; «ПЗ» — пояснительная записка."),
         ["variant"] = new("Работа", "Вариант", "Например: 7", null, Half: true),
+        ["module"] = new("Работа", "Профессиональный модуль", "Например: ПМ.01 Разработка модулей программного обеспечения", "Код и название — как в рабочей программе практики."),
+        ["practice_spo"] = new("Работа", "Вид практики", "Например: о выполнении программы учебной практики", null, FieldKind.Combo),
         ["practice_kind"] = new("Работа", "Вид практики", "Например: о прохождении производственной практики", "Как в приказе о практике.", FieldKind.Combo),
         ["organization"] = new("Работа", "Место практики", "Например: ООО «Ромашка», отдел разработки", null),
         ["period"] = new("Работа", "Сроки практики", "Например: с 01.07.2026 по 28.07.2026", null),
@@ -190,6 +192,9 @@ public sealed partial class FieldsViewModel : ObservableObject
         ["head_position"] = new("Руководство", "Должность и степень заведующего", "Например: профессор, д-р экон. наук", null, Half: true),
         ["normcontrol"] = new("Руководство", "Нормоконтролёр", "И. О. Фамилия", null, Half: true),
         ["org_supervisor"] = new("Руководство", "Руководитель от организации", "И. О. Фамилия", null, Half: true),
+        ["pck_head"] = new("Руководство", "Председатель ПЦК", "И. О. Фамилия", "Предметно-цикловая комиссия — «Согласовано».", Half: true),
+        ["deputy"] = new("Руководство", "Допускает к защите", "И. О. Фамилия", null, Half: true),
+        ["deputy_position"] = new("Руководство", "Должность того, кто допускает к защите", "Например: Заместитель директора по учебной работе", null),
         ["org_supervisor_position"] = new("Руководство", "Должность в организации", "Например: начальник отдела", null, Half: true),
     };
 
@@ -201,6 +206,11 @@ public sealed partial class FieldsViewModel : ObservableObject
         "о прохождении учебной практики", "о прохождении производственной практики",
         "о прохождении преддипломной практики", "о прохождении научно-исследовательской работы",
     ];
+    static readonly string[] PracticeKindsSpo =
+    [
+        "о выполнении программы учебной практики", "о выполнении программы производственной практики (по профилю специальности)",
+        "о выполнении программы преддипломной практики",
+    ];
     static readonly string[] Degrees =
     [
         "на соискание учёной степени кандидата технических наук", "на соискание учёной степени кандидата экономических наук",
@@ -208,7 +218,7 @@ public sealed partial class FieldsViewModel : ObservableObject
     ];
 
     /// <summary>Поля, которые зависят от профиля и хранятся отдельно для каждого вида работы.</summary>
-    public static readonly HashSet<string> ProfileSpecific = ["work_type", "work_kind", "project_kind", "practice_kind", "degree", "ministry", "org_form"];
+    public static readonly HashSet<string> ProfileSpecific = ["work_type", "work_kind", "project_kind", "practice_kind", "practice_spo", "degree", "ministry", "org_form", "deputy_position"];
 
     public ObservableCollection<FieldGroupViewModel> Groups { get; } = new();
     public IEnumerable<FieldViewModel> All => Groups.SelectMany(g => g.Fields.Concat(g.HeaderFields));
@@ -250,7 +260,7 @@ public sealed partial class FieldsViewModel : ObservableObject
             {
                 SuggestInitials = hint?.Initials != false,
                 IsHalf = key == "student" ? !hasCourse : meta.Half,
-                Options = key switch { "work_kind" => WorkKinds, "project_kind" => ProjectKinds, "practice_kind" => PracticeKinds, "degree" => Degrees, _ => [] },
+                Options = key switch { "work_kind" => WorkKinds, "project_kind" => ProjectKinds, "practice_kind" => PracticeKinds, "practice_spo" => PracticeKindsSpo, "degree" => Degrees, _ => [] },
             };
             var saved = (ProfileSpecific.Contains(key) ? specific : common)?.GetValueOrDefault(key);
             field.Value = saved ?? (isHint ? "" : profileValue);

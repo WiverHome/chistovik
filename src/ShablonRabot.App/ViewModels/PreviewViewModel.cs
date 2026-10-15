@@ -18,12 +18,13 @@ public abstract class PreviewFocusable : ObservableObject
 }
 
 /// <summary>Строка титульного листа. Размеры — в DIP листа 793,7×1122,5 (A4 при 96 DPI); масштабирует Viewbox.</summary>
-public sealed class PreviewLine(IReadOnlyList<PreviewRun> runs, TextAlignment align, bool bold, double size, double spaceBefore, double indentLeft)
+public sealed class PreviewLine(IReadOnlyList<PreviewRun> runs, TextAlignment align, bool bold, double size, double spaceBefore, double indentLeft, bool italic = false)
     : PreviewFocusable
 {
     public IReadOnlyList<PreviewRun> Runs { get; } = runs;
     public TextAlignment Align { get; } = align;
     public FontWeight Weight { get; } = bold ? FontWeights.Bold : FontWeights.Normal;
+    public FontStyle Style { get; } = italic ? FontStyles.Italic : FontStyles.Normal;
     public double Size { get; } = size;
     public Thickness Margin { get; } = new(indentLeft, spaceBefore, 0, 0);
     public IEnumerable<string> Keys => Runs.Where(r => r.FieldKey != null).Select(r => r.FieldKey!);
@@ -207,7 +208,7 @@ public sealed partial class PreviewViewModel : ObservableObject
             }
             for (var i = 0; i < block.Lines.Count; i++)
                 items.Add(new PreviewLine(Runs(block.Lines[i]), Align(block.Align), block.Bold, (block.SizePt ?? tp.FontSizePt) * DipPerPt,
-                    i == 0 ? block.SpaceBeforePt * DipPerPt : 0, block.IndentLeftCm * DipPerCm));
+                    i == 0 ? block.SpaceBeforePt * DipPerPt : 0, block.IndentLeftCm * DipPerCm, block.Italic));
         }
         TitleItems = items;
         BottomLines = tp.BottomLines.Select(l => new PreviewLine(Runs(l), TextAlignment.Center, false, TitleFontSize, 0, 0)).ToList();

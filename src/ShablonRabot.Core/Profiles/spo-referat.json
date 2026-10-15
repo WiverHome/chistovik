@@ -1,0 +1,39 @@
+{
+  "_comment": "СПО: «Реферат». Структура — как у реферата вуза, титул — колледжа.",
+  "extends": "referat.json",
+  "name": "Реферат (СПО)",
+
+  "fields": {
+    "ministry": "[Министерство (департамент) образования региона]",
+    "org_form": "Государственное бюджетное профессиональное образовательное учреждение",
+    "university": "[Полное наименование колледжа или техникума]",
+    "specialty": "[00.00.00 Наименование специальности]"
+  },
+
+  "field_hints": {
+    "ministry": { "label": "Учредитель", "placeholder": "Например: Департамент образования Томской области" },
+    "org_form": { "placeholder": "Например: Областное государственное бюджетное профессиональное образовательное учреждение" },
+    "university": { "label": "Колледж или техникум", "placeholder": "Например: Томский индустриальный техникум", "help": "Без кавычек — «ёлочки» добавятся сами." },
+    "specialty": { "label": "Специальность", "placeholder": "Например: 09.02.07 Информационные системы и программирование", "help": "Код и название по ФГОС СПО." },
+    "supervisor": { "label": "Преподаватель" }
+  },
+
+  "title_page": {
+    "blocks": [
+      { "type": "lines", "align": "center", "lines": ["{ministry}", "{org_form}", "«{university}»"] },
+      { "type": "lines", "align": "center", "space_before_pt": 150, "bold": true, "size_pt": 16, "lines": ["{work_type}"] },
+      { "type": "lines", "align": "center", "space_before_pt": 6, "lines": ["по дисциплине «{discipline}»"] },
+      { "type": "lines", "align": "center", "space_before_pt": 12, "bold": true, "lines": ["на тему: «{topic}»"] },
+      { "type": "lines", "align": "center", "space_before_pt": 12, "lines": ["Специальность {specialty}"] },
+      { "type": "lines", "align": "left", "indent_left_cm": 8.5, "space_before_pt": 96, "lines": [
+        "Выполнил(а):",
+        "студент(ка) группы {group}",
+        "________________ {student}",
+        "",
+        "Проверил(а):",
+        "преподаватель",
+        "________________ {supervisor}"
+      ] }
+    ]
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "_comment": "СПО: «Дипломная работа (проект)» — выпускная квалификационная работа в колледже (Порядок ГИА по программам СПО, приказ Минпросвещения от 08.11.2021 № 800). Титул — по образцу колледжа: «Согласовано» (председатель ПЦК) и «К защите допустить» (заместитель директора).",
+  "extends": "spo-kursovaya.json",
+  "name": "Дипломная работа (СПО)",
+
+  "fields": {
+    "work_type": "ДИПЛОМНАЯ РАБОТА",
+    "pck_head": "И. О. Фамилия",
+    "deputy_position": "Заместитель директора по учебной работе",
+    "deputy": "И. О. Фамилия"
+  },
+
+  "field_hints": {
+    "work_type": { "help": "Или «ДИПЛОМНЫЙ ПРОЕКТ» — как в приказе о темах ВКР." },
+    "supervisor": { "label": "Руководитель" }
+  },
+
+  "title_page": {
+    "blocks": [
+      { "type": "lines", "align": "center", "lines": ["{ministry}", "{org_form}", "«{university}»"] },
+      { "type": "signatures", "space_before_pt": 36, "col_widths_cm": [8, 8], "rows": [
+        ["СОГЛАСОВАНО\nПредседатель предметно-цикловой комиссии\n________________ {pck_head}\n«___» ____________ {year} г.",
+         "К ЗАЩИТЕ ДОПУСТИТЬ\n{deputy_position}\n________________ {deputy}\n«___» ____________ {year} г."]
+      ] },
+      { "type": "lines", "align": "center", "space_before_pt": 72, "bold": true, "lines": ["{topic}"] },
+      { "type": "lines", "align": "center", "space_before_pt": 6, "italic": true, "size_pt": 16, "lines": ["{work_type}"] },
+      { "type": "lines", "align": "center", "space_before_pt": 6, "lines": ["Специальность {specialty}"] },
+      { "type": "lines", "align": "left", "indent_left_cm": 8.5, "space_before_pt": 72, "lines": [
+        "Выполнил(а):",
+        "студент(ка) группы {group}",
+        "________________ {student}",
+        "",
+        "Руководитель:",
+        "{supervisor_position}",
+        "________________ {supervisor}"
+      ] }
+    ]
+  }
+}

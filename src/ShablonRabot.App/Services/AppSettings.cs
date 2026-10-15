@@ -57,6 +57,8 @@ public sealed class AppSettings
     public bool FirstRunDone { get; set; }
     /// <summary>Обучение показано (пройдено или пропущено).</summary>
     public bool OnboardingDone { get; set; }
+    /// <summary>vo — вуз, spo — колледж или техникум; null — определить по последнему виду работы.</summary>
+    public string? EducationLevel { get; set; }
     public string Theme { get; set; } = "system";
     public WindowPlacement? Window { get; set; }
 

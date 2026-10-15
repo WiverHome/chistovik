@@ -180,7 +180,12 @@
                 </DockPanel>
             </Border>
 
-            <TextBlock Text="Встроенные профили" Style="{StaticResource GroupTitle}" />
+            <Grid Margin="0,24,0,8">
+                <TextBlock Text="Встроенные профили" Style="{StaticResource Text.BodyStrong}" VerticalAlignment="Center" />
+                <ListBox Style="{StaticResource Segmented}" HorizontalAlignment="Right" ItemsSource="{x:Static vm:MainViewModel.Levels}"
+                         SelectedValue="{Binding EducationLevel}" SelectedValuePath="Value" AutomationProperties.Name="Где вы учитесь"
+                         ToolTip="От этого зависят виды работ и титульные листы" />
+            </Grid>
             <ItemsControl ItemsSource="{Binding BuiltInCards}" ItemsPanel="{StaticResource CardGrid}" Focusable="False"
                           KeyboardNavigation.DirectionalNavigation="Contained">
                 <ItemsControl.ItemTemplate>
@@ -190,9 +195,9 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
 
-            <TextBlock Text="Профили кафедр" Style="{StaticResource GroupTitle}" Margin="0,32,0,0" />
+            <TextBlock Text="Профили кафедр и колледжей" Style="{StaticResource GroupTitle}" Margin="0,32,0,0" />
             <TextBlock Style="{StaticResource Text.Caption}" Margin="0,0,0,8"
-                       Text="Профиль — файл .json с правилами методички. Его может выдать кафедра или руководитель." />
+                       Text="Профиль — файл .json с правилами методички. Его может выдать кафедра, колледж или руководитель." />
             <ItemsControl ItemsSource="{Binding ImportedTiles}" ItemsPanel="{StaticResource CardGrid}" Focusable="False">
                 <ItemsControl.Resources>
                     <DataTemplate DataType="{x:Type vm:ProfileCard}">

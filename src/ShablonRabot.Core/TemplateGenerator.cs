@@ -385,6 +385,7 @@ public sealed class TemplateGenerator
                 if (text.Length == 0) continue;
                 var rpr = new RunProperties();
                 if (block.Bold) rpr.Append(new Bold(), new BoldComplexScript());
+                if (block.Italic) rpr.Append(new Italic(), new ItalicComplexScript());
                 if (block.SizePt is { } s) rpr.Append(new FontSize { Val = HalfPt(s) }, new FontSizeComplexScript { Val = HalfPt(s) });
                 p.Append(TextRun(text, rpr.HasChildren ? rpr : null));
             }

@@ -26,7 +26,7 @@
 
         <DataTemplate DataType="{x:Type vm:PreviewLine}">
             <Border Style="{StaticResource FocusRing}" Margin="{Binding Margin}">
-                <TextBlock Style="{StaticResource PaperText}" TextAlignment="{Binding Align}" FontWeight="{Binding Weight}"
+                <TextBlock Style="{StaticResource PaperText}" TextAlignment="{Binding Align}" FontWeight="{Binding Weight}" FontStyle="{Binding Style}"
                            FontSize="{Binding Size}" LineHeight="{Binding Size, Converter={x:Static v:PreviewSheet.LineHeight}}"
                            v:PreviewSheet.Runs="{Binding Runs}" />
             </Border>
