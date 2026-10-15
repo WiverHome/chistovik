@@ -111,9 +111,9 @@ public static class Standards
             }
             candidates.Add((standard, matched, compared, diffs, compared == 0 ? 0 : (double)matched / compared));
         }
-        // Ближайший — по доле совпадений; при равной доле — тот, с которым совпало больше правил;
-        // при полном равенстве остаётся первый эталон (ГОСТ 7.32-2017)
-        var best = candidates.OrderByDescending(c => c.Score).ThenByDescending(c => c.Matched).FirstOrDefault();
+        // Ближайший — по сглаженной доле совпадений (m+1)/(n+2): «3 из 4» не должно обгонять «5 из 7» только потому,
+        // что у эталона меньше правил. При равенстве — тот, с которым совпало больше; затем первый эталон (ГОСТ 7.32-2017)
+        var best = candidates.OrderByDescending(c => (c.Matched + 1.0) / (c.Compared + 2.0)).ThenByDescending(c => c.Matched).FirstOrDefault();
         if (best.Standard == null) return new StandardVerdict(VerdictKind.NotEnoughData, null, 0, 0, []);
         // DESIGN.md 17.4.4: вывод о ГОСТ — от 6 найденных правил, «похоже» — от 80 % совпадений
         var kind = usable.Count < 6 || best.Compared < 3 ? VerdictKind.NotEnoughData

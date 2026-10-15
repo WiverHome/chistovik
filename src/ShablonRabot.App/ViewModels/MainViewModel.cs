@@ -763,9 +763,30 @@ public sealed class MainViewModel : ObservableObject
 
     DetectDialogViewModel CreateDetectDialog()
     {
-        var dialog = new DetectDialogViewModel(Rules, _dialogs, ProfileTitle, ApplyDetection);
+        var dialog = new DetectDialogViewModel(Rules, _dialogs, ProfileTitle, ApplyDetection, SuggestProfile);
         dialog.CloseRequested = () => { if (Dialog == dialog) Dialog = null; };
         return dialog;
+    }
+
+    /// <summary>Встроенный вид работы по каждому эталону ГОСТ.</summary>
+    static readonly Dictionary<string, string> ProfileForStandard = new()
+    {
+        [Standards.Gost732.Id] = "kursovaya",
+        [Standards.Gost2105.Id] = "eskd",
+        [Standards.Gost7011.Id] = "dissertation",
+    };
+
+    /// <summary>
+    /// Пример похож на ГОСТ, под который есть готовый вид работы, а выбран вид по другому ГОСТу
+    /// (например, пример — диссертация, выбрана курсовая) — предлагаем сменить вид работы.
+    /// Профили кафедр не подменяем: у них свои правила.
+    /// </summary>
+    (string Key, string Title)? SuggestProfile(StandardVerdict? verdict)
+    {
+        if (verdict?.Standard is not { } standard || _profile is not { IsImported: false } current) return null;
+        if (current.Gost == standard.Name) return null;
+        if (!ProfileForStandard.TryGetValue(standard.Id, out var key)) return null;
+        return Cards.FirstOrDefault(c => c.Key == key) is { } card ? (card.Key, card.Title) : null;
     }
 
     public void OpenDetect(DetectSource source)
@@ -813,7 +834,17 @@ public sealed class MainViewModel : ObservableObject
     {
         if (dialog.Result is not { } result) return;
         var chosen = dialog.Rows.Where(r => r.IsChecked).Select(r => r.Rule).ToList();
-        if (chosen.Count == 0) return;
+        // Смена вида работы под найденный ГОСТ: сначала переключаем профиль (титул и структура по стандарту),
+        // затем применяем правила примера — включая «уже так»: они совпадали со старым профилем, не с новым
+        var previousCard = _profile;
+        var checkedCount = chosen.Count; // столько правил пользователь отметил — их и называем в сообщении
+        var switchTo = dialog.SuggestedProfile is { } sp ? Cards.FirstOrDefault(c => c.Key == sp.Key) : null;
+        if (switchTo != null)
+        {
+            chosen = dialog.Rows.Where(r => r.IsChecked || r.IsSame).Select(r => r.Rule).ToList();
+            SelectProfile(switchTo);
+        }
+        if (chosen.Count == 0 && switchTo == null) return;
         var snapshot = BuildProfile(withFields: false);
         var marks = Rules.SampleMarks;
         var state = _settings.For(_profile!.Key);
@@ -832,7 +863,8 @@ public sealed class MainViewModel : ObservableObject
         Preview.Mode = PreviewMode.Page;
         OnPropertyChanged(nameof(PreviewModeIndex));
         var verdict = result.Verdict is { Kind: VerdictKind.Matches } v ? $" {v.Title}." : "";
-        ShowUndo($"Применено правил: {chosen.Count} из примера «{source}».{verdict}", () =>
+        var switched = switchTo != null ? $"Вид работы: «{switchTo.Title}». " : "";
+        ShowUndo(checkedCount == 0 ? $"{switched}Правила из примера «{source}» применены.{verdict}" : $"{switched}Применено правил: {checkedCount} из примера «{source}».{verdict}", () =>
         {
             _switching = true;
             Rules.Load(snapshot);
@@ -844,8 +876,9 @@ public sealed class MainViewModel : ObservableObject
             OnDetectedSourceChanged();
             Refresh();
             _autosave.Start();
+            if (switchTo != null && previousCard != null) SelectProfile(previousCard);
         });
-        FocusRequested?.Invoke(AppPage.Rules, "rule:" + chosen[0].Key);
+        if (chosen.Count > 0) FocusRequested?.Invoke(AppPage.Rules, "rule:" + chosen[0].Key);
     }
 
     void OnDetectedSourceChanged()

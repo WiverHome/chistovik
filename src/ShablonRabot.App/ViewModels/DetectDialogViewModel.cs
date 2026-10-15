@@ -73,13 +73,20 @@ public sealed class DetectDialogViewModel : DialogViewModel
     DetectSource _resultSource;
     bool _showAllDiffs;
 
-    public DetectDialogViewModel(RulesViewModel rules, IDialogService dialogs, string profileTitle, Action<DetectDialogViewModel> apply)
+    readonly string _profileTitle;
+    readonly Func<StandardVerdict?, (string Key, string Title)?>? _suggest;
+    (string Key, string Title)? _suggested;
+    bool _switchProfile = true;
+
+    public DetectDialogViewModel(RulesViewModel rules, IDialogService dialogs, string profileTitle, Action<DetectDialogViewModel> apply,
+        Func<StandardVerdict?, (string Key, string Title)?>? suggestProfile = null)
     {
         _rules = rules;
         _dialogs = dialogs;
         _apply = apply;
+        _profileTitle = profileTitle;
+        _suggest = suggestProfile;
         Title = "Определить правила по примеру";
-        FooterText = $"Применится к профилю «{profileTitle}»";
         IsWordInstalled = TemplateService.IsWordInstalled;
 
         ChooseFileCommand = new RelayCommand(ChooseFile, () => State != DetectState.Analyzing);
@@ -89,13 +96,28 @@ public sealed class DetectDialogViewModel : DialogViewModel
         RetryCommand = new RelayCommand(() => { if (_filePath != null) _ = AnalyzeFileAsync(_filePath); });
         SwitchToTextCommand = new RelayCommand(() => { Source = DetectSource.Text; State = DetectState.Choose; FocusText?.Invoke(); });
         CancelCommand = new RelayCommand(Dismiss);
-        ApplyCommand = new RelayCommand(() => _apply(this), () => State == DetectState.Result && CheckedCount > 0);
+        ApplyCommand = new RelayCommand(() => _apply(this), () => State == DetectState.Result && (CheckedCount > 0 || SuggestedProfile != null));
         ToggleAllDiffsCommand = new RelayCommand(() => { _showAllDiffs = true; OnPropertyChanged(nameof(Differences)); OnPropertyChanged(nameof(MoreDiffsText)); });
     }
 
     public static Choice[] Sources { get; } = [new(0, "Пример работы"), new(1, "Текст требований")];
     public bool IsWordInstalled { get; }
-    public string FooterText { get; }
+    public string FooterText => HasSuggestion && SwitchProfile
+        ? $"Вид работы сменится на «{_suggested!.Value.Title}»"
+        : $"Применится к профилю «{_profileTitle}»";
+
+    /// <summary>Готовый вид работы под найденный ГОСТ (пример — диссертация, а выбрана курсовая).</summary>
+    public (string Key, string Title)? SuggestedProfile => HasSuggestion && SwitchProfile ? _suggested : null;
+    public bool HasSuggestion => _suggested != null && State == DetectState.Result;
+    public bool SwitchProfile
+    {
+        get => _switchProfile;
+        set { if (!Set(ref _switchProfile, value)) return; OnPropertyChanged(nameof(FooterText)); OnPropertyChanged(nameof(ApplyText)); System.Windows.Input.CommandManager.InvalidateRequerySuggested(); }
+    }
+    public string SwitchText => _suggested is { } s ? $"Сменить вид работы на «{s.Title}»" : "";
+    public string SwitchHelp => Verdict?.Standard is { } st
+        ? $"Титульный лист и структура — по {st.Name}. Данные титульного листа сохранятся."
+        : "";
     public Action? FocusText { get; set; }
     public Action? Announce { get; set; }
 
@@ -125,6 +147,8 @@ public sealed class DetectDialogViewModel : DialogViewModel
             OnPropertyChanged(nameof(IsResult));
             OnPropertyChanged(nameof(IsError));
             OnPropertyChanged(nameof(ApplyText));
+            OnPropertyChanged(nameof(HasSuggestion));
+            OnPropertyChanged(nameof(FooterText));
         }
     }
 
@@ -177,7 +201,7 @@ public sealed class DetectDialogViewModel : DialogViewModel
         get => CheckedCount == 0 ? false : CheckedCount == ApplicableCount ? true : null;
         set { var v = value ?? false; foreach (var r in Rows.Where(r => !r.IsSame)) r.IsChecked = v; }
     }
-    public string ApplyText => CheckedCount == 0 ? "Применить" : $"Применить {Plural(CheckedCount)}";
+    public string ApplyText => CheckedCount == 0 ? (SuggestedProfile != null ? "Сменить вид работы" : "Применить") : $"Применить {Plural(CheckedCount)}";
     public string? NotFoundText
     {
         get
@@ -336,12 +360,14 @@ public sealed class DetectDialogViewModel : DialogViewModel
                 .Select(r => new DetectedRowViewModel(r!, _rules.CurrentDisplay(r!.Key), _rules.IsSame(r!), Changed)).ToList();
             if (rows.Count > 0) ResultGroups.Add(new DetectedGroup(title, rows));
         }
+        _suggested = result.Verdict is { Kind: Core.Detection.VerdictKind.Matches } ? _suggest?.Invoke(result.Verdict) : null;
         if (result.Rules.Count > 0) State = DetectState.Result;
         OnPropertyChanged(string.Empty);
         Announce?.Invoke();
     }
 
-    public string AnnounceText => $"Найдено правил: {_result?.Rules.Count ?? 0}. {VerdictTitle}. Отмечено для применения: {CheckedCount}.";
+    public string AnnounceText => $"Найдено правил: {_result?.Rules.Count ?? 0}. {VerdictTitle}. Отмечено для применения: {CheckedCount}."
+        + (HasSuggestion ? $" {SwitchText}: флажок включён." : "");
 
     static string Plural(int n)
     {

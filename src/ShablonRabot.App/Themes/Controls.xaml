@@ -690,6 +690,7 @@
                                           Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
                                           VerticalAlignment="Center" />
                         <TextBox x:Name="PART_EditableTextBox" Visibility="Collapsed" Margin="0" Padding="11,5,32,6"
+                                 c:Input.Placeholder="{TemplateBinding c:Input.Placeholder}"
                                  AutomationProperties.Name="{TemplateBinding AutomationProperties.Name}"
                                  Background="Transparent" BorderBrush="Transparent" IsReadOnly="{TemplateBinding IsReadOnly}" />
                         <TextBlock Text="&#xE70D;" Style="{StaticResource Icon}" FontSize="12" HorizontalAlignment="Right" Margin="0,0,12,0"

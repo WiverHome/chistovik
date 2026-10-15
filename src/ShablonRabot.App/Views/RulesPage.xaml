@@ -123,7 +123,7 @@
                     </c:SettingRow>
                     <Border Style="{StaticResource RowDivider}" />
                     <c:SettingRow Tag="fontSize" Header="Размер шрифта"
-                                  Description="Кегль основного текста. По ГОСТ — не меньше 12 пт, чаще требуют 14. Заголовки и подписи того же размера изменятся вместе с ним."
+                                  Description="{Binding Rules.FontSizeHelp}"
                                   IsChanged="{Binding Rules[fontSize].IsChanged}" ChangedText="{Binding Rules[fontSize].ChangedText}" RevertName="{Binding Rules[fontSize].RevertName}">
                         <c:SettingRow.Footer>
                             <StackPanel>
@@ -142,7 +142,7 @@
                                  SelectedValue="{Binding Rules.LineSpacing}" AutomationProperties.Name="Межстрочный интервал" />
                     </c:SettingRow>
                     <Border Style="{StaticResource RowDivider}" />
-                    <c:SettingRow Tag="indent" Header="Абзацный отступ" Description="Отступ первой строки абзаца («красная строка»). По ГОСТ — 1,25 см."
+                    <c:SettingRow Tag="indent" Header="Абзацный отступ" Description="{Binding Rules.IndentHelp}"
                                   IsChanged="{Binding Rules[indent].IsChanged}" ChangedText="{Binding Rules[indent].ChangedText}" RevertName="{Binding Rules[indent].RevertName}">
                         <c:SettingRow.Footer>
                             <StackPanel>
@@ -174,7 +174,7 @@
             <Border Style="{StaticResource Card}">
                 <StackPanel>
                     <c:SettingRow Tag="headingAlign" Header="Положение заголовков глав"
-                                  Description="Заголовки глав, параграфов и пунктов. По ГОСТ — с абзацного отступа, но многие методички требуют по центру."
+                                  Description="{Binding Rules.HeadingHelp}"
                                   IsChanged="{Binding Rules[headingAlign].IsChanged}" ChangedText="{Binding Rules[headingAlign].ChangedText}" RevertName="{Binding Rules[headingAlign].RevertName}">
                         <ListBox Style="{StaticResource Segmented}" ItemsSource="{x:Static vm:RulesViewModel.HeadingAligns}"
                                  SelectedValue="{Binding Rules.HeadingAlign}" AutomationProperties.Name="Положение заголовков глав" />

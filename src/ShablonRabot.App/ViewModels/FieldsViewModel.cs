@@ -34,6 +34,8 @@ public sealed partial class FieldViewModel : ObservableObject, INotifyDataErrorI
         FixCommand = new RelayCommand(() => { if (_fixedValue != null) Value = _fixedValue; });
     }
 
+    /// <summary>Предлагать «И. О. Фамилия» вместо полного ФИО (кроме видов работ, где нужно полное).</summary>
+    public bool SuggestInitials { get; init; } = true;
     public string Key { get; }
     public string Label { get; }
     public string Placeholder { get; }
@@ -99,7 +101,7 @@ public sealed partial class FieldViewModel : ObservableObject, INotifyDataErrorI
 
         // Умные подсказки (не ошибки)
         _tip = _tipFix = _fixedValue = null;
-        if (NameKeys.Contains(Key) && FullName().Match(v) is { Success: true } m)
+        if (SuggestInitials && NameKeys.Contains(Key) && FullName().Match(v) is { Success: true } m)
         {
             _fixedValue = $"{m.Groups[2].Value}. {m.Groups[3].Value}. {m.Groups[1].Value}";
             _tip = $"На титульном листе обычно пишут «{_fixedValue}».";
@@ -188,7 +190,7 @@ public sealed partial class FieldsViewModel : ObservableObject
         ["head_position"] = new("Руководство", "Должность и степень заведующего", "Например: профессор, д-р экон. наук", null, Half: true),
         ["normcontrol"] = new("Руководство", "Нормоконтролёр", "И. О. Фамилия", null, Half: true),
         ["org_supervisor"] = new("Руководство", "Руководитель от организации", "И. О. Фамилия", null, Half: true),
-        ["org_supervisor_position"] = new("Руководство", "Должность руководителя от организации", "Например: начальник отдела", null, Half: true),
+        ["org_supervisor_position"] = new("Руководство", "Должность в организации", "Например: начальник отдела", null, Half: true),
     };
 
     static readonly string[] GroupOrder = ["Учебное заведение", "Работа", "Студент", "Руководство", "Другое"];
@@ -235,14 +237,18 @@ public sealed partial class FieldsViewModel : ObservableObject
         foreach (var (key, profileValue) in ordered)
         {
             var meta = Catalog.GetValueOrDefault(key) ?? new Meta("Другое", key, "", null);
+            // Вид работы может уточнить подпись поля («ФИО автора» в диссертации)
+            var hint = profile.FieldHints?.GetValueOrDefault(key);
+            if (hint != null) meta = meta with { Label = hint.Label ?? meta.Label, Placeholder = hint.Placeholder ?? meta.Placeholder, Help = hint.Help ?? meta.Help };
             var isHint = Placeholders.IsPlaceholder(profileValue);
             // Для известных полей — тексты из дизайна; подсказка профиля — только для полей «Другое»
             var placeholder = key == "year" ? DateTime.Today.Year.ToString()
-                : Catalog.ContainsKey(key) ? meta.Placeholder
+                : Catalog.ContainsKey(key) || hint?.Placeholder != null ? meta.Placeholder
                 : Brackets().Replace(profileValue, "").Trim();
             var field = new FieldViewModel(key, meta.Label, placeholder, meta.Help, meta.Kind, isHint ? "" : profileValue,
                 counted: isHint && key != "year")
             {
+                SuggestInitials = hint?.Initials != false,
                 IsHalf = key == "student" ? !hasCourse : meta.Half,
                 Options = key switch { "work_kind" => WorkKinds, "project_kind" => ProjectKinds, "practice_kind" => PracticeKinds, "degree" => Degrees, _ => [] },
             };

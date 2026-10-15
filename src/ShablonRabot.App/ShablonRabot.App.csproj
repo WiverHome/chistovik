@@ -14,7 +14,7 @@
     <RootNamespace>ShablonRabot.App</RootNamespace>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>1.1.0</Version>
+    <Version>1.1.1</Version>
     <Product>Чистовик</Product>
     <Company>Чистовик</Company>
     <Description>Шаблоны курсовых и выпускных работ по ГОСТ</Description>

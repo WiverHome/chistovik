@@ -16,6 +16,8 @@ public sealed class Profile
     public CaptionRules Captions { get; set; } = new();
     public ListRules Lists { get; set; } = new();
     public Dictionary<string, string> Fields { get; set; } = new();
+    /// <summary>Подписи и подсказки полей титула для этого вида работы — «ФИО автора» в диссертации и т. п. Необязательно.</summary>
+    public Dictionary<string, FieldHint>? FieldHints { get; set; }
     public TitlePage TitlePage { get; set; } = new();
     public List<StructureItem> Structure { get; set; } = new();
 
@@ -103,6 +105,16 @@ public sealed class CaptionRules
 public sealed class ListRules
 {
     public string Bullet { get; set; } = "–";
+}
+
+/// <summary>Переопределение подписи поля титула в профиле. Пустые свойства — как в приложении по умолчанию.</summary>
+public sealed class FieldHint
+{
+    public string? Label { get; set; }
+    public string? Placeholder { get; set; }
+    public string? Help { get; set; }
+    /// <summary>false — не предлагать сокращать ФИО до инициалов (в диссертации пишут полностью).</summary>
+    public bool? Initials { get; set; }
 }
 
 public sealed class TitlePage
@@ -270,6 +282,9 @@ public static class ProfileJson
     {
         if (node["structure"] is not JsonArray { Count: > 0 }) throw new MissingSectionException("structure (структура работы)");
         if (node["title_page"] is not JsonObject) throw new MissingSectionException("title_page (титульный лист)");
+        // Служебные ключи («_comment») допустимы и в подсказках полей — это не поле
+        if (node["field_hints"] is JsonObject hints)
+            foreach (var key in hints.Select(p => p.Key).Where(k => k.StartsWith('_')).ToList()) hints.Remove(key);
         return node.Deserialize<Profile>(Options) ?? throw new JsonException("Пустой профиль");
     }
 

@@ -86,15 +86,17 @@ public sealed class StructurePlan
         result.AddRange(extraAfter);
         if (References) result.Add(Find(i => i.Type == "references") ?? new StructureItem { Type = "references", Title = "Список использованных источников", Items = ["[Источник.]"] });
 
-        var srcAppendix = Find(i => i.Type == "appendix");
+        // Приложения профиля сохраняют свои заголовки и подсказки («Дневник практики»); новые — с заглушкой
+        var srcAppendices = src.Where(i => i.Type == "appendix").ToList();
         for (var a = 0; a < Math.Min(Appendices, MaxAppendices); a++)
         {
+            var own = a < srcAppendices.Count ? srcAppendices[a] : null;
             result.Add(new StructureItem
             {
                 Type = "appendix",
                 Letter = AppendixLetters[a],
-                Title = "[Название приложения]",
-                Body = a == 0 && srcAppendix?.Body != null ? srcAppendix.Body : [BodyItem.Paragraph("[Содержание приложения.]")],
+                Title = own?.Title ?? "[Название приложения]",
+                Body = own?.Body ?? [BodyItem.Paragraph("[Содержание приложения.]")],
             });
         }
         profile.Structure = result;

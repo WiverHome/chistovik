@@ -296,6 +296,15 @@
                                             Command="{Binding ToggleAllDiffsCommand}" Visibility="{Binding MoreDiffsText, Converter={StaticResource NullToCollapsed}}" />
                                     <TextBlock Style="{StaticResource Text.Caption}" Margin="0,8,0,0"
                                                Text="Это сравнение с эталонами ГОСТ, а не проверка нормоконтроля. Если требования кафедры отличаются, главнее они." />
+                                    <!-- Есть готовый вид работы под найденный ГОСТ: предлагаем перейти на него -->
+                                    <CheckBox IsChecked="{Binding SwitchProfile}" Margin="0,12,0,0" VerticalContentAlignment="Top"
+                                              Visibility="{Binding HasSuggestion, Converter={StaticResource BoolToVisibility}}"
+                                              AutomationProperties.Name="{Binding SwitchText}" AutomationProperties.HelpText="{Binding SwitchHelp}">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding SwitchText}" Style="{StaticResource Text.BodyStrong}" TextWrapping="Wrap" />
+                                            <TextBlock Text="{Binding SwitchHelp}" Style="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="0,2,0,0" />
+                                        </StackPanel>
+                                    </CheckBox>
                                 </StackPanel>
                             </Grid>
                         </Border>

@@ -12,6 +12,11 @@
     "org_supervisor": "И. О. Фамилия"
   },
 
+  "field_hints": {
+    "supervisor": { "label": "Руководитель от вуза" },
+    "supervisor_position": { "label": "Должность, степень" }
+  },
+
   "title_page": {
     "blocks": [
       { "type": "lines", "align": "center", "lines": ["{ministry}", "{org_form}", "«{university}»"] },

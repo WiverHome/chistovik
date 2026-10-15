@@ -34,9 +34,9 @@
                                                Foreground="{DynamicResource Brush.Accent.Text}" />
                                 </Border>
                                 <StackPanel Grid.Column="1" Margin="12,0,8,0">
-                                    <TextBlock x:Name="T" Text="{Binding Title}" Style="{StaticResource Text.BodyStrong}" MaxHeight="40" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock x:Name="T" Text="{Binding Title}" Style="{StaticResource Text.BodyStrong}" MaxHeight="60" TextTrimming="CharacterEllipsis" />
                                     <TextBlock x:Name="D" Text="{Binding Description}" Style="{StaticResource Text.Caption}" Margin="0,4,0,0"
-                                               MaxHeight="48" TextTrimming="CharacterEllipsis" />
+                                               MaxHeight="80" TextTrimming="CharacterEllipsis" />
                                 </StackPanel>
                                 <Grid Grid.Column="2" VerticalAlignment="Top">
                                     <Border x:Name="Check" Width="20" Height="20" CornerRadius="10" Visibility="Collapsed"

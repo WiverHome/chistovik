@@ -159,7 +159,35 @@ public sealed class RulesViewModel : ObservableObject, INotifyDataErrorInfo
         _baselineName = name;
         UpdateDiffs();
         OnPropertyChanged(nameof(DefaultsText));
+        OnPropertyChanged(nameof(FontSizeHelp));
+        OnPropertyChanged(nameof(IndentHelp));
+        OnPropertyChanged(nameof(HeadingHelp));
     }
+
+    // Подсказки к правилам — по ГОСТу выбранного вида работы, а не всегда по ГОСТ 7.32 (design/GOSTS.md)
+    public string FontSizeHelp => "Кегль основного текста. " + (_baselineGost switch
+    {
+        "ГОСТ Р 2.105-2019" => "По ГОСТ Р 2.105 — 11–14 пт.",
+        "ГОСТ Р 7.0.11-2011" => "По ГОСТ Р 7.0.11 — 12–14 пт.",
+        null => "Чаще всего требуют 14 пт.",
+        _ => "По ГОСТ — не меньше 12 пт, чаще требуют 14.",
+    }) + " Заголовки и подписи того же размера изменятся вместе с ним.";
+
+    public string IndentHelp => "Отступ первой строки абзаца («красная строка»). " + _baselineGost switch
+    {
+        "ГОСТ Р 2.105-2019" => "По ГОСТ Р 2.105 — пять знаков, 12,5–17 мм.",
+        "ГОСТ Р 7.0.11-2011" => "По ГОСТ Р 7.0.11 — пять знаков, обычно 1,25 см.",
+        null => "Чаще всего — 1,25 см.",
+        _ => "По ГОСТ — 1,25 см.",
+    };
+
+    public string HeadingHelp => "Заголовки глав, параграфов и пунктов. " + _baselineGost switch
+    {
+        "ГОСТ Р 2.105-2019" => "По ГОСТ Р 2.105 — с абзацного отступа.",
+        "ГОСТ Р 7.0.11-2011" => "По ГОСТ Р 7.0.11 — посередине страницы.",
+        null => "Методички требуют по центру или с абзацного отступа.",
+        _ => "По ГОСТ — с абзацного отступа, но многие методички требуют по центру.",
+    };
 
     public void Load(Profile p)
     {

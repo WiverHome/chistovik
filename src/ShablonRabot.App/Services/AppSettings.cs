@@ -64,60 +64,77 @@ public sealed class AppSettings
         return state;
     }
 
+    static string LegacyFilePath => System.IO.Path.Combine(LegacyDir, "settings.json");
+
     public static AppSettings Load()
     {
-        var migrated = MigrateLegacyDir();
+        // Данные версии 1.0 переносим, только если своих настроек ещё нет — решает файл, а не папка:
+        // папка Chistovik может появиться раньше (журнал ошибок, временные файлы)
+        var fromLegacy = !File.Exists(FilePath) && File.Exists(LegacyFilePath);
+        if (fromLegacy) MigrateLegacyFiles();
         try
         {
-            var settings = File.Exists(FilePath)
-                ? JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(FilePath), ProfileJson.Options) ?? new()
+            // Если перенести не удалось, читаем старый файл напрямую: данные пользователя не должны «пропасть»
+            var source = File.Exists(FilePath) ? FilePath : fromLegacy ? LegacyFilePath : null;
+            var settings = source != null
+                ? JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(source), ProfileJson.Options) ?? new()
                 : new();
-            if (migrated)
+            if (fromLegacy)
             {
-                // Импортированные профили лежали в старой папке — пути в настройках указывают туда
+                // Пути импортированных профилей указывают в старую папку — переводим на новую, если файл там есть
                 foreach (var imp in settings.Imported)
-                    if (imp.Path.StartsWith(LegacyDir, StringComparison.OrdinalIgnoreCase))
-                        imp.Path = Dir + imp.Path[LegacyDir.Length..];
+                {
+                    if (!imp.Path.StartsWith(LegacyDir, StringComparison.OrdinalIgnoreCase)) continue;
+                    var moved = Dir + imp.Path[LegacyDir.Length..];
+                    if (File.Exists(moved)) imp.Path = moved;
+                }
                 settings.Save();
             }
             return settings;
         }
-        catch (Exception)
+        catch (Exception e)
         {
+            Log("Не удалось прочитать настройки", e);
             return new(); // повреждённый файл настроек не должен мешать запуску
         }
     }
 
     /// <summary>
-    /// Переносит данные версии 1.0 (%APPDATA%\KonstruktorShablonov) в новую папку, если новой ещё нет.
-    /// Возвращает true, если перенос был.
+    /// Переносит данные версии 1.0 (%APPDATA%\KonstruktorShablonov) в новую папку.
+    /// Если новой папки ещё нет — перемещает целиком, иначе (или если переместить нельзя) копирует файлы.
     /// </summary>
-    static bool MigrateLegacyDir()
+    static void MigrateLegacyFiles()
+    {
+        if (!Directory.Exists(Dir))
+        {
+            try { Directory.Move(LegacyDir, Dir); return; }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException) { Log("Перенос папки 1.0 не удался, копирую файлы", e); }
+        }
+        try
+        {
+            foreach (var file in Directory.EnumerateFiles(LegacyDir, "*", SearchOption.AllDirectories))
+            {
+                try
+                {
+                    var target = System.IO.Path.Combine(Dir, System.IO.Path.GetRelativePath(LegacyDir, file));
+                    Directory.CreateDirectory(System.IO.Path.GetDirectoryName(target)!);
+                    if (!File.Exists(target)) File.Copy(file, target);
+                }
+                catch (Exception e) when (e is IOException or UnauthorizedAccessException) { Log($"Не скопирован {System.IO.Path.GetFileName(file)}", e); }
+            }
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { Log("Не удалось прочитать папку 1.0", e); }
+    }
+
+    /// <summary>Запись в журнал ошибок (тот же файл, что у App): сбои настроек иначе не видны.</summary>
+    static void Log(string what, Exception e)
     {
         try
         {
-            if (Directory.Exists(Dir) || !Directory.Exists(LegacyDir)) return false;
-            try { Directory.Move(LegacyDir, Dir); }
-            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
-            {
-                // Папку нельзя переместить (открыта в Проводнике, нет прав) — копируем, старая остаётся как есть
-                foreach (var file in Directory.EnumerateFiles(LegacyDir, "*", SearchOption.AllDirectories))
-                {
-                    try
-                    {
-                        var target = System.IO.Path.Combine(Dir, System.IO.Path.GetRelativePath(LegacyDir, file));
-                        Directory.CreateDirectory(System.IO.Path.GetDirectoryName(target)!);
-                        File.Copy(file, target, overwrite: false);
-                    }
-                    catch (Exception fe) when (fe is IOException or UnauthorizedAccessException) { /* один файл не мешает остальным */ }
-                }
-            }
-            return true;
+            Directory.CreateDirectory(Dir);
+            File.AppendAllText(System.IO.Path.Combine(Dir, "errors.log"), $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {what}: {e}\n\n");
         }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
-        {
-            return false; // не получилось — начнём с чистых настроек, старая папка не тронута
-        }
+        catch { /* журнал — не повод для новой ошибки */ }
     }
 
     public void Save()
