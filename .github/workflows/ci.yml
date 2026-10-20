@@ -1,0 +1,56 @@
+# Сборка и быстрая проверка на каждый push в main и каждый PR.
+# Секреты не нужны; MSI-установщик и релизы здесь не собираются (см. build.ps1).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  build:
+    name: Сборка и тесты
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 8.0.x
+
+      # Кэш пакетов NuGet (lock-файлов в проекте нет, ключ — по csproj)
+      - uses: actions/cache@v6
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Восстановление пакетов
+        run: dotnet restore ShablonRabot.sln
+
+      - name: Сборка (Release)
+        run: dotnet build ShablonRabot.sln -c Release --no-restore
+
+      # Отдельных тестовых проектов в репозитории нет, поэтому `dotnet test` ничего бы не проверил.
+      # Вместо него — быстрая проверка через консольную утилиту: шаблон собирается без Word
+      # и проходит проверку схемы OpenXML, а проверка готовой работы читает этот файл.
+      - name: Проверка генератора шаблонов и проверки работ
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/smoke"
+          for p in kursovaya vkr referat spo-kursovaya; do
+            dotnet run -c Release --no-build --project src/ShablonRabot.Cli -- $p -o "$RUNNER_TEMP/smoke/$p.docx" --no-word --validate
+          done
+          dotnet run -c Release --no-build --project src/ShablonRabot.Cli -- check "$RUNNER_TEMP/smoke/kursovaya.docx" --profile kursovaya
