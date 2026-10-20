@@ -1,4 +1,4 @@
-# Снимает баннеры README из docs/banner.html: docs/banner.png (светлый) и docs/banner-dark.png (тёмный).
+﻿# Снимает баннеры README из docs/banner.html: docs/banner.png (светлый) и docs/banner-dark.png (тёмный).
 # Макет 1280×400, PNG в двойном разрешении (2560×800), чтобы текст был чётким на экранах с высокой плотностью.
 # Нужны Microsoft Edge и интернет (шрифты Golos Text и JetBrains Mono берутся из Google Fonts).
 # Запуск: powershell -File docs\make-banner.ps1
