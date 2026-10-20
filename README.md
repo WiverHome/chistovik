@@ -1,5 +1,10 @@
 <div align="center">
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/banner-dark.png">
+  <img src="docs/banner.png" alt="Чистовик — курсовая, ВКР, реферат сразу по ГОСТ: титульный лист с полями 30, 15, 20 и 20 мм" width="100%">
+</picture>
+
 # Чистовик
 
 ### Курсовая, ВКР, реферат или отчёт по практике — сразу по ГОСТ
