@@ -109,7 +109,7 @@ public sealed class ChapterViewModel : OutlineItem
 /// <summary>Структура работы (DESIGN.md 4.4).</summary>
 public sealed class StructureViewModel : ObservableObject
 {
-    bool _introduction, _conclusion, _references, _appendices, _examples, _loading;
+    bool _toc, _introduction, _conclusion, _references, _appendices, _examples, _loading;
 
     public StructureViewModel()
     {
@@ -146,6 +146,8 @@ public sealed class StructureViewModel : ObservableObject
     public ObservableCollection<ChapterViewModel> Chapters { get; } = new();
     public NumberRule AppendixCount { get; } = new(1, 10, true, "Введите число от 1 до 10");
 
+    /// <summary>Содержание можно отключить у любого вида работы — решает методичка (аудит 1.1 №12).</summary>
+    public bool Toc { get => _toc; set => SetPart(ref _toc, value); }
     public bool Introduction { get => _introduction; set => SetPart(ref _introduction, value); }
     public bool Conclusion { get => _conclusion; set => SetPart(ref _conclusion, value); }
     public bool References { get => _references; set => SetPart(ref _references, value); }
@@ -197,6 +199,7 @@ public sealed class StructureViewModel : ObservableObject
     {
         _loading = true;
         var plan = StructurePlan.From(profile);
+        Toc = plan.Toc;
         Introduction = plan.Introduction;
         Conclusion = plan.Conclusion;
         References = plan.References;
@@ -213,7 +216,7 @@ public sealed class StructureViewModel : ObservableObject
     {
         new StructurePlan
         {
-            Toc = true, Introduction = Introduction, Conclusion = Conclusion, References = References,
+            Toc = Toc, Introduction = Introduction, Conclusion = Conclusion, References = References,
             Appendices = AppendixTotal, Examples = Examples,
             Chapters = Chapters.Select(c => new ChapterPlan(
                 Title(c.Title, c.ProfileHint ?? $"[Название главы {c.Number}]"),

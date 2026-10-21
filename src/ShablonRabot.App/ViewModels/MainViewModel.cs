@@ -277,7 +277,7 @@ public sealed class MainViewModel : ObservableObject
             OnPropertyChanged(nameof(ShowWelcome));
             if (value == AppPage.Check) Check.RefreshRules();
             if (value == AppPage.Ai) Ai.Refresh();
-            ClearUndo();
+            // «Отменить» переживает переход между разделами (аудит 1.1 №13): сбрасывается только следующим изменением
             if (InfoBar is { IsUndo: false, IsValidation: false }) InfoBar = null;
             // Первый запуск завершён, когда пользователь ушёл со страницы «Вид работы»
             if (value != AppPage.Type) _settings.FirstRunDone = true;
