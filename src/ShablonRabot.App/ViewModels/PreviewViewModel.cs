@@ -95,8 +95,10 @@ public sealed partial class PreviewViewModel : ObservableObject
     {
         PreviewMode.Title => PlaceholderCount > 0 ? "Подсвечено — не заполнено, останется подсказкой" : "Все поля заполнены",
         PreviewMode.Page => "Схема в масштабе. Переносы слов здесь не показаны",
-        _ => "Номера страниц условные",
+        _ => HasToc ? "Номера страниц условные" : "Содержание отключено — в шаблоне его не будет",
     };
+    bool _hasToc = true;
+    public bool HasToc { get => _hasToc; private set { if (Set(ref _hasToc, value)) OnPropertyChanged(nameof(Legend)); } }
     public bool ShowLegendSwatch => Mode == PreviewMode.Title && PlaceholderCount > 0;
     public string AutomationName => Mode switch
     {
@@ -247,6 +249,7 @@ public sealed partial class PreviewViewModel : ObservableObject
         var upper = p.Headings.Structural.Case == "upper";
         string S(string t) => upper ? t.ToUpperInvariant() : t;
         TocTitle = S("Содержание");
+        HasToc = structure.Toc;
         var toc = new List<PreviewTocLine>();
         var page = 3;
         if (structure.Introduction) toc.Add(new PreviewTocLine("", S("Введение"), false, 0, page, null));
