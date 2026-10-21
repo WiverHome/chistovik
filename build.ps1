@@ -2,7 +2,7 @@
 # Требуется: .NET 8 SDK и WiX как dotnet-инструмент:
 #   dotnet tool install --global wix --version 5.0.2
 #   wix extension add -g WixToolset.UI.wixext/5.0.2
-param([string]$Version = "1.4.1")
+param([string]$Version = "1.4.2")
 $ErrorActionPreference = "Stop"
 $root = $PSScriptRoot
 $publish = Join-Path $root "artifacts\publish"
