@@ -242,7 +242,7 @@
 ```powershell
 dotnet tool install --global wix --version 5.0.2
 wix extension add -g WixToolset.UI.wixext/5.0.2
-.\build.ps1 -Version 1.4.2
+.\build.ps1 -Version 1.4.3
 ```
 
 Результат — в `dist`: самодостаточный `Chistovik.exe` и MSI-установщик.
