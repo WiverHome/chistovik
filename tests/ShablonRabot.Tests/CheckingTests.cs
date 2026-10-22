@@ -36,7 +36,9 @@ public class CheckingTests
         // Подсказки-заглушки («[Текст параграфа.]», источники без дат) могут давать замечания по содержанию,
         // но оформление, которое задаёт сам шаблон, должно соответствовать своим правилам
         string[] formatting = ["pageSize", "margins", "pageNumber", "titleNumber", "font", "fontSize", "lineSpacing", "indent", "align",
-                               "structuralCase", "structuralAlign", "headingAlign", "headingDot", "newPage", "headingStyle", "toc"];
+                               "structuralCase", "structuralAlign", "headingAlign", "headingDot", "newPage", "headingStyle", "toc",
+                               // примеры в шаблоне сами должны быть написаны по ГОСТ 8.417 и Р 7.0.100
+                               "unitSpace", "unitSymbol", "refPages", "refYear"];
         var issues = report.Issues.Where(i => formatting.Contains(i.Key)).Select(i => $"{i.Key}: {i.Title} — {i.Detail}");
         Assert.Empty(issues);
     }

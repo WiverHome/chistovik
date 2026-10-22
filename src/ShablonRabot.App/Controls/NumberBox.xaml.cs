@@ -107,8 +107,6 @@ public partial class NumberBox : UserControl
         Down.IsEnabled = !valid || v > Min;
         AutomationProperties.SetHelpText(Box, hasError ? Validation.GetErrors(this).FirstOrDefault()?.ErrorContent?.ToString() ?? "" : "");
     }
-
-    Brush Res(string key) => (Brush)FindResource(key);
 }
 
 /// <summary>Подписка на изменение Validation.HasError (у него нет события в WPF).</summary>

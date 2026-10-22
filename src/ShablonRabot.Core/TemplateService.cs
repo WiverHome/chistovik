@@ -191,9 +191,10 @@ public static class TemplateService
     /// <summary>Завершает только экземпляр Word, запущенный нами (документы пользователя не трогаем).</summary>
     static void KillOurWord(int pid, HashSet<int> before)
     {
-        var targets = pid != 0
-            ? Process.GetProcessesByName("WINWORD").Where(p => p.Id == pid)
-            : Process.GetProcessesByName("WINWORD").Where(p => !before.Contains(p.Id)).Take(1);
+        var started = Process.GetProcessesByName("WINWORD").Where(p => !before.Contains(p.Id)).ToList();
+        // Если наш PID не определился, завершаем новый Word, только когда он один:
+        // второй мог открыть сам пользователь за время сборки
+        var targets = pid != 0 ? started.Where(p => p.Id == pid) : started.Count == 1 ? started : [];
         foreach (var p in targets)
         {
             try { p.Kill(entireProcessTree: true); } catch (Exception) { /* процесс уже завершился */ }
