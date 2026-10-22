@@ -43,10 +43,13 @@ jobs:
       - name: Сборка (Release)
         run: dotnet build ShablonRabot.sln -c Release --no-restore
 
-      # Отдельных тестовых проектов в репозитории нет, поэтому `dotnet test` ничего бы не проверил.
-      # Вместо него — быстрая проверка через консольную утилиту: шаблон собирается без Word
-      # и проходит проверку схемы OpenXML, а проверка готовой работы читает этот файл.
-      - name: Проверка генератора шаблонов и проверки работ
+      # Автотесты (tests/ShablonRabot.Tests): шаблоны всех видов работ, определение ГОСТа,
+      # проверка готовых работ, отключаемое содержание, перенос настроек 1.0. Word не нужен.
+      - name: Автотесты
+        run: dotnet test ShablonRabot.sln -c Release --no-build --logger "console;verbosity=normal"
+
+      # Консольная утилита тоже должна работать: шаблон без Word, проверка схемы OpenXML и проверка работы
+      - name: Проверка консольной утилиты
         shell: bash
         run: |
           mkdir -p "$RUNNER_TEMP/smoke"

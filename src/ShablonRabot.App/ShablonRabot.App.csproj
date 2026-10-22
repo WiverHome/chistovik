@@ -23,6 +23,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Автотесты проверяют перенос настроек 1.0 через внутренний AppSettings.Load(dir, legacyDir) -->
+    <InternalsVisibleTo Include="ShablonRabot.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Resource Include="Assets\app.ico" />
     <!-- Статьи базы знаний (Markdown) -->
     <EmbeddedResource Include="Knowledge\*.md" LogicalName="Knowledge.%(Filename)%(Extension)" />
