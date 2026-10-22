@@ -40,6 +40,21 @@ public static partial class DocumentChecker
     [GeneratedRegex(@"\[([\d\s,;–\-]+)(?:[,;]?\s*(?:с|c|л|s|p)\.\s*[\d\s–\-,]+)?\]")]
     private static partial Regex Citation();
 
+    // Число слитно с обозначением единицы: «5кг», «10мм» (ГОСТ 8.417). Однобуквенные заглавные (А, В, Н, К) не берём —
+    // их не отличить от литер классов и групп («11А»); знаки над строкой (°, ′, ″) и % пробела не требуют
+    [GeneratedRegex(@"(?<![\p{L}\d.,])\d+(?:[.,]\d+)?(?:мкм|нм|мм|см|дм|км|м|мг|кг|г|мл|л|мкс|мс|с|мин|ч|кГц|МГц|ГГц|Гц|кВт|МВт|Вт|кВ|мВ|мА|кА|кОм|МОм|Ом|кПа|МПа|ГПа|Па|кН|кДж|МДж|Дж|бит|Кбайт|Мбайт|Гбайт|Тбайт|байт)(?![\p{L}\d])")]
+    private static partial Regex UnitWithoutSpace();
+
+    // Неверные обозначения: «сек» вместо «с», «гр» вместо «г», точка после обозначения внутри предложения
+    [GeneratedRegex(@"\d\s?(?:(?:сек|гр|кгр)\.?(?![\p{L}])|(?:мм|см|км|кг|мг|мин)\.(?=\s*[а-яё,;]))")]
+    private static partial Regex WrongUnitSymbol();
+
+    [GeneratedRegex(@"(?<![\p{L}])стр\.")]
+    private static partial Regex PagesAbbreviation();
+
+    [GeneratedRegex(@"\b(?:1[5-9]|20)\d{2}\s?г\.")]
+    private static partial Regex YearWithAbbreviation();
+
     const int MaxLocations = 40;
 
     sealed record Para(int Index, Paragraph P, string Text, bool InTable)
@@ -118,6 +133,7 @@ public static partial class DocumentChecker
         c.Toc(body);
         c.Captions(body);
         c.References();
+        c.Abstract();
         c.Appendices();
         // Сначала ошибки, затем замечания и советы; внутри — по количеству мест
         var ordered = report.Issues.OrderBy(i => i.Severity).ThenByDescending(i => i.Count).ToList();
@@ -459,6 +475,19 @@ public static partial class DocumentChecker
                 Add("dash", "Основной текст", IssueSeverity.Advice, "Дефис вместо тире",
                     $"В {Plural(hyphens.Count, "абзаце", "абзацах", "абзацах")} между словами стоит дефис «-». Между словами ставят тире «–» или «—».",
                     "Ctrl+H: « - » заменить на « – » (тире: Ctrl + минус на цифровой клавиатуре).", null, hyphens);
+
+            // Единицы величин (ГОСТ 8.417): пробел между числом и обозначением, обозначения без точки
+            var unitSpace = _body.Where(p => UnitWithoutSpace().IsMatch(p.Text)).ToList();
+            if (unitSpace.Count > 0)
+                Add("unitSpace", "Основной текст", IssueSeverity.Advice, "Число слитно с единицей величины",
+                    $"В {Plural(unitSpace.Count, "абзаце", "абзацах", "абзацах")} число написано слитно с обозначением: «{UnitWithoutSpace().Match(unitSpace[0].Text).Value}». Между числом и обозначением единицы ставят пробел (лучше неразрывный): «5 кг», «10 мм».",
+                    "Неразрывный пробел: Ctrl + Shift + Пробел — число и единица не разойдутся по строкам.", "ГОСТ 8.417-2024", unitSpace);
+            else Pass("Пробел между числом и единицей");
+            var unitSymbol = _body.Where(p => WrongUnitSymbol().IsMatch(p.Text)).ToList();
+            if (unitSymbol.Count > 0)
+                Add("unitSymbol", "Основной текст", IssueSeverity.Advice, "Неверное обозначение единицы",
+                    $"«{WrongUnitSymbol().Match(unitSymbol[0].Text).Value.Trim()}»: секунду обозначают «с», грамм — «г», и после обозначений единиц точку не ставят.",
+                    "Исправьте обозначение: «5 с», «200 г», «10 мм».", "ГОСТ 8.417-2024", unitSymbol);
         }
 
         // ---------------- заголовки
@@ -723,6 +752,68 @@ public static partial class DocumentChecker
                 if (badRefs.Count == 0 && uncited.Count == 0) Pass("Ссылки на источники");
             }
             if (noDate.Count + noUrlLabel.Count == 0 && items.Count > 0) Pass("Описание электронных источников");
+
+            // Сокращения в описании (ГОСТ Р 7.0.12, Р 7.0.100): «с.», а не «стр.»; год издания без «г.»
+            var pages = items.Where(p => PagesAbbreviation().IsMatch(p.Text)).ToList();
+            if (pages.Count > 0)
+                Add("refPages", "Список литературы", IssueSeverity.Advice, "«стр.» вместо «с.»",
+                    "Страницы в библиографическом описании сокращают до «с.»: «– 256 с.», «С. 15–20».",
+                    "Ctrl+H: «стр.» заменить на «с.».", "ГОСТ Р 7.0.12-2011, Р 7.0.100-2018", pages);
+            var years = items.Where(p => YearWithAbbreviation().IsMatch(p.Text) && !p.Text.Contains("дата обращения", StringComparison.OrdinalIgnoreCase)).ToList();
+            if (years.Count > 0)
+                Add("refYear", "Список литературы", IssueSeverity.Advice, "Год издания с «г.»",
+                    "В описании год издания пишут цифрами без «г.»: «Москва : Наука, 2024. – 256 с.».", null, "ГОСТ Р 7.0.100-2018", years);
+            if (pages.Count + years.Count == 0) Pass("Сокращения в списке источников");
+        }
+
+        // ---------------- реферат
+
+        /// <summary>Реферат работы (не вид работы «Реферат»): объём, ключевые слова — ГОСТ 7.32-2017, 5.3.2 и 6.12; ГОСТ Р 7.0.99-2018.</summary>
+        public void Abstract()
+        {
+            var heading = paras.FirstOrDefault(p => p.Kind == Kind.Structural && Regex.IsMatch(p.Text.Trim(), @"^реферат\.?$", RegexOptions.IgnoreCase));
+            if (heading == null) return;
+            var part = paras.SkipWhile(p => p != heading).Skip(1)
+                .TakeWhile(p => p.Kind is not (Kind.Structural or Kind.Heading or Kind.Toc))
+                .Where(p => p.Text.Trim().Length > 0).ToList();
+            if (part.Count == 0) return;
+
+            var issues = 0;
+            if (!part.Any(p => Regex.IsMatch(p.Text, @"\d+\s*(?:с\.|стр|страниц)", RegexOptions.IgnoreCase)))
+            {
+                issues++;
+                Add("abstractVolume", "Реферат", IssueSeverity.Advice, "Нет сведений об объёме работы",
+                    "Реферат начинают со сведений об объёме: «Отчёт 56 с., 12 рис., 4 табл., 25 источн., 2 прил.».", null, "ГОСТ 7.32-2017, 5.3.2", [heading]);
+            }
+
+            static bool Upper(string s) { var letters = s.Where(char.IsLetter).ToList(); return letters.Count > 0 && letters.Count(char.IsUpper) * 10 >= letters.Count * 8; }
+            var kw = part.FirstOrDefault(p => Regex.IsMatch(p.Text.TrimStart(), @"^ключевые\s+слова", RegexOptions.IgnoreCase))
+                     ?? part.FirstOrDefault(p => Upper(p.Text) && p.Text.Count(c => c == ',') >= 2);
+            if (kw == null)
+            {
+                issues++;
+                Add("abstractKeywords", "Реферат", IssueSeverity.Warning, "Нет перечня ключевых слов",
+                    "После сведений об объёме идёт перечень из 5–15 ключевых слов прописными буквами через запятые.", null, "ГОСТ 7.32-2017, 5.3.2.1", [heading]);
+            }
+            else
+            {
+                var list = Regex.Replace(kw.Text.Trim(), @"^ключевые\s+слова\s*[:—–-]?\s*", "", RegexOptions.IgnoreCase);
+                var count = list.TrimEnd('.').Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Length;
+                if (count is < 5 or > 15)
+                {
+                    issues++;
+                    Add("abstractKeywords", "Реферат", IssueSeverity.Warning, $"Ключевых слов {count}",
+                        $"Перечень включает от 5 до 15 ключевых слов или словосочетаний, сейчас — {count}.", null, "ГОСТ 7.32-2017, 5.3.2.1", [kw]);
+                }
+                if (!Upper(list) || list.TrimEnd().EndsWith('.'))
+                {
+                    issues++;
+                    Add("abstractKeywordsStyle", "Реферат", IssueSeverity.Advice, "Ключевые слова оформлены не по ГОСТ",
+                        "Ключевые слова печатают прописными буквами, в строку, через запятые, без точки в конце.",
+                        "Выделите перечень → Shift+F3 до ПРОПИСНЫХ; уберите точку в конце.", "ГОСТ 7.32-2017, 6.12.2", [kw]);
+                }
+            }
+            if (issues == 0) Pass("Реферат");
         }
 
         // ---------------- приложения
