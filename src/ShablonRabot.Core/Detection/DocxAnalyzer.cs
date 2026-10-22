@@ -30,7 +30,9 @@ public static partial class DocxAnalyzer
 
     public static RulesDetection Analyze(string path, string? displayName = null, bool approximate = false)
     {
-        using var doc = WordprocessingDocument.Open(path, false);
+        // Свой поток: если файл повреждён, OpenXml не закрывает открытый им файл, и тот остаётся занятым до выхода из программы
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        using var doc = WordprocessingDocument.Open(stream, false);
         var main = doc.MainDocumentPart ?? throw new InvalidDataException("В файле нет основного документа.");
         var body = main.Document?.Body ?? throw new InvalidDataException("Документ пуст.");
         var ctx = new FormatResolver(main);
