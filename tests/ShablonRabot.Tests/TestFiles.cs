@@ -35,21 +35,21 @@ public static class TestFiles
     public static bool HasTocField(string docx)
     {
         using var doc = WordprocessingDocument.Open(docx, false);
-        return doc.MainDocumentPart!.Document.Body!.Descendants<FieldCode>()
+        return doc.MainDocumentPart!.Document!.Body!.Descendants<FieldCode>()
             .Any(f => f.Text.TrimStart().StartsWith("TOC", StringComparison.OrdinalIgnoreCase));
     }
 
     public static List<string> ParagraphTexts(string docx)
     {
         using var doc = WordprocessingDocument.Open(docx, false);
-        return doc.MainDocumentPart!.Document.Body!.Descendants<Paragraph>()
+        return doc.MainDocumentPart!.Document!.Body!.Descendants<Paragraph>()
             .Select(p => string.Concat(p.Descendants<Text>().Select(t => t.Text))).ToList();
     }
 
     public static int CountStyle(string docx, string styleId)
     {
         using var doc = WordprocessingDocument.Open(docx, false);
-        return doc.MainDocumentPart!.Document.Body!.Descendants<Paragraph>()
+        return doc.MainDocumentPart!.Document!.Body!.Descendants<Paragraph>()
             .Count(p => p.ParagraphProperties?.ParagraphStyleId?.Val?.Value == styleId);
     }
 

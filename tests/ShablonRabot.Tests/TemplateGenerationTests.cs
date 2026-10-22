@@ -47,7 +47,7 @@ public class TemplateGenerationTests
         using var dir = new TempDir();
         var path = TestFiles.Generate(p, dir);
         using var doc = WordprocessingDocument.Open(path, false);
-        var sect = doc.MainDocumentPart!.Document.Body!.Elements<SectionProperties>().Single();
+        var sect = doc.MainDocumentPart!.Document!.Body!.Elements<SectionProperties>().Single();
         var size = sect.GetFirstChild<PageSize>()!;
         var m = sect.GetFirstChild<PageMargin>()!;
         Assert.Equal((uint)TestFiles.Mm(p.Page.WidthMm), size.Width!.Value);
