@@ -156,8 +156,8 @@ public static partial class PdfAnalyzer
             var text = string.Concat(ordered.Select(l => l.Value)).Trim();
             var size = visible.GroupBy(l => Math.Round(l.PointSize * 2) / 2).OrderByDescending(g => g.Count()).First().Key;
             var font = visible.GroupBy(l => l.FontName).OrderByDescending(g => g.Count()).First().Key;
-            yield return new Line(page.Number, visible.Min(l => l.GlyphRectangle.Left), visible.Max(l => l.GlyphRectangle.Right), group.Key,
-                visible.Max(l => l.GlyphRectangle.Top), size, CleanFont(font), text, page.Width, page.Height);
+            yield return new Line(page.Number, visible.Min(l => l.BoundingBox.Left), visible.Max(l => l.BoundingBox.Right), group.Key,
+                visible.Max(l => l.BoundingBox.Top), size, CleanFont(font), text, page.Width, page.Height);
         }
     }
 

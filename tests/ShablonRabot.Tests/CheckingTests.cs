@@ -48,7 +48,7 @@ public class CheckingTests
     {
         using var doc = WordprocessingDocument.Open(path, true);
         var main = doc.MainDocumentPart!;
-        var margin = main.Document.Body!.Elements<SectionProperties>().Single().GetFirstChild<PageMargin>()!;
+        var margin = main.Document!.Body!.Elements<SectionProperties>().Single().GetFirstChild<PageMargin>()!;
         margin.Left = (uint)TestFiles.Mm(20);
         margin.Right = (uint)TestFiles.Mm(20);
         foreach (var f in main.StyleDefinitionsPart!.Styles!.Descendants<RunFonts>())
@@ -97,7 +97,7 @@ public class CheckingTests
         Assert.True(n > 0);
         Assert.Equal(before, File.ReadAllBytes(path));
         using var doc = WordprocessingDocument.Open(copy, false);
-        Assert.Equal(n, doc.MainDocumentPart!.WordprocessingCommentsPart!.Comments.ChildElements.Count);
+        Assert.Equal(n, doc.MainDocumentPart!.WordprocessingCommentsPart!.Comments!.ChildElements.Count);
         Assert.Empty(new OpenXmlValidator().Validate(doc));
     }
 
@@ -109,7 +109,7 @@ public class CheckingTests
         var path = TestFiles.Generate(p, dir);
         using (var doc = WordprocessingDocument.Open(path, true))
         {
-            var body = doc.MainDocumentPart!.Document.Body!;
+            var body = doc.MainDocumentPart!.Document!.Body!;
             // Автособираемое содержание заменяем текстом «вручную», к первой главе добавляем точку в конце
             foreach (var f in body.Descendants<FieldCode>().Where(f => f.Text.TrimStart().StartsWith("TOC")).ToList())
                 f.Parent!.Parent!.Remove();

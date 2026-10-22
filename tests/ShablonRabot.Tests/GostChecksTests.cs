@@ -19,7 +19,7 @@ public class GostChecksTests
         var path = TestFiles.Generate(p, dir);
         using (var doc = WordprocessingDocument.Open(path, true))
         {
-            var body = doc.MainDocumentPart!.Document.Body!;
+            var body = doc.MainDocumentPart!.Document!.Body!;
             if (bodyText != null)
             {
                 var h2 = body.Descendants<Paragraph>().First(x => x.ParagraphProperties?.ParagraphStyleId?.Val?.Value == "Heading2");
